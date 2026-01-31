@@ -1,3 +1,27 @@
-# Domain: <Domain Name>
-# Problem Statement: <Platform / System Type>
-# Last Updated: <YYYY-MM-DD>
+# Domain: Healthcare Administration (Non - Clinical)   
+# Problem Statement: Patient Appointment and Registration Management System
+# Last Updated: 01-02-2026
+
+Patient:
+  definition: A person who visits the healthcare facility to receive medical consultation or treatment.
+  examples:
+    - A walk-in individual visiting the clinic for fever treatment.
+  aliases:
+    - registered_patient
+    - clinic_patient
+
+Doctor:
+  definition: A qualified medical professional who provides consultation, diagnosis, and treatment to patients.
+  examples:
+    - A physician consulting patients during outpatient hours.
+  aliases:
+    - physician
+    - medical_practitioner
+
+FrontDesk:
+  definition: Hospital staff responsible for handling patient registration, walk-in appointments, follow-ups, and billing.
+  examples:
+    - A receptionist registering a new patient and issuing a walk-in appointment.
+  aliases:
+    - receptionist
+    - registration_staff
