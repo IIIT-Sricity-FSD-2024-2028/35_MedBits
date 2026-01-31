@@ -25,3 +25,27 @@ FrontDesk:
   aliases:
     - receptionist
     - registration_staff
+
+Registration:
+  definition: The process of collecting and recording patient information during their first or subsequent visits.
+  examples:
+    - Registering a new patient at the front desk before consultation.
+  aliases:
+    - patient_registration
+    - enrollment
+
+Appointment:
+  definition: A planned visit scheduled for a patient to consult a doctor at a specific time.
+  examples:
+    - Booking an appointment with a general physician for the next day.
+  aliases:
+    - scheduled_visit
+    - clinic_visit
+
+Consultation:
+  definition: The interaction between a doctor and a patient for medical examination, diagnosis, or advice.
+  examples:
+    - A doctor examining symptoms and advising treatment.
+  aliases:
+    - doctor_visit
+    - medical_consultation
