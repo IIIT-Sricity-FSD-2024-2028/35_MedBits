@@ -106,3 +106,18 @@ Token:
     - queue_token
     - visit_number
 
+CheckIn:
+  definition: The act of marking a patient as arrived at the healthcare facility for a scheduled appointment.
+  examples:
+    - A patient checking in at the front desk upon arrival.
+  aliases:
+    - arrival_marking
+    - patient_arrival
+
+CheckOut:
+  definition: The act of marking the completion of a patient’s visit after consultation.
+  examples:
+    - Completing the visit record after the doctor consultation ends.
+  aliases:
+    - visit_completion
+    - departure_marking
