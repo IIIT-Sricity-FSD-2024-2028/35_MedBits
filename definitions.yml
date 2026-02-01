@@ -49,3 +49,28 @@ Consultation:
   aliases:
     - doctor_visit
     - medical_consultation
+
+Speciality:
+  definition: A specific field of medical practice in which a doctor is trained.
+  examples:
+    - Orthopedics as a medical speciality.
+  aliases:
+    - medical_speciality
+    - department
+
+Prescription:
+  definition: Medical instructions provided by a doctor following a consultation.
+  examples:
+    - A prescription containing medicines and dosage instructions.
+  aliases:
+    - medication_instruction
+    - treatment_order
+
+FollowUp:
+  definition: A subsequent appointment scheduled to review a patient's condition after an initial consultation.
+  examples:
+    - A follow-up visit scheduled after two weeks.
+  aliases:
+    - review_visit
+    - subsequent_visit
+
