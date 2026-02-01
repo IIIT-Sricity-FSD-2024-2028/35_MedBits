@@ -89,3 +89,20 @@ TimeSlot:
   aliases:
     - slot
     - schedule_window
+
+LabTest:
+  definition: A medical investigation prescribed during or after consultation to assess a patient's health condition.
+  examples:
+    - A blood test prescribed by a doctor during consultation.
+  aliases:
+    - diagnostic_test
+    - medical_test
+
+Token:
+  definition: A queue identifier assigned to a patient to manage consultation order.
+  examples:
+    - Token number 12 displayed on the waiting screen.
+  aliases:
+    - queue_token
+    - visit_number
+
