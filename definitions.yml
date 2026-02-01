@@ -74,3 +74,18 @@ FollowUp:
     - review_visit
     - subsequent_visit
 
+AppointmentStatus:
+  definition: The current stage of an appointment within its lifecycle.
+  examples:
+    - An appointment marked as confirmed or cancelled.
+  aliases:
+    - status
+    - visit_status
+
+TimeSlot:
+  definition: A defined time interval allocated for scheduling an appointment with a doctor.
+  examples:
+    - A 10:00 AM to 10:15 AM consultation slot.
+  aliases:
+    - slot
+    - schedule_window
