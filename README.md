@@ -12,3 +12,16 @@ The Patient Registration and Appointment Management System is a non-clinical hea
                       1)Patient
                       2)Doctor
                       3)Front-Desk
+## Planned features:                      
+
+### PATIENT:
+
+1. Patient Registration: A digital onboarding interface where new users input personal, contact, and emergency details to generate a persistent hospital profile.
+
+2. Appointment Booking: A real-time scheduling interface that allows patients to book an appointment with doctor.
+
+3. Purchase of Medicines: A pharmacy integration module where patients buy prescribed medicines through online.
+
+4. Lab Test Booking: A portal for patients to book doctor-recommended tests, lab slots, and download digital results once processed.
+
+5. Feedback: A comprehensive dashboard for patients to provide feedback and their opinions on their visit to the hospital.
