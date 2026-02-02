@@ -14,7 +14,7 @@ The Patient Registration and Appointment Management System is a non-clinical hea
                       3)Front-Desk
 ## Planned features:                      
 
-### PATIENT:
+### 1. Patient
 
 1. Patient Registration: A digital onboarding interface where new users input personal, contact, and emergency details to generate a persistent hospital profile.
 
@@ -25,3 +25,25 @@ The Patient Registration and Appointment Management System is a non-clinical hea
 4. Lab Test Booking: A portal for patients to book doctor-recommended tests, lab slots, and download digital results once processed.
 
 5. Feedback: A comprehensive dashboard for patients to provide feedback and their opinions on their visit to the hospital.
+
+### 2. Front-Desk
+
+1. Walk-In Registration: An interface for receptionists to register walk-in patients.
+
+2. Appointment Management: To manage appointment for both walk-in patients and also according to doctor's schedule.
+
+3. Follow-Up Coordination: A scheduling tool to book a patient's next visit immediately after a session based on the doctor’s consultation notes.
+
+4. Queue Management: A token-generation feature that assigns a token number to a walk-in patient for queue management.
+
+5. Billing : To generate bill for the current doctor visit and provide invoice to the patient.
+
+### 3. Doctor
+
+1. Appointment & Slot Management: A unified dashboard for moving existing appointments due to emergencies and "blocking" future slots for planned leaves or breaks.
+
+2. Lab Test Package Creation: A tool for doctors to select and assign standardized lab test packages or specific diagnostic requests to a patient's digital profile.
+
+3. Consultation Notes: A digital interface for recording non-clinical observations, diagnosis summaries, and administrative follow-up instructions during consultation
+
+4. Internal Doctor Referral: A referral module that allows a doctor to recommend another specialist within the system, automatically linking the patient's record to the new department for a follow-up booking.
