@@ -74,6 +74,14 @@ FollowUp:
     - review_visit
     - subsequent_visit
 
+Referral:
+  definition: The process of directing a patient to another healthcare professional or specialist for further evaluation, diagnosis or treatment.
+  examples:
+    - The doctor provided a referral to a cardiologist for specialized care.
+  aliases:
+    - specialist_referral
+    - doctor_referral
+
 AppointmentStatus:
   definition: The current stage of an appointment within its lifecycle.
   examples:
