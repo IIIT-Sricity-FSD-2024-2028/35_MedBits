@@ -1,6 +1,6 @@
-# Domain: Healthcare Administration (Non - Clinical)   
+# Domain: Healthcare Administration (Non - Clinical)
 # Problem Statement: Patient Appointment and Registration Management System
-# Last Updated: 01-02-2026
+# Last Updated: 08-03-2026
 
 Patient:
   definition: A person who visits the healthcare facility to receive medical consultation or treatment.
