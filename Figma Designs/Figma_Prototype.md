@@ -1,0 +1,2 @@
+## Prototype link for figma designs
+- **Figma Prototype link:** [Figma Prototype](https://www.figma.com/proto/Ca5YI5q9iwKkVuNlpcDiNt/MedBits?node-id=3-1047&t=cZXche3GSQVJhPBJ-1&scaling=min-zoom&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=118%3A79&show-proto-sidebar=1)
