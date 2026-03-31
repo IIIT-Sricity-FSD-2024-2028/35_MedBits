@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEDBITS – Medicines</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/patient/global.css">
+  <link rel="stylesheet" href="../../css/components/p_sidebar.css">
+  <link rel="stylesheet" href="../../css/components/p_navbar.css">
+  <link rel="stylesheet" href="../../css/patient/cart.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+<div class="main-wrap">
+  <div id="navbarMount"></div>
+  <main class="content">
+
+    <!-- Search bar -->
+    <div class="search-hero">
+      <h2>Buy Medicines &amp; Essentials</h2>
+      <div class="search-wrap">
+        <input type="text" placeholder="Search medicines by name…" oninput="searchMedicines(this.value)">
+      </div>
+    </div>
+
+    <!-- Category chips -->
+    <div class="card mb-16">
+      <div class="section-header">
+        <div class="section-title">Browse by Health Condition</div>
+        <button class="view-all" onclick="showAllMeds()">View All</button>
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card" onclick="showMedCategory('Cardiac Care')">
+          <div class="cat-icon">🫀</div><div class="cat-name">Cardiac Care</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Diabetes Care')">
+          <div class="cat-icon">🩺</div><div class="cat-name">Diabetes Care</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Stomach Care')">
+          <div class="cat-icon">🫃</div><div class="cat-name">Stomach Care</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Pain Relief')">
+          <div class="cat-icon">🩹</div><div class="cat-name">Pain Relief</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Oral Care')">
+          <div class="cat-icon">🦷</div><div class="cat-name">Oral Care</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Respiratory')">
+          <div class="cat-icon">🌬️</div><div class="cat-name">Respiratory</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Sexual Health')">
+          <div class="cat-icon">💊</div><div class="cat-name">Sexual Health</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Cold and Immunity')">
+          <div class="cat-icon">🛡️</div><div class="cat-name">Cold &amp; Immunity</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Liver Care')">
+          <div class="cat-icon">🔬</div><div class="cat-name">Liver Care</div>
+        </div>
+        <div class="cat-card" onclick="showMedCategory('Elderly Care')">
+          <div class="cat-icon">🧓</div><div class="cat-name">Elderly Care</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product grid -->
+    <div class="card mb-16">
+      <div class="section-header">
+        <div class="section-title" id="medCategoryTitle">Pain Relief</div>
+        <button class="view-all" onclick="showAllMeds()">View All</button>
+      </div>
+      <div class="product-grid" id="medProductGrid"></div>
+    </div>
+
+    <!-- Order history -->
+    <div class="card mt-20">
+      <div class="section-header">
+        <div class="section-title">Order History</div>
+        <button class="btn btn-primary btn-sm" onclick="openAddMedOrder()">+ New Order</button>
+      </div>
+      <div id="medOrderList"></div>
+    </div>
+
+    <!-- Inline cart checkout (hidden by default) -->
+    <div class="card mt-20" id="cartCheckoutSection" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Your Cart</div>
+        <button class="btn btn-outline btn-sm" onclick="hideCart()">✕ Close</button>
+      </div>
+      <div id="cartItemsInline"></div>
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <strong>Total:</strong>
+        <div class="confirm-price" id="cartInlineTotal"></div>
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="placeOrder()">Place Order</button>
+    </div>
+
+  </main>
+</div>
+
+<!-- Floating cart bar -->
+<div class="cart-bar hidden" id="medCartBar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="cart-bar-icon">🛒</div>
+    <div>
+      <div class="cart-bar-price" id="cartTotal">₹ 0.00</div>
+      <div class="cart-bar-count" id="cartCount">(0 items)</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="showCartInline()">View Cart</button>
+</div>
+
+<!-- ── TEMPLATES ── -->
+
+<!-- Single product card -->
+<template id="tpl-med-card">
+  <div class="product-card">
+    <div class="product-card-img med-icon"></div>
+    <div class="product-card-name med-name"></div>
+    <div class="product-card-sub  med-qty"></div>
+    <div class="product-card-footer">
+      <div class="product-card-price med-price"></div>
+      <button class="btn-add med-btn">Add</button>
+    </div>
+  </div>
+</template>
+
+<!-- Single cart item row -->
+<template id="tpl-cart-item">
+  <div class="list-item">
+    <div>
+      <div class="list-item-title cart-item-name"></div>
+      <div class="list-item-sub  cart-item-qty"></div>
+    </div>
+    <div style="font-weight:700" class="cart-item-price"></div>
+  </div>
+</template>
+
+<!-- Single order history row -->
+<template id="tpl-order-row">
+  <div class="order-item">
+    <div>
+      <div class="list-item-title order-id"></div>
+      <div class="list-item-sub  order-info"></div>
+    </div>
+    <div class="gap-8">
+      <span class="badge badge-green order-status"></span>
+      <button class="btn btn-outline btn-sm order-view">View</button>
+      <button class="btn btn-red    btn-sm order-delete">Delete</button>
+    </div>
+  </div>
+</template>
+
+<!-- Add Order modal -->
+<template id="tpl-addOrder">
+  <div class="modal-title">Add New Order</div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Order ID</label>  <input id="no-id"    placeholder="ORD14-001"></div>
+    <div class="form-group">     <label>Date</label>      <input id="no-date"  placeholder="March 25, 2026"></div>
+    <div class="form-group">     <label>Total (₹)</label> <input type="number" id="no-total" value="0"></div>
+    <div class="form-group full"><label>Status</label>
+      <select id="no-status">
+        <option>Delivered</option><option>Pending</option><option>Processing</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-full mt-20" onclick="addMedOrder()">Add Order</button>
+</template>
+
+<!-- View/Edit Order modal -->
+<template id="tpl-viewOrder">
+  <div class="modal-title">Edit Order</div>
+  <div class="form-group mb-16"><label>Date</label>       <input id="vo-date"></div>
+  <div class="form-group mb-16"><label>Total (₹)</label>  <input type="number" id="vo-total"></div>
+  <div class="form-group mb-16"><label>Status</label>
+    <select id="vo-status">
+      <option>Delivered</option><option>Pending</option><option>Processing</option>
+    </select>
+  </div>
+  <button class="btn btn-primary btn-full mt-20" onclick="updateMedOrder()">Save Changes</button>
+</template>
+
+<!-- Modal shell -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../../js/patient/data.js"></script>
+<script src="../../js/patient/utils.js"></script>
+<script src="../../js/patient/components.js"></script>
+<script src="../../js/patient/medicines.js"></script>
+<script>
+  (async () => {
+    await loadDB();
+    await loadComponents('medicines', 'Medicines');
+    updateTopbarUser();
+    renderMedicines();
+  })();
+</script>
+</body>
+</html>

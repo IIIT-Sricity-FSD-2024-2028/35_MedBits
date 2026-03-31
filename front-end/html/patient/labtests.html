@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEDBITS – Lab Tests</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/patient/global.css">
+  <link rel="stylesheet" href="../../css/components/p_sidebar.css">
+  <link rel="stylesheet" href="../../css/components/p_navbar.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+<div class="main-wrap">
+  <div id="navbarMount"></div>
+  <main class="content">
+
+    <!-- Search -->
+    <div class="search-hero">
+      <h2>Book Lab Tests</h2>
+      <div class="search-wrap">
+        <input type="text" placeholder="Search tests by name…" oninput="searchLabTests(this.value)">
+      </div>
+    </div>
+
+    <!-- Category chips -->
+    <div class="card mb-16">
+      <div class="section-header">
+        <div class="section-title">Health Check Categories</div>
+        <button class="view-all" onclick="showAllLab()">View All</button>
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card" onclick="showLabCategory('Full Body Check Up')">
+          <div class="cat-icon">🏃</div><div class="cat-name">Full Body</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Diabetes')">
+          <div class="cat-icon">🩺</div><div class="cat-name">Diabetes</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Women\'s Health')">
+          <div class="cat-icon">🌸</div><div class="cat-name">Women's Health</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Thyroid')">
+          <div class="cat-icon">🦋</div><div class="cat-name">Thyroid</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Vitamin')">
+          <div class="cat-icon">🌿</div><div class="cat-name">Vitamin</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Blood Studies')">
+          <div class="cat-icon">🩸</div><div class="cat-name">Blood Studies</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Heart')">
+          <div class="cat-icon">🫀</div><div class="cat-name">Heart</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Kidney')">
+          <div class="cat-icon">🧫</div><div class="cat-name">Kidney</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Liver')">
+          <div class="cat-icon">🔬</div><div class="cat-name">Liver</div>
+        </div>
+        <div class="cat-card" onclick="showLabCategory('Senior Citizen')">
+          <div class="cat-icon">🧓</div><div class="cat-name">Senior Citizen</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product grid (filled by JS) -->
+    <div class="card mb-16">
+      <div class="section-header">
+        <div class="section-title" id="labCategoryTitle">Full Body Check Up</div>
+      </div>
+      <div class="product-grid" id="labProductGrid"></div>
+    </div>
+
+    <!-- Top booked tests -->
+    <div class="card mt-20">
+      <div class="section-header">
+        <div class="section-title">Top Booked Tests</div>
+        <button class="btn btn-primary btn-sm" onclick="openAddLabTest()">+ Add Test</button>
+      </div>
+      <div class="product-grid" id="topLabGrid"></div>
+    </div>
+
+    <!-- My lab orders -->
+    <div class="card mt-20">
+      <div class="section-header">
+        <div class="section-title">My Lab Orders</div>
+      </div>
+      <div id="labOrderList"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Floating cart bar -->
+<div class="cart-bar hidden" id="labCartBar">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="cart-bar-icon">🛒</div>
+    <div>
+      <div class="cart-bar-price" id="labCartTotal">₹ 0.00</div>
+      <div class="cart-bar-count" id="labCartCount">(0 items)</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="checkoutLab()">View Cart</button>
+</div>
+
+<!-- ── TEMPLATES ── -->
+
+<!-- Single lab test product card -->
+<template id="tpl-lab-card">
+  <div class="product-card">
+    <div class="product-card-img">🧪</div>
+    <div class="product-card-name lab-name"></div>
+    <div class="product-card-sub  lab-tests"></div>
+    <div class="product-card-footer">
+      <div class="product-card-price lab-price"></div>
+      <button class="btn-add lab-btn">Add</button>
+    </div>
+  </div>
+</template>
+
+<!-- Single lab order row -->
+<template id="tpl-lab-order-row">
+  <div class="order-item">
+    <div>
+      <div class="list-item-title lab-order-test"></div>
+      <div class="list-item-sub  lab-order-date"></div>
+    </div>
+    <div class="gap-8">
+      <span class="badge lab-order-badge"></span>
+      <button class="btn btn-red btn-sm lab-order-delete">Delete</button>
+    </div>
+  </div>
+</template>
+
+<!-- Single cart item row (used in checkout modal) -->
+<template id="tpl-lab-cart-item">
+  <div class="list-item">
+    <div>
+      <div class="list-item-title lab-ci-name"></div>
+      <div class="list-item-sub  lab-ci-cat"></div>
+    </div>
+    <div style="font-weight:700" class="lab-ci-price"></div>
+  </div>
+</template>
+
+<!-- Add Lab Test modal -->
+<template id="tpl-addLabTest">
+  <div class="modal-title">Add Lab Test</div>
+  <div class="form-grid">
+    <div class="form-group full"><label>Test Name</label> <input id="alt-name" placeholder="Test name"></div>
+    <div class="form-group"><label>Category</label>
+      <select id="alt-cat">
+        <option>Full Body Check Up</option><option>Diabetes</option><option>Blood Studies</option>
+        <option>Heart</option><option>Kidney</option><option>Liver</option>
+        <option>Thyroid</option><option>Vitamin</option><option>Women's Health</option>
+        <option>Senior Citizen</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Price (₹)</label>          <input type="number" id="alt-price" value="500"></div>
+    <div class="form-group"><label>Tests Included (optional)</label><input type="number" id="alt-tests" placeholder="e.g. 30"></div>
+  </div>
+  <button class="btn btn-primary btn-full mt-20" onclick="addLabTest()">Add Test</button>
+</template>
+
+<!-- Lab Cart checkout modal -->
+<template id="tpl-labCart">
+  <div class="modal-title">🛒 Lab Test Cart</div>
+  <div id="labCartItems"></div>
+  <div class="divider"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <strong>Total:</strong>
+    <div class="confirm-price" id="labCartModalTotal"></div>
+  </div>
+  <button class="btn btn-primary btn-full mt-20" onclick="placeLabOrder()">Book Tests</button>
+</template>
+
+<!-- Modal shell -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../../js/patient/data.js"></script>
+<script src="../../js/patient/utils.js"></script>
+<script src="../../js/patient/components.js"></script>
+<script src="../../js/patient/labtests.js"></script>
+<script>
+  (async () => {
+    await loadDB();
+    await loadComponents('labtests', 'Lab Tests');
+    updateTopbarUser();
+    renderLabTests();
+  })();
+</script>
+</body>
+</html>

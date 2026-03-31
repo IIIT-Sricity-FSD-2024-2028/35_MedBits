@@ -1,0 +1,106 @@
+{
+  "staff": {
+    "id": "ADM-301",
+    "name": "Ananya Rao",
+    "displayName": "Sarah Williams",
+    "age": 28,
+    "gender": "F",
+    "role": "Senior Front Desk Coordinator",
+    "department": "Out Patient Department (OPD)",
+    "email": "arao@medbits.com",
+    "phone": "9576613534",
+    "joiningDate": "15 May 2019",
+    "reportingManager": "Sharah Chein AH-101",
+    "shift": "Morning Shift",
+    "shiftTime": "08:00 AM - 04:00 PM",
+    "counter": "Main Lobby - Counter 3",
+    "languages": [
+      { "name": "English", "level": "Fluent" },
+      { "name": "Hindi", "level": "Professional" },
+      { "name": "Telugu", "level": "Native" }
+    ],
+    "authorizedModules": ["Walk-In Appointments", "Billing"],
+    "lastLogin": "10:15 AM , Today"
+  },
+  "dashboard": {
+    "walkInsToday": 12,
+    "appointmentsToday": 28,
+    "patientsInQueue": 8,
+    "todaysRevenue": 5000
+  },
+  "patients": [
+    { "id": "P001", "patientId": "S12025", "firstName": "Arjun", "lastName": "Rampal", "age": 18, "gender": "Male", "phone": "9999999999", "email": "arjun@email.com", "dob": "15-06-2006", "bloodGroup": "O+", "guardian": "Rampal Sr." },
+    { "id": "P002", "patientId": "S12010", "firstName": "Aarav", "lastName": "Sharma", "age": 45, "gender": "Male", "phone": "9876543210", "email": "aarav@email.com", "dob": "10-03-1979", "bloodGroup": "A+", "guardian": "" },
+    { "id": "P003", "patientId": "S12015", "firstName": "Sarah", "lastName": "Gupta", "age": 38, "gender": "Female", "phone": "9123456789", "email": "sarah@email.com", "dob": "22-07-1986", "bloodGroup": "B+", "guardian": "" },
+    { "id": "P004", "patientId": "S12020", "firstName": "Dev", "lastName": "Patel", "age": 65, "gender": "Male", "phone": "9988776655", "email": "dev@email.com", "dob": "05-01-1959", "bloodGroup": "AB-", "guardian": "Sunita Patel" },
+    { "id": "P005", "patientId": "S12030", "firstName": "Alisha", "lastName": "Verma", "age": 29, "gender": "Female", "phone": "9001234567", "email": "alisha@email.com", "dob": "18-11-1994", "bloodGroup": "O-", "guardian": "" },
+    { "id": "P006", "patientId": "S12031", "firstName": "Vedant", "lastName": "Chatterjee", "age": 52, "gender": "Male", "phone": "9112345678", "email": "vedant@email.com", "dob": "03-09-1972", "bloodGroup": "A-", "guardian": "" },
+    { "id": "P007", "patientId": "S12032", "firstName": "Kranthi", "lastName": "Kumar", "age": 41, "gender": "Male", "phone": "9223456789", "email": "kranthi@email.com", "dob": "14-05-1983", "bloodGroup": "B-", "guardian": "" }
+  ],
+  "specialties": [
+    { "id": "SP01", "name": "General Physicians", "icon": "general" },
+    { "id": "SP02", "name": "Dermatology", "icon": "dermatology" },
+    { "id": "SP03", "name": "Neurology", "icon": "neurology" },
+    { "id": "SP04", "name": "Orthopaedics", "icon": "ortho" },
+    { "id": "SP05", "name": "Diabetology", "icon": "diabetology" },
+    { "id": "SP06", "name": "Dentist", "icon": "dentist" },
+    { "id": "SP07", "name": "Cardiology", "icon": "cardiology" },
+    { "id": "SP08", "name": "Paediatrics", "icon": "paediatrics" },
+    { "id": "SP09", "name": "Nephrology", "icon": "nephrology" },
+    { "id": "SP10", "name": "ENT", "icon": "ent" },
+    { "id": "SP11", "name": "Endocrinology", "icon": "endocrinology" },
+    { "id": "SP12", "name": "Rheumatology", "icon": "rheumatology" },
+    { "id": "SP13", "name": "Ophthalmology", "icon": "ophthalmology" },
+    { "id": "SP14", "name": "Infectious Disease", "icon": "infectious" },
+    { "id": "SP15", "name": "Oncology", "icon": "oncology" },
+    { "id": "SP16", "name": "Psychology", "icon": "psychology" },
+    { "id": "SP17", "name": "Neuro Surgery", "icon": "neurosurgery" },
+    { "id": "SP18", "name": "Psychiatry", "icon": "psychiatry" },
+    { "id": "SP19", "name": "Urology", "icon": "urology" },
+    { "id": "SP20", "name": "Pulmonology", "icon": "pulmonology" }
+  ],
+  "doctors": [
+    { "id": "D01", "name": "Dr. Elizabeth O", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D02", "name": "Dr. Heisenberg", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D03", "name": "Dr. Ana Mary", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D04", "name": "Dr. Karuppuswamy N", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D05", "name": "Dr. Takemichi", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D06", "name": "Dr. Tyrion L", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D07", "name": "Dr. Dhanalakshmi O", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D08", "name": "Dr. Poornima P", "specialty": "Cardiology", "specialtyId": "SP07" },
+    { "id": "D09", "name": "Dr. Sarah Johnson", "specialty": "General Physicians", "specialtyId": "SP01" },
+    { "id": "D10", "name": "Dr. Ryan Sharma", "specialty": "General Physicians", "specialtyId": "SP01" },
+    { "id": "D11", "name": "Dr. Arjun Reddy", "specialty": "General Physicians", "specialtyId": "SP01" },
+    { "id": "D12", "name": "Dr. Vikram Iyer", "specialty": "Neurology", "specialtyId": "SP03" },
+    { "id": "D13", "name": "Dr. Karthik Subramanian", "specialty": "Neurology", "specialtyId": "SP03" },
+    { "id": "D14", "name": "Dr. Ravi Krishnan", "specialty": "Dermatology", "specialtyId": "SP02" },
+    { "id": "D15", "name": "Dr. Aravind Nair", "specialty": "Orthopaedics", "specialtyId": "SP04" }
+  ],
+  "appointments": [
+    { "id": "A001", "patientId": "P002", "patientName": "Aarav Sharma", "patientAge": 45, "patientGender": "M", "doctorId": "D09", "doctorName": "Dr. Sarah Johnson", "specialty": "General Physicians", "date": "2026-03-25", "time": "10:15 AM", "status": "Confirmed" },
+    { "id": "A002", "patientId": "P003", "patientName": "Sarah Gupta", "patientAge": 38, "patientGender": "F", "doctorId": "D10", "doctorName": "Dr. Ryan Sharma", "specialty": "General Physicians", "date": "2026-03-25", "time": "10:30 AM", "status": "Confirmed" },
+    { "id": "A003", "patientId": "P004", "patientName": "Dev Patel", "patientAge": 65, "patientGender": "M", "doctorId": "D09", "doctorName": "Dr. Sarah Johnson", "specialty": "General Physicians", "date": "2026-03-25", "time": "11:15 AM", "status": "Confirmed" },
+    { "id": "A004", "patientId": "P001", "patientName": "Arjun Rampal", "patientAge": 18, "patientGender": "M", "doctorId": "D11", "doctorName": "Dr. Arjun Reddy", "specialty": "General Physicians", "date": "2026-03-26", "time": "09:30 AM", "status": "Confirmed" }
+  ],
+  "queue": [
+    { "token": "T-025", "code": "GP-025", "patientId": "P002", "patientName": "Aarav Sharma", "age": 45, "gender": "Male", "specialty": "General Physicians", "doctorName": "Dr Sarah Johnson", "time": "10:15 AM", "status": "Waiting" },
+    { "token": "T-026", "code": "GP-026", "patientId": "P003", "patientName": "Kabir Singh", "age": 32, "gender": "Male", "specialty": "General Physicians", "doctorName": "Dr Ryan Sharma", "time": "10:30 AM", "status": "Waiting" },
+    { "token": "T-027", "code": "GP-027", "patientId": "P005", "patientName": "Aditya Verma", "age": 27, "gender": "Male", "specialty": "Cardiology", "doctorName": "Dr Ana Mary", "time": "11:00 AM", "status": "Waiting" },
+    { "token": "T-028", "code": "GP-028", "patientId": "P001", "patientName": "Arjun Rampal", "age": 18, "gender": "Male", "specialty": "General Physicians", "doctorName": "Dr Arjun Reddy", "time": "11:30 AM", "status": "Waiting" },
+    { "token": "T-024", "code": "GP-024", "patientId": "P006", "patientName": "Ali Muhammad", "age": 40, "gender": "Male", "specialty": "General Physicians", "doctorName": "Dr Arjun Reddy", "time": "11:00 AM", "status": "In Consultation" },
+    { "token": "T-023", "code": "NE-023", "patientId": "P007", "patientName": "Ananya Singh", "age": 35, "gender": "Female", "specialty": "Neurology", "doctorName": "Dr Vikram Iyer", "time": "10:45 AM", "status": "In Consultation" },
+    { "token": "T-022", "code": "NE-022", "patientId": "P003", "patientName": "Priya Malhotra", "age": 29, "gender": "Female", "specialty": "Neurology", "doctorName": "Dr Karthik Subramanian", "time": "10:30 AM", "status": "In Consultation" },
+    { "token": "T-021", "code": "DE-021", "patientId": "P004", "patientName": "Sneha Bansal", "age": 44, "gender": "Female", "specialty": "Dermatology", "doctorName": "Dr Ravi Krishnan", "time": "10:15 AM", "status": "In Consultation" },
+    { "token": "GP-022", "code": "GP-022", "patientId": "P005", "patientName": "Mrs Aisha Khan", "age": 40, "gender": "Male", "specialty": "General Physicians", "doctorName": "Dr Sarah Johnson", "time": "11:00 AM", "status": "In Consultation" },
+    { "token": "DE-004", "code": "DE-004", "patientId": "P006", "patientName": "Mr Rahul Gupta", "age": 35, "gender": "Male", "specialty": "Dermatology", "doctorName": "", "time": "12:00 PM", "status": "Confirmed" },
+    { "token": "CA-074", "code": "CA-074", "patientId": "P007", "patientName": "Mrs Riya S", "age": 36, "gender": "Female", "specialty": "Cardiology", "doctorName": "", "time": "", "status": "Pending" }
+  ],
+  "followUps": [
+    { "id": "FU001", "patientId": "P006", "patientName": "Vedant Chatterjee", "doctorName": "Dr Karuppuswamy", "lastVisit": "March 8, 2026", "doctorNote": "Follow-up for hypertension management", "priority": "Medium", "suggestedDate": "March 15, 2026", "phone": "9112345678" },
+    { "id": "FU002", "patientId": "P007", "patientName": "Kranthi Kumar", "doctorName": "Dr Aravind Nair", "lastVisit": "March 19, 2025", "doctorNote": "Post-surgery checkup required", "priority": "High", "suggestedDate": "March 22, 2026", "phone": "9223456789" }
+  ],
+  "billings": [
+    { "id": "B001", "patientId": "P002", "patientName": "Aarav Sharma", "appointmentId": "S12010", "visitType": "Online Appointment", "amount": 1000, "date": "2026-03-25" },
+    { "id": "B002", "patientId": "P001", "patientName": "Arjun Rampal", "appointmentId": "S12025", "visitType": "Walk-In", "amount": 500, "date": "2026-03-25" }
+  ]
+}

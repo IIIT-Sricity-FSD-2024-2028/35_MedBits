@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEDBITS – Appointments</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/patient/global.css">
+  <link rel="stylesheet" href="../../css/components/p_sidebar.css">
+  <link rel="stylesheet" href="../../css/components/p_navbar.css">
+  <link rel="stylesheet" href="../../css/patient/appointments.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+<div class="main-wrap">
+  <div id="navbarMount"></div>
+  <main class="content">
+
+    <!-- Find Doctor form -->
+    <div class="find-form">
+      <h2>Find a Doctor in 2 Easy Steps</h2>
+      <div class="find-form-row">
+        <div class="form-group" style="flex:1">
+          <label>Select Speciality</label>
+          <select id="specSelect" onchange="filterDoctors()">
+            <option value="">Choose a specialty…</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label>Preferred Date</label>
+          <input type="date" id="apptDateSearch">
+        </div>
+        <button class="btn btn-accent btn-lg" onclick="filterDoctors()">Search</button>
+      </div>
+    </div>
+
+    <!-- Doctor list + schedule panel (hidden until specialty chosen) -->
+    <div id="doctorSection" style="display:none">
+      <div id="docSearchWrap" style="display:none">
+        <div class="search-hero" style="padding:20px 28px;margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0">
+          <h2 id="docSearchLabel">Search Doctors</h2>
+          <div class="search-wrap">
+            <input type="text" placeholder="Search by doctor name" oninput="searchDoctors(this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="appt-layout">
+        <div class="card" style="border-radius:0 0 var(--radius) var(--radius)">
+          <div class="doc-list" id="docList"></div>
+        </div>
+        <div class="schedule-panel" id="schedulePanel">
+          <h3>Schedule Appointment</h3>
+          <p class="text-muted">Click a doctor to see available slots.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming & Past appointments -->
+    <div class="appt-two-col mt-20">
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Upcoming Appointments</div>
+          <button class="btn btn-primary btn-sm" onclick="openAddAppointment()">+ Add</button>
+        </div>
+        <div id="upcomingList"></div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Past Appointments</div>
+        </div>
+        <div id="pastList"></div>
+      </div>
+    </div>
+
+    <!-- Browse by Specialty chips -->
+    <div class="card mt-20">
+      <div class="section-header">
+        <div class="section-title">Browse by Specialty</div>
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card" data-spec="Dermatologist"    onclick="selectSpeciality('Dermatologist')">
+          <div class="cat-icon">🧴</div><div class="cat-name">Dermatology</div>
+        </div>
+        <div class="cat-card" data-spec="Cardiologist"     onclick="selectSpeciality('Cardiologist')">
+          <div class="cat-icon">🫀</div><div class="cat-name">Cardiology</div>
+        </div>
+        <div class="cat-card" data-spec="Pediatrician"     onclick="selectSpeciality('Pediatrician')">
+          <div class="cat-icon">🧒</div><div class="cat-name">Paediatrics</div>
+        </div>
+        <div class="cat-card" data-spec="Orthopedic"       onclick="selectSpeciality('Orthopedic')">
+          <div class="cat-icon">🦾</div><div class="cat-name">Orthopaedics</div>
+        </div>
+        <div class="cat-card" data-spec="Neurologist"      onclick="selectSpeciality('Neurologist')">
+          <div class="cat-icon">🧠</div><div class="cat-name">Neurology</div>
+        </div>
+        <div class="cat-card" data-spec="Diabetologist"    onclick="selectSpeciality('Diabetologist')">
+          <div class="cat-icon">🩺</div><div class="cat-name">Diabetology</div>
+        </div>
+        <div class="cat-card" data-spec="Dentist"          onclick="selectSpeciality('Dentist')">
+          <div class="cat-icon">🦷</div><div class="cat-name">Dentist</div>
+        </div>
+        <div class="cat-card" data-spec="ENT"              onclick="selectSpeciality('ENT')">
+          <div class="cat-icon">👃</div><div class="cat-name">ENT</div>
+        </div>
+        <div class="cat-card" data-spec="General Physician" onclick="selectSpeciality('General Physician')">
+          <div class="cat-icon">🩻</div><div class="cat-name">General</div>
+        </div>
+        <div class="cat-card" data-spec="Nephrology"       onclick="selectSpeciality('Nephrology')">
+          <div class="cat-icon">🫁</div><div class="cat-name">Nephrology</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── TEMPLATES: reusable HTML chunks, read by JS via .innerHTML ── -->
+
+<!-- Appointment card row (upcoming) -->
+<template id="tpl-appt-upcoming">
+  <div class="list-item" data-id="">
+    <div>
+      <div class="list-item-title appt-doctor"></div>
+      <div class="list-item-sub appt-info"></div>
+    </div>
+    <div class="gap-8">
+      <button class="btn btn-outline btn-sm appt-modify">Modify</button>
+      <button class="btn btn-red btn-sm appt-cancel">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<!-- Appointment card row (past/completed) -->
+<template id="tpl-appt-past">
+  <div class="list-item">
+    <div>
+      <div class="list-item-title appt-doctor"></div>
+      <div class="list-item-sub appt-info"></div>
+    </div>
+    <span class="badge badge-blue">Completed</span>
+  </div>
+</template>
+
+<!-- Doctor card -->
+<template id="tpl-doc-card">
+  <div class="doc-card">
+    <div class="doc-info">
+      <div class="doc-avatar doc-icon"></div>
+      <div>
+        <div class="doc-name"></div>
+        <div class="doc-sub doc-exp-qual"></div>
+        <div class="doc-sub2 doc-hospital"></div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div class="doc-fee"></div>
+      <button class="btn btn-primary btn-sm">Book</button>
+    </div>
+  </div>
+</template>
+
+<!-- Schedule panel (filled when a doctor is selected) -->
+<template id="tpl-schedule-panel">
+  <h3>Schedule Appointment</h3>
+  <div class="doc-info" style="margin-bottom:16px">
+    <div class="doc-avatar sched-icon"></div>
+    <div>
+      <div class="doc-name sched-name"></div>
+      <div class="doc-sub sched-spec"></div>
+    </div>
+  </div>
+  <div class="form-group mb-16">
+    <label>Select Date</label>
+    <input type="date" id="schedDate" style="background:#eff6ff">
+  </div>
+  <div class="time-section-label">Morning</div>
+  <div class="slot-grid mb-16" id="morningSlots"></div>
+  <div class="time-section-label">Evening</div>
+  <div class="slot-grid" id="eveningSlots"></div>
+  <div class="confirm-bar">
+    <div class="confirm-price sched-fee"></div>
+    <button class="btn btn-primary" onclick="confirmAppointment()">Confirm Booking</button>
+  </div>
+</template>
+
+<!-- Slot button -->
+<template id="tpl-slot-btn">
+  <button class="slot-btn"></button>
+</template>
+
+<!-- Add Appointment modal -->
+<template id="tpl-addAppt">
+  <div class="modal-title">Add Appointment</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Doctor Name</label>
+      <input id="na-doc" placeholder="Dr. Name">
+    </div>
+    <div class="form-group">
+      <label>Speciality</label>
+      <select id="na-spec"></select>
+    </div>
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="na-date">
+    </div>
+    <div class="form-group">
+      <label>Time</label>
+      <input id="na-time" placeholder="10:00 AM">
+    </div>
+    <div class="form-group">
+      <label>Fee (₹)</label>
+      <input type="number" id="na-fee" value="850">
+    </div>
+  </div>
+  <button class="btn btn-primary btn-full mt-20" onclick="addAppointment()">Add Appointment</button>
+</template>
+
+<!-- Modify Appointment modal -->
+<template id="tpl-modifyAppt">
+  <div class="modal-title">Modify Appointment</div>
+  <div class="list-item mb-16">
+    <div>
+      <div class="list-item-title" id="mod-doctor"></div>
+      <div class="list-item-sub"  id="mod-spec"></div>
+    </div>
+  </div>
+  <div class="form-group mb-16">
+    <label>New Date</label>
+    <input type="date" id="mod-date" style="background:#eff6ff">
+  </div>
+  <div class="time-section-label">Morning</div>
+  <div class="slot-grid mb-16" id="mod-morning"></div>
+  <div class="time-section-label">Evening</div>
+  <div class="slot-grid mb-16" id="mod-evening"></div>
+  <div class="confirm-bar">
+    <div class="confirm-price" id="mod-fee"></div>
+    <button class="btn btn-primary" onclick="saveModifyAppointment()">Save Changes</button>
+  </div>
+</template>
+
+<!-- Modal shell -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../../js/patient/data.js"></script>
+<script src="../../js/patient/utils.js"></script>
+<script src="../../js/patient/components.js"></script>
+<script src="../../js/patient/appointments.js"></script>
+<script>
+  (async () => {
+    await loadDB();
+    await loadComponents('appointments', 'Appointments');
+    updateTopbarUser();
+    renderAppointments();
+  })();
+</script>
+</body>
+</html>
