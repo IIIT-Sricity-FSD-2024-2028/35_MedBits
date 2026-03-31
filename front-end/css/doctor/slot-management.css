@@ -1,0 +1,47 @@
+/* slot-management.css */
+
+.slot-legend {
+  display: flex; align-items: center; gap: 18px;
+  flex-wrap: wrap; margin-top: 16px;
+}
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: .8rem; color: var(--text-muted); font-weight: 500; }
+.legend-dot  { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.available-dot { background: var(--accent-light); border: 1.5px solid var(--accent); }
+.booked-dot    { background: var(--bg); border: 1.5px solid var(--border); }
+.selected-dot  { background: var(--accent); border: 1.5px solid var(--accent); }
+
+.unavail-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: var(--red-light); border: 1px solid #fca5a5;
+  border-radius: 20px; font-size: .78rem; color: #dc2626; font-weight: 600;
+}
+.unavail-tag button { font-size: 1rem; color: #dc2626; background: none; border: none; cursor: pointer; }
+
+.slot-date-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.slot-date-label {
+  font-family: 'Sora', sans-serif;
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.slot-grid.is-disabled {
+  opacity: .68;
+}
+
+.slot-grid.is-disabled .slot-item {
+  cursor: not-allowed;
+}
+
+.slot-grid.is-disabled .slot-item:not(.booked) {
+  border-style: dashed;
+}

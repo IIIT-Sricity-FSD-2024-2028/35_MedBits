@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Treatment Plan — MEDBITS Doctor</title>
+  <link rel="stylesheet" href="../../css/doctor/global.css"/>
+  <link rel="stylesheet" href="../../css/doctor/treatment-plan.css"/>
+</head>
+<body data-page="treatment-plan">
+<div class="app-shell">
+  <div id="sidebarMount"></div>
+  <div class="main-wrapper" id="mainWrapper">
+    <div id="headerMount"></div>
+    <main class="page-content">
+
+      <!-- Patient select + history button -->
+      <div class="card">
+        <div class="patient-select-row">
+          <select class="form-control" id="patientSelect" style="flex:1;">
+            <option value="">— Select Patient —</option>
+            <option value="PAT-001">PAT-001 — Alisha Verma</option>
+            <option value="PAT-002">PAT-002 — Neil Verma</option>
+            <option value="PAT-003">PAT-003 — Dev Patel</option>
+            <option value="PAT-004">PAT-004 — Ria Sharma</option>
+          </select>
+          <button class="btn btn-outline" id="viewHistoryBtn" style="white-space:nowrap;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/>
+            </svg>
+            View History
+          </button>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="card" id="planFormCard">
+        <div class="card-header"><span class="card-title">Treatment Plan Documentation</span></div>
+        <div class="form-error-banner" id="planErrorBanner" role="alert" aria-live="polite"></div>
+        <div class="form-group">
+          <label class="form-label">Prescribed Medicines</label>
+          <textarea class="form-control" id="medicines" rows="4" placeholder="List medicines with dosage and frequency..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recommended Tests</label>
+          <textarea class="form-control" id="tests" rows="3" placeholder="List recommended lab tests and investigations..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lifestyle Recommendations</label>
+          <textarea class="form-control" id="lifestyle" rows="3" placeholder="Exercise, sleep, stress management recommendations..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diet Recommendations</label>
+          <textarea class="form-control" id="diet" rows="3" placeholder="Dietary advice and recommendations"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Treatment Duration</label>
+          <input type="text" class="form-control" id="duration" placeholder="e.g., 2 weeks, 1 month" style="max-width:280px;"/>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" id="savePlanBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17,21 17,13 7,13"/><polyline points="7,3 7,8 15,8"/>
+          </svg>
+          Save Treatment Plan
+        </button>
+      </div>
+
+      <!-- History modal -->
+      <div class="modal-overlay" id="historyModal">
+        <div class="modal-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <h2 style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;" id="historyModalTitle">Treatment History</h2>
+            <button class="btn btn-outline" id="closeHistoryBtn" style="padding:6px 14px;font-size:.8rem;">Close</button>
+          </div>
+          <div id="historyList"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="../../js/doctor/components.js"></script>
+<script src="../../js/doctor/treatment-plan.js"></script>
+</body>
+</html>

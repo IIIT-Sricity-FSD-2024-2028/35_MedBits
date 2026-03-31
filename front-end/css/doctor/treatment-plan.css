@@ -1,0 +1,29 @@
+/* ── treatment-plan.css ── */
+.patient-select-row { display: flex; align-items: center; gap: 10px; }
+
+.form-error-banner {
+  display: none;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #f3b3b3;
+  border-radius: var(--radius-sm);
+  background: #fff1f1;
+  color: #b42318;
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.form-error-banner.show { display: block; }
+
+.field-error {
+  border-color: #d92d20 !important;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.12);
+}
+
+.hist-row {
+  font-size: .83rem;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+.hist-row strong { color: var(--text-muted); font-weight: 600; }
