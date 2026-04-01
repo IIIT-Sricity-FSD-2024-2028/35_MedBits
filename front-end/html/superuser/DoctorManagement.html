@@ -420,6 +420,15 @@ Promise.all([
     if (activeLink) activeLink.classList.add('active');
     if (headerTitle) headerTitle.textContent = headerTitleMap[activeKey] || 'Dashboard';
   }
+
+  const logoutLink = document.getElementById('superuser-logout');
+  if (logoutLink) {
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('medbits_session');
+      window.location.replace('../login.html');
+    });
+  }
  
   // Load icons AFTER HTML injection
   lucide.createIcons();
