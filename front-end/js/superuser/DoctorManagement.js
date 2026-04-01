@@ -32,6 +32,13 @@ window.DoctorStore = {
         this.saveAll(all);
         return true;
     },
+    delete(id) {
+        const all = this.getAll();
+        const filtered = all.filter(d => d.id !== Number(id));
+        if (filtered.length === all.length) return false;
+        this.saveAll(filtered);
+        return true;
+    },
     search(query) {
         const q = query.trim().toLowerCase();
         return !q ? this.getAll() : this.getAll().filter(d =>
@@ -112,9 +119,26 @@ function renderDoctorRows(doctors) {
             <td>${d.department}</td>
             <td>${d.specialization}</td>
             <td>${d.contact}</td>
-            <td><button class="view-link" data-view-id="${d.id}">view all</button></td>
+            <td>
+                <div class="row-actions">
+                    <button class="delete-btn" data-delete-id="${d.id}">Delete</button>
+                    <button class="view-link" data-view-id="${d.id}">view all</button>
+                </div>
+            </td>
         </tr>
     `).join('') : '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:2rem;">No doctors found.</td></tr>';
+}
+
+function handleDeleteDoctor(id) {
+    const doctor = DoctorStore.getById(id);
+    if (!doctor) return showToast('Doctor not found.', 'error');
+    if (!confirm(`Delete the profile of ${DoctorStore.fullName(doctor)}?`)) return;
+    if (!DoctorStore.delete(id)) return showToast('Delete failed. Doctor not found.', 'error');
+    if (currentDoctorId === Number(id)) currentDoctorId = null;
+    if (editDoctorId === Number(id)) editDoctorId = null;
+    renderDoctorRows(DoctorStore.search($('view-search-input')?.value || ''));
+    showToast('Doctor profile deleted successfully!');
+    navigateTo('page-view-doctor');
 }
 
 function initDetailPage(id) {
@@ -294,9 +318,10 @@ function initManagedForm(type, preloadId) {
 }
 
 document.addEventListener('click', event => {
-    const button = event.target.closest('[data-action], [data-view-id], #back-to-list-btn');
+    const button = event.target.closest('[data-action], [data-view-id], [data-delete-id], #back-to-list-btn');
     if (!button) return;
     if (button.id === 'back-to-list-btn') return navigateTo('page-view-doctor');
+    if (button.dataset.deleteId) return handleDeleteDoctor(Number(button.dataset.deleteId));
     if (button.dataset.viewId) return navigateTo('page-view-all-doctor', currentDoctorId = Number(button.dataset.viewId));
     const page = { 'view-doctor': 'page-view-doctor', 'add-doctor': 'page-add-doctor', 'edit-doctor': 'page-edit-doctor' }[button.dataset.action];
     if (page) navigateTo(page, currentDoctorId);

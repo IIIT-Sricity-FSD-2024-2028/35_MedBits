@@ -231,6 +231,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 
 .doctors-table td:last-child { text-align: right; }
 
+.row-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.45rem;
+}
+
 .doctors-table th:first-child,
 .doctors-table td:first-child {
     border-top-left-radius: 0.5rem;
@@ -256,6 +263,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helv
 }
 
 .view-link:hover { color: #0f766e; }
+
+.delete-btn {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 0.35rem;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-family: inherit;
+}
+
+.delete-btn:hover { background-color: #b91c1c; }
 
 .details-header,
 .form-header,
