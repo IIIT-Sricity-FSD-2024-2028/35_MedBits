@@ -13,14 +13,6 @@
   position: relative;
   overflow: hidden;
 }
-.profile-header-card::before {
-  content: '';
-  position: absolute;
-  width: 200px; height: 200px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.05);
-  top: -60px; right: -40px;
-}
 
 .profile-avatar-lg {
   width: 76px; height: 76px;
