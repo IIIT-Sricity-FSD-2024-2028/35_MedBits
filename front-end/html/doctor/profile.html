@@ -1,180 +1,112 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Profile — MEDBITS Frontdesk</title>
-    <link rel="stylesheet" href="../../css/front-desk/base.css" />
-    <link rel="stylesheet" href="../../css/front-desk/profile.css" />
-  </head>
-  <body>
-    <div class="app-layout">
-      <!-- Sidebar -->
-      <aside class="sidebar">
-        <div class="sidebar-logo">
-          <span class="sidebar-logo-text">MEDBITS</span>
-        </div>
-        <nav class="sidebar-nav" id="sidebar-nav"></nav>
-      </aside>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile - MEDBITS Doctor</title>
+  <link rel="stylesheet" href="../../css/doctor/global.css"/>
+  <link rel="stylesheet" href="../../css/doctor/profile.css"/>
+</head>
+<body data-page="profile">
+<div class="app-shell">
+  <div id="sidebarMount"></div>
+  <div class="main-wrapper" id="mainWrapper">
+    <div id="headerMount"></div>
+    <main class="page-content">
 
-      <!-- Topbar -->
-      <header class="topbar">
-        <div class="topbar-title">
-          <h1 id="topbar-title-h1">Profile</h1>
-          <span id="topbar-subtitle">Frontdesk Portal</span>
+      <div class="profile-header-card">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar-lg" id="profileAvatarLg">SJ</div>
         </div>
-        <div class="topbar-right">
-          <div class="topbar-bell" title="Notifications">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        <div class="profile-meta">
+          <span class="profile-name" id="profileName">Dr. Sarah Johnson</span>
+          <span class="profile-role" id="profileRole">General Physician - MEDBITS Hospital</span>
+          <span class="profile-id">DOC-2024-001</span>
+        </div>
+        <div style="margin-left:auto;">
+          <button class="btn btn-outline btn-edit-white" id="editProfileBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
+            Edit Profile
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Personal Information</span></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" id="firstName" value="Sarah" disabled/>
           </div>
-          <div class="topbar-user">
-            <div class="topbar-user-icon">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <rect x="2" y="3" width="20" height="14" rx="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-            </div>
-            <div class="topbar-user-info">
-              <span class="topbar-user-name" id="topbar-username"
-                >Sarah Williams</span
-              >
-              <span class="topbar-user-role">Frontdesk</span>
-            </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="lastName" value="Johnson" disabled/>
           </div>
         </div>
-      </header>
-
-      <!-- Main Content -->
-      <main class="main-content">
-        <!-- Profile Header Card -->
-        <div class="profile-header-card card">
-          <div class="profile-avatar" id="profile-avatar">AR</div>
-          <div class="profile-header-info">
-            <div class="profile-name-row">
-              <h2 class="profile-name" id="profile-name">Ananya Rao</h2>
-              <span class="profile-age" id="profile-age">28F</span>
-            </div>
-            <div class="profile-role" id="profile-role">
-              Senior Front Desk Coordinator
-            </div>
-            <div class="profile-ids">
-              <span class="profile-id-badge" id="profile-empid"
-                >EmpID : ADM-301</span
-              >
-              <span class="profile-dept-badge" id="profile-dept"
-                >Out Patient Department (OPD)</span
-              >
-            </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" value="sarah.johnson@medbits.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="text" class="form-control" id="phone" value="9384751206" inputmode="numeric" maxlength="10" />
           </div>
         </div>
-
-        <!-- Details Grid -->
-        <div class="profile-grid">
-          <!-- Employment Details -->
-          <div class="card profile-section-card">
-            <div class="profile-section-title">Employment Details</div>
-            <div class="profile-detail-row">
-              <div class="profile-detail-box">
-                <div class="profile-detail-label">Date Of Joining</div>
-                <div class="profile-detail-value" id="joining-date">
-                  15 May 2019
-                </div>
-              </div>
-              <div class="profile-detail-box">
-                <div class="profile-detail-label">Reporting Manager</div>
-                <div class="profile-detail-value" id="reporting-manager">
-                  Sharah Chein AH-101
-                </div>
-              </div>
-            </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Specialization</label>
+            <input type="text" class="form-control" id="spec" value="General Physician" disabled/>
           </div>
-
-          <!-- Contact Details -->
-          <div class="card profile-section-card">
-            <div class="profile-section-title">Contact Details</div>
-            <div class="profile-contact-row">
-              <div class="profile-contact-box">
-                <div class="profile-detail-label">Email</div>
-                <div class="profile-detail-value" id="profile-email">
-                  arao@medbits.com
-                </div>
-              </div>
-              <div class="profile-contact-box">
-                <div class="profile-detail-label">Phone</div>
-                <div class="profile-detail-value" id="profile-phone">
-                  9576613534
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Current Shift -->
-          <div class="card profile-section-card">
-            <div class="profile-section-title">Current Shift</div>
-            <div class="profile-detail-row">
-              <div class="profile-detail-box">
-                <div class="profile-detail-label">Shift</div>
-                <div class="profile-detail-value" id="shift-name">
-                  Morning Shift
-                </div>
-                <div class="profile-detail-sub" id="shift-time">
-                  08:00 AM - 04:00 PM
-                </div>
-              </div>
-              <div class="profile-detail-box">
-                <div class="profile-detail-label">Counter</div>
-                <div class="profile-detail-value" id="shift-counter">
-                  Main Lobby - Counter 3
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- System Access -->
-          <div class="card profile-section-card">
-            <div class="profile-section-title">System Access</div>
-            <div class="profile-access-box">
-              <div class="profile-detail-label">Authorized Modules</div>
-              <div class="profile-detail-value" id="authorized-modules">
-                Walk-In Appointments, Billing
-              </div>
-            </div>
-            <div class="profile-access-box" style="margin-top: var(--space-3)">
-              <div class="profile-detail-label">Last Login</div>
-              <div class="profile-detail-value" id="last-login">
-                10:15 AM , Today
-              </div>
-            </div>
-          </div>
-
-          <!-- Language Proficiency -->
-          <div class="card profile-section-card profile-section-wide">
-            <div class="profile-section-title">Language Proficiency</div>
-            <div id="language-list" class="language-list"></div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" class="form-control" id="dept" value="General Medicine" disabled/>
           </div>
         </div>
-      </main>
-    </div>
+        <div class="form-group">
+          <label class="form-label">Qualification</label>
+          <input type="text" class="form-control" id="qual" value="MBBS, MD - AIIMS Delhi" disabled/>
+        </div>
+        <div id="editActions" class="profile-edit-actions" style="display:none;">
+          <button class="btn btn-outline" id="cancelEditBtn">Cancel</button>
+          <button class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+        </div>
+      </div>
 
-    <script src="../../js/front-desk/shared.js"></script>
-    <script src="../../js/front-desk/profile.js"></script>
-  </body>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Performance Overview</span></div>
+        <div class="performance-grid" id="performanceGrid">
+          <div class="performance-card">
+            <span class="performance-label">Patients Seen</span>
+            <strong class="performance-value" id="patientsSeenValue">148</strong>
+            <span class="performance-note">Update from the shared image if values differ.</span>
+          </div>
+          <div class="performance-card">
+            <span class="performance-label">Appointments Completed</span>
+            <strong class="performance-value" id="appointmentsCompletedValue">96%</strong>
+            <span class="performance-note">Editable in code once image data is available.</span>
+          </div>
+          <div class="performance-card">
+            <span class="performance-label">Patient Satisfaction</span>
+            <strong class="performance-value" id="patientSatisfactionValue">4.8 / 5</strong>
+            <span class="performance-note">Placeholder until the image values are provided.</span>
+          </div>
+          <div class="performance-card">
+            <span class="performance-label">Referral Follow-ups</span>
+            <strong class="performance-value" id="referralFollowUpsValue">24</strong>
+            <span class="performance-note">Replace these stats with the exact image details.</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="../../js/doctor/components.js"></script>
+<script src="../../js/doctor/profile.js"></script>
+</body>
 </html>
