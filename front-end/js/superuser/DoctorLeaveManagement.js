@@ -1,28 +1,35 @@
 // ============================================================
 // DATA STORE
 // ============================================================
-const leaveRequests = [
-    // ── Pending ──────────────────────────────────────────────
-    { id: 1,  name: 'Dr. Alisha Sharma',   dept: 'Cardiology',  startDate: '2025-03-09', endDate: '2025-03-11', type: 'Sick',      reason: 'Viral Fever',       status: 'pending',  dateRange: 'Mar 9 – Mar 11'   },
-    { id: 2,  name: 'Dr. Elizabeth O',     dept: 'Cardiology',  startDate: '2025-10-25', endDate: '2025-10-27', type: 'Casual',    reason: 'Family Function',   status: 'pending',  dateRange: 'Oct 25 – Oct 27'  },
-    { id: 3,  name: 'Dr. Ana Mary',        dept: 'Dermatology', startDate: '2025-05-09', endDate: '2025-05-10', type: 'Emergency', reason: 'Medical Emergency', status: 'pending',  dateRange: 'May 9 – May 10'   },
-    { id: 4,  name: 'Mrs. Sarah Williams', dept: 'Front Desk',  startDate: '2025-04-10', endDate: '2025-04-13', type: 'Casual',    reason: 'Family Function',   status: 'pending',  dateRange: 'Apr 10 – Apr 13'  },
-    { id: 5,  name: 'Dr. Raj Patel',       dept: 'Neurology',   startDate: '2025-06-15', endDate: '2025-06-16', type: 'Sick',      reason: 'Migraine',          status: 'pending',  dateRange: 'Jun 15 – Jun 16'  },
-    { id: 6,  name: 'Dr. Priya Nair',      dept: 'Oncology',    startDate: '2025-07-20', endDate: '2025-07-25', type: 'Emergency', reason: 'Family Emergency',  status: 'pending',  dateRange: 'Jul 20 – Jul 25'  },
- 
-    // ── Already Approved ─────────────────────────────────────
-    { id: 7,  name: 'Dr. Karan Mehta',    dept: 'Orthopedics', startDate: '2025-02-14', endDate: '2025-02-16', type: 'Sick',      reason: 'Back Pain',        status: 'approved', dateRange: 'Feb 14 – Feb 16', actionedOn: 'Feb 13, 2025, 10:30 AM' },
-    { id: 8,  name: 'Dr. Sneha Rao',      dept: 'Pediatrics',  startDate: '2025-01-20', endDate: '2025-01-22', type: 'Casual',    reason: 'Personal Work',    status: 'approved', dateRange: 'Jan 20 – Jan 22', actionedOn: 'Jan 19, 2025, 09:15 AM' },
-    { id: 9,  name: 'Dr. Arjun Verma',    dept: 'Neurology',   startDate: '2025-03-01', endDate: '2025-03-03', type: 'Emergency', reason: 'Family Emergency', status: 'approved', dateRange: 'Mar 1 – Mar 3',   actionedOn: 'Feb 28, 2025, 04:00 PM' },
- 
-    // ── Already Rejected ─────────────────────────────────────
-    { id: 10, name: 'Dr. Meena Krishnan', dept: 'Dermatology', startDate: '2025-02-05', endDate: '2025-02-06', type: 'Sick',      reason: 'Flu',              status: 'rejected', dateRange: 'Feb 5 – Feb 6',   actionedOn: 'Feb 4, 2025, 11:45 AM'  },
-    { id: 11, name: 'Dr. Rohit Saxena',   dept: 'Cardiology',  startDate: '2025-03-15', endDate: '2025-03-20', type: 'Casual',    reason: 'Vacation',         status: 'rejected', dateRange: 'Mar 15 – Mar 20', actionedOn: 'Mar 14, 2025, 02:30 PM' },
-];
- 
+let leaveRequests = [];
 let activeFilter = null;
 let currentViewAll = 'approved';
 let toastTimer = null;
+const API_BASE = 'http://localhost:3000';
+const AUTH_HEADERS = { 'Content-Type': 'application/json', 'role': 'admin' };
+
+async function loadLeaveRequests() {
+    try {
+        const res = await fetch(`${API_BASE}/leave-requests`, { headers: AUTH_HEADERS });
+        if (res.ok) {
+            leaveRequests = await res.json();
+            // Map dates back to the filtering logic
+            leaveRequests = leaveRequests.map(r => ({
+                ...r,
+                startDate: r.date,
+                endDate: r.date
+            }));
+            updateCounts();
+            if (document.getElementById('page-main').classList.contains('active')) {
+                renderTable();
+            } else {
+                renderViewAll(currentViewAll);
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load leave requests', e);
+    }
+}
  
 // ============================================================
 // HELPERS
@@ -95,8 +102,8 @@ function renderTable() {
             <td><span class="type-badge ${getTypeClass(r.type)}">${r.type}</span></td>
             <td>${r.reason}</td>
             <td class="actions">
-                <button class="btn btn-approve" onclick="handleAction(${r.id}, 'approved')">✓ Approve</button>
-                <button class="btn btn-reject"  onclick="handleAction(${r.id}, 'rejected')">✕ Reject</button>
+                <button class="btn btn-approve" onclick="handleAction('${r.id}', 'approved')">✓ Approve</button>
+                <button class="btn btn-reject"  onclick="handleAction('${r.id}', 'rejected')">✕ Reject</button>
             </td>
         </tr>
     `).join('');
@@ -108,30 +115,40 @@ function renderTable() {
 // APPROVE / REJECT
 // ============================================================
  
-function handleAction(id, action) {
+async function handleAction(id, action) {
     const req = leaveRequests.find(r => r.id === id);
     if (!req) return;
  
-    // Show toast immediately
-    showToast(req.name, action);
- 
-    const row = document.getElementById(`row-${id}`);
-    if (row) {
-        row.style.transition = 'opacity 0.35s, transform 0.35s';
-        row.style.opacity    = '0';
-        row.style.transform  = 'translateX(30px)';
-    }
- 
-    // Update data after animation
-    setTimeout(() => {
-        req.status     = action;
-        req.actionedOn = new Date().toLocaleString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
+    try {
+        const res = await fetch(`${API_BASE}/leave-requests/${id}`, {
+            method: 'PUT',
+            headers: AUTH_HEADERS,
+            body: JSON.stringify({ status: action })
         });
-        updateCounts();
-        renderTable();
-    }, 350);
+        
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            alert(err?.message || 'Failed to update leave request status');
+            return;
+        }
+
+        // Show toast immediately
+        showToast(req.name, action);
+     
+        const row = document.getElementById(`row-${id}`);
+        if (row) {
+            row.style.transition = 'opacity 0.35s, transform 0.35s';
+            row.style.opacity    = '0';
+            row.style.transform  = 'translateX(30px)';
+        }
+     
+        // Update data after animation
+        setTimeout(async () => {
+            await loadLeaveRequests();
+        }, 350);
+    } catch (e) {
+        alert('Network error updating status');
+    }
 }
  
 // ============================================================
@@ -270,9 +287,8 @@ function renderViewAll(type) {
 // ============================================================
 // INIT
 // ============================================================
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
-    updateCounts();
-    renderTable();
+    await loadLeaveRequests();
 });
  

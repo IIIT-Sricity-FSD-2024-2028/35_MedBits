@@ -1,221 +1,396 @@
-/* MEDBITS – medicines.js
-   Pure logic. All HTML lives in medicines.html <template> tags.
-*/
+/* MEDBITS - medicines.js */
 
-// Icon for each medicine category (used in product cards)
+const MEDICINES_API_BASE_URL = 'http://localhost:3000';
+
 const MED_ICONS = {
-  'Pain Relief':      '🩹',
-  'Diabetes Care':    '🩺',
-  'Cardiac Care':     '🫀',
-  'Stomach Care':     '🫃',
-  'Oral Care':        '🦷',
-  'Respiratory':      '🌬️',
-  'Sexual Health':    '💊',
-  'Cold and Immunity':'🛡️',
-  'Liver Care':       '🔬',
-  'Elderly Care':     '🧓'
+  'Pain Relief': '<i class="fa-solid fa-bandage"></i>',
+  'Diabetes Care': '<i class="fa-solid fa-syringe"></i>',
+  'Cardiac Care': '<i class="fa-solid fa-heart-pulse"></i>',
+  'Stomach Care': '<i class="fa-solid fa-pills"></i>',
+  'Oral Care': '<i class="fa-solid fa-tooth"></i>',
+  Respiratory: '<i class="fa-solid fa-wind"></i>',
+  'Sexual Health': '<i class="fa-solid fa-capsules"></i>',
+  'Cold and Immunity': '<i class="fa-solid fa-shield-heart"></i>',
+  'Liver Care': '<i class="fa-solid fa-flask"></i>',
+  'Elderly Care': '<i class="fa-solid fa-user"></i>',
 };
 
-// ── CLONE a <template> by id ──────────────────────────────────────
+let medicines = [];
+let cartOrders = [];
+let orderHistory = [];
+let activeCategory = 'Pain Relief';
+
 function useTemplate(id) {
   return document.getElementById(id).content.cloneNode(true);
 }
 
-// ── PAGE INIT ─────────────────────────────────────────────────────
+async function initializeMedicinesPage() {
+  await Promise.all([loadMedicines(), loadCartOrders(), loadOrderHistory()]);
+  renderMedicines();
+}
+
+async function loadMedicines() {
+  const response = await fetch(`${MEDICINES_API_BASE_URL}/medicines`, {
+    headers: {
+      role: 'patient',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load medicines');
+  }
+
+  medicines = await response.json();
+}
+
+async function loadCartOrders() {
+  const session = requireRole('patient');
+  if (!session) return;
+
+  const response = await fetch(
+    `${MEDICINES_API_BASE_URL}/orders/cart/${encodeURIComponent(session.id)}`,
+    {
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to load cart');
+  }
+
+  cartOrders = await response.json();
+}
+
+async function loadOrderHistory() {
+  const session = requireRole('patient');
+  if (!session) return;
+
+  const response = await fetch(
+    `${MEDICINES_API_BASE_URL}/orders/history/${encodeURIComponent(session.id)}`,
+    {
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to load order history');
+  }
+
+  orderHistory = await response.json();
+}
 
 function renderMedicines() {
-  updateCartBar();
-  renderMedOrders();
-  showMedCategory('Pain Relief');
-}
+  renderCartSummary();
+  renderCartItems();
+  renderOrderHistory();
 
-// ── CATEGORY / SEARCH ─────────────────────────────────────────────
-
-function showMedCategory(cat) {
-  setText('medCategoryTitle', cat);
-  renderMedProducts(DB.medicines.filter(m => m.category === cat));
-}
-
-function showAllMeds() {
-  setText('medCategoryTitle', 'All Medicines');
-  renderMedProducts(DB.medicines);
-}
-
-function searchMedicines(q) {
-  const results = q
-    ? DB.medicines.filter(m => m.name.toLowerCase().includes(q.toLowerCase()))
-    : DB.medicines.filter(m => m.category === 'Pain Relief');
-  setText('medCategoryTitle', q ? 'Results for "' + q + '"' : 'Pain Relief');
-  renderMedProducts(results);
-}
-
-// ── PRODUCT CARDS ─────────────────────────────────────────────────
-
-function renderMedProducts(meds) {
-  const grid = document.getElementById('medProductGrid');
-  grid.innerHTML = '';
-
-  if (!meds.length) {
-    const msg = document.createElement('p'); msg.className = 'text-muted'; msg.textContent = 'No medicines in this category.'; grid.appendChild(msg);
+  if (activeCategory === 'All Medicines') {
+    showAllMeds();
     return;
   }
 
-  meds.forEach(m => {
+  showMedCategory(activeCategory);
+}
+
+function showMedCategory(cat) {
+  activeCategory = cat;
+  setText('medCategoryTitle', cat);
+  renderMedProducts(medicines.filter((medicine) => medicine.category === cat));
+}
+
+function showAllMeds() {
+  activeCategory = 'All Medicines';
+  setText('medCategoryTitle', 'All Medicines');
+  renderMedProducts(medicines);
+}
+
+function searchMedicines(q) {
+  const query = q.trim().toLowerCase();
+  const results = query
+    ? medicines.filter((medicine) => medicine.name.toLowerCase().includes(query))
+    : medicines.filter((medicine) => medicine.category === 'Pain Relief');
+
+  setText('medCategoryTitle', query ? `Results for "${q}"` : 'Pain Relief');
+  renderMedProducts(results);
+}
+
+function renderMedProducts(items) {
+  const grid = document.getElementById('medProductGrid');
+  grid.innerHTML = '';
+
+  if (!items.length) {
+    const msg = document.createElement('p');
+    msg.className = 'text-muted';
+    msg.textContent = 'No medicines available right now.';
+    grid.appendChild(msg);
+    return;
+  }
+
+  items.forEach((medicine) => {
     const frag = useTemplate('tpl-med-card');
     const card = frag.querySelector('.product-card');
+    const existingCartOrder = cartOrders.find((order) => order.medicineId === medicine.id);
 
-    card.querySelector('.med-icon').textContent  = MED_ICONS[m.category] || '💊';
-    card.querySelector('.med-name').textContent  = m.name;
-    card.querySelector('.med-qty').textContent   = m.qty;
-    card.querySelector('.med-price').textContent = '₹ ' + m.price.toFixed(2);
+    card.querySelector('.med-icon').innerHTML = MED_ICONS[medicine.category] || '<i class="fa-solid fa-capsules"></i>';
+    card.querySelector('.med-name').textContent = medicine.name;
+    card.querySelector('.med-desc').textContent = medicine.description;
+    card.querySelector('.med-price').textContent = `Rs ${medicine.price.toFixed(2)}`;
 
     const btn = card.querySelector('.med-btn');
-    if (m.inCart) {
-      btn.textContent  = 'Remove';
-      btn.className    = 'btn-remove';
-    } else {
-      btn.textContent  = 'Add';
-      btn.className    = 'btn-add';
-    }
-    btn.onclick = function() { toggleMedCart(m.id); };
+    btn.textContent = existingCartOrder ? 'Remove' : 'Add';
+    btn.className = `${existingCartOrder ? 'btn btn-outline' : 'btn-add'} med-btn`;
+    btn.disabled = false;
+    btn.onclick = async function () {
+      if (existingCartOrder) {
+        await removeMedicineFromCart(existingCartOrder.id);
+        return;
+      }
+
+      await addMedicineToCart(medicine.id);
+    };
 
     grid.appendChild(frag);
   });
 }
 
-function toggleMedCart(id) {
-  const m = DB.medicines.find(x => x.id === id);
-  m.inCart = !m.inCart;
-  updateCartBar();
-  showMedCategory(m.category);
-}
+async function addMedicineToCart(medicineId) {
+  const session = requireRole('patient');
+  if (!session) return;
 
-// ── CART BAR ─────────────────────────────────────────────────────
-
-function updateCartBar() {
-  const items = DB.medicines.filter(m => m.inCart);
-  const total = items.reduce((sum, m) => sum + m.price, 0);
-  const bar   = document.getElementById('medCartBar');
-  if (!bar) return;
-  bar.classList.toggle('hidden', items.length === 0);
-  setText('cartTotal', '₹ ' + total.toFixed(2));
-  setText('cartCount', '(' + items.length + ' item' + (items.length !== 1 ? 's' : '') + ')');
-}
-
-function showCartInline() {
-  const items = DB.medicines.filter(m => m.inCart);
-  const total = items.reduce((sum, m) => sum + m.price, 0);
-  const sec   = document.getElementById('cartCheckoutSection');
-  const listEl = document.getElementById('cartItemsInline');
-
-  listEl.innerHTML = '';
-  items.forEach(m => {
-    const frag = useTemplate('tpl-cart-item');
-    frag.querySelector('.cart-item-name').textContent  = m.name;
-    frag.querySelector('.cart-item-qty').textContent   = m.qty;
-    frag.querySelector('.cart-item-price').textContent = '₹ ' + m.price.toFixed(2);
-    listEl.appendChild(frag);
+  const response = await fetch(`${MEDICINES_API_BASE_URL}/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      role: 'patient',
+    },
+    body: JSON.stringify({
+      userId: session.id,
+      medicineId,
+      quantity: 1,
+    }),
   });
 
-  setText('cartInlineTotal', '₹ ' + total.toFixed(2));
-  sec.style.display = 'block';
-  sec.scrollIntoView({ behavior: 'smooth' });
+  if (!response.ok) {
+    showToast('Unable to add medicine', 'error');
+    return;
+  }
+
+  await loadCartOrders();
+  renderMedicines();
+  showToast('Medicine added to cart', 'success');
 }
 
-function hideCart() {
-  document.getElementById('cartCheckoutSection').style.display = 'none';
-}
+async function updateMedicineCartQuantity(orderId, quantity) {
+  if (quantity <= 0) {
+    await removeMedicineFromCart(orderId);
+    return;
+  }
 
-function placeOrder() {
-  const items = DB.medicines.filter(m => m.inCart);
-  if (!items.length) { showToast('Your cart is empty', 'error'); return; }
+  const response = await fetch(
+    `${MEDICINES_API_BASE_URL}/orders/cart/${encodeURIComponent(orderId)}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        role: 'patient',
+      },
+      body: JSON.stringify({ quantity }),
+    },
+  );
 
-  const total = items.reduce((sum, m) => sum + m.price, 0);
-  DB.medicineOrders.unshift({
-    id:     'ORD' + Date.now().toString().slice(-6),
-    date:   new Date().toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' }),
-    total:  Math.round(total),
-    status: 'Processing',
-    items:  items.map(m => m.name)
-  });
+  if (!response.ok) {
+    showToast('Unable to update cart item', 'error');
+    return;
+  }
 
-  DB.medicines.forEach(m => m.inCart = false);
-  hideCart();
-  showToast('Order placed!', 'success');
+  await loadCartOrders();
   renderMedicines();
 }
 
-// ── ORDER HISTORY ─────────────────────────────────────────────────
+async function removeMedicineFromCart(orderId) {
+  const response = await fetch(
+    `${MEDICINES_API_BASE_URL}/orders/cart/${encodeURIComponent(orderId)}`,
+    {
+      method: 'DELETE',
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
 
-function renderMedOrders() {
+  if (!response.ok) {
+    showToast('Unable to remove cart item', 'error');
+    return;
+  }
+
+  await loadCartOrders();
+  renderMedicines();
+  showToast('Medicine removed from cart', 'info');
+}
+
+function renderCartSummary() {
+  const bar = document.getElementById('medCartBar');
+  const cartCount = cartOrders.reduce((sum, order) => sum + order.quantity, 0);
+  const cartTotal = cartOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+
+  if (!bar) return;
+
+  bar.classList.toggle('hidden', cartOrders.length === 0);
+  setText('cartCount', `(${cartCount} item${cartCount !== 1 ? 's' : ''})`);
+  setText('cartTotal', `Rs ${cartTotal.toFixed(2)}`);
+}
+
+function showCart() {
+  const cartSection = document.getElementById('cartSection');
+  if (!cartSection) return;
+
+  cartSection.style.display = 'block';
+  cartSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hideCart() {
+  const cartSection = document.getElementById('cartSection');
+  if (!cartSection) return;
+
+  cartSection.style.display = 'none';
+}
+
+function renderCartItems() {
+  const cartList = document.getElementById('cartItemsList');
+  const cartEmpty = document.getElementById('cartEmptyState');
+  const placeOrderBtn = document.getElementById('placeOrderBtn');
+  const cartSubtotal = document.getElementById('cartSubtotal');
+
+  if (!cartList || !cartEmpty || !placeOrderBtn || !cartSubtotal) return;
+
+  cartList.innerHTML = '';
+
+  if (!cartOrders.length) {
+    cartEmpty.style.display = 'block';
+    placeOrderBtn.disabled = true;
+    setText('cartSubtotal', 'Rs 0.00');
+    return;
+  }
+
+  cartEmpty.style.display = 'none';
+  placeOrderBtn.disabled = false;
+
+  cartOrders.forEach((order) => {
+    const frag = useTemplate('tpl-cart-row');
+    const row = frag.querySelector('.cart-item');
+
+    row.querySelector('.cart-item-icon').innerHTML =
+      MED_ICONS[order.medicine.category] || '<i class="fa-solid fa-capsules"></i>';
+    row.querySelector('.cart-item-name').textContent = order.medicine.name;
+    row.querySelector('.cart-item-qty').textContent = order.medicine.category;
+    row.querySelector('.cart-item-qty-value').textContent = order.quantity;
+    row.querySelector('.cart-item-price').textContent = `Rs ${order.totalPrice.toFixed(2)}`;
+    row.querySelector('.cart-minus').onclick = async function () {
+      await updateMedicineCartQuantity(order.id, order.quantity - 1);
+    };
+    row.querySelector('.cart-plus').onclick = async function () {
+      await updateMedicineCartQuantity(order.id, order.quantity + 1);
+    };
+    row.querySelector('.cart-remove').onclick = async function () {
+      await removeMedicineFromCart(order.id);
+    };
+
+    cartList.appendChild(frag);
+  });
+
+  const subtotal = cartOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+  setText('cartSubtotal', `Rs ${subtotal.toFixed(2)}`);
+}
+
+async function placeOrder() {
+  const session = requireRole('patient');
+  if (!session || !cartOrders.length) return;
+
+  const response = await fetch(
+    `${MEDICINES_API_BASE_URL}/orders/place/${encodeURIComponent(session.id)}`,
+    {
+      method: 'POST',
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    showToast('Unable to place order', 'error');
+    return;
+  }
+
+  await Promise.all([loadCartOrders(), loadOrderHistory()]);
+  renderMedicines();
+  hideCart();
+  showToast('Order placed successfully', 'success');
+}
+
+function renderOrderHistory() {
   const el = document.getElementById('medOrderList');
   if (!el) return;
   el.innerHTML = '';
 
-  if (!DB.medicineOrders.length) {
-    const empty = document.createElement('div'); empty.className = 'empty-state';
-    const icon = document.createElement('div'); icon.className = 'empty-icon'; icon.textContent = '📦';
-    const msg  = document.createElement('p');  msg.textContent = 'No orders yet';
-    empty.appendChild(icon); empty.appendChild(msg); el.appendChild(empty);
+  if (!orderHistory.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    const icon = document.createElement('div');
+    icon.className = 'empty-icon';
+    icon.innerHTML = '<i class="fa-solid fa-box-open"></i>';
+    const msg = document.createElement('p');
+    msg.textContent = 'No placed orders yet';
+    empty.appendChild(icon);
+    empty.appendChild(msg);
+    el.appendChild(empty);
     return;
   }
 
-  DB.medicineOrders.forEach(o => {
-    const frag = useTemplate('tpl-order-row');
-    const row  = frag.querySelector('.order-item');
+  const groupedOrders = groupItemsByOrderId(orderHistory);
 
-    row.querySelector('.order-id').textContent    = 'Order #' + o.id;
-    row.querySelector('.order-info').textContent  = o.date + ' · ₹' + o.total;
-    row.querySelector('.order-status').textContent = o.status;
-    row.querySelector('.order-view').onclick   = function() { viewMedOrder(o.id); };
-    row.querySelector('.order-delete').onclick = function() { deleteMedOrder(o.id); };
+  groupedOrders.forEach((group) => {
+    const frag = useTemplate('tpl-order-row');
+    const row = frag.querySelector('.order-item');
+    const primaryOrder = group.items[0];
+    const itemSummary = group.items
+      .map((order) => `${order.medicine.name} x${order.quantity}`)
+      .join(', ');
+    const totalQuantity = group.items.reduce((sum, order) => sum + order.quantity, 0);
+    const totalPrice = group.items.reduce((sum, order) => sum + order.totalPrice, 0);
+
+    row.querySelector('.order-icon').innerHTML =
+      MED_ICONS[primaryOrder.medicine.category] || '<i class="fa-solid fa-capsules"></i>';
+    row.querySelector('.order-id').textContent = `Order #${group.orderId}`;
+    row.querySelector('.order-name').textContent =
+      `${group.items.length} item${group.items.length !== 1 ? 's' : ''} in this order`;
+    row.querySelector('.order-info').textContent =
+      `${itemSummary} | Total Qty ${totalQuantity} | ${primaryOrder.status}`;
+    row.querySelector('.order-total').textContent = `Rs ${totalPrice.toFixed(2)}`;
 
     el.appendChild(frag);
   });
 }
 
-function openAddMedOrder() {
-  openModal(document.getElementById('tpl-addOrder').innerHTML);
-}
+function groupItemsByOrderId(items) {
+  const groups = new Map();
 
-function addMedOrder() {
-  const id   = val('no-id').trim();
-  const date = val('no-date').trim();
-  if (!id || !date) { showToast('Fill all fields', 'error'); return; }
-  DB.medicineOrders.unshift({ id, date, total: +val('no-total'), status: val('no-status'), items: [] });
-  closeModal();
-  showToast('Order added!', 'success');
-  renderMedOrders();
-}
+  items.forEach((item) => {
+    const orderId = item.orderId || item.id;
+    const existingGroup = groups.get(orderId);
+    if (existingGroup) {
+      existingGroup.items.push(item);
+      return;
+    }
 
-function viewMedOrder(id) {
-  const o = DB.medicineOrders.find(x => x.id === id);
-  currentEditId = id;
-  // Pre-fill the template fields before injecting into modal
-  const tpl    = document.getElementById('tpl-viewOrder');
-  const clone  = tpl.content.cloneNode(true);
-  clone.querySelector('#vo-date').value   = o.date;
-  clone.querySelector('#vo-total').value  = o.total;
-  clone.querySelector('#vo-status').value = o.status;
-  const modalContent = document.getElementById('modalContent');
-  modalContent.innerHTML = '';
-  modalContent.appendChild(clone);
-  document.getElementById('modalOverlay').classList.add('open');
-}
+    groups.set(orderId, {
+      orderId,
+      items: [item],
+    });
+  });
 
-function updateMedOrder() {
-  const o = DB.medicineOrders.find(x => x.id === currentEditId);
-  o.date   = val('vo-date');
-  o.total  = +val('vo-total');
-  o.status = val('vo-status');
-  closeModal();
-  showToast('Order updated!', 'success');
-  renderMedOrders();
-}
-
-function deleteMedOrder(id) {
-  if (!confirm('Delete this order?')) return;
-  DB.medicineOrders = DB.medicineOrders.filter(x => x.id !== id);
-  showToast('Order deleted', 'info');
-  renderMedOrders();
+  return Array.from(groups.values());
 }

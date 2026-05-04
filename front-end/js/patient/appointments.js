@@ -1,64 +1,209 @@
-/* MEDBITS – appointments.js
-   Pure logic. All HTML lives in appointments.html <template> tags.
-   JS clones templates, fills in data, and inserts into the page.
-*/
+/* MEDBITS - appointments.js */
 
+const APPOINTMENTS_API_BASE_URL = 'http://localhost:3000';
+
+let allDoctors = [];
+let doctors = [];
+let userAppointments = [];
 let selectedDoctor = null;
-let selectedSlot   = null;
+let selectedSlot = null;
+let editingAppointment = null;
+let editingAppointmentId = null;
+let appointmentRefreshTimer = null;
 
-const MORNING_SLOTS = ['10:01 AM', '10:11 AM', '10:21 AM', '10:31 AM'];
-const EVENING_SLOTS = ['4:01 PM',  '4:11 PM',  '4:21 PM',  '4:31 PM'];
-
-// ── HELPER: clone a <template> by id ─────────────────────────────
 function useTemplate(id) {
   return document.getElementById(id).content.cloneNode(true);
 }
 
-// ── PAGE INIT ─────────────────────────────────────────────────────
+async function initializeAppointmentsPage() {
+  await Promise.all([loadAllDoctors(), loadUserAppointments()]);
+  doctors = allDoctors;
+  renderAppointments();
+  startAppointmentStatusRefresh();
+}
+
+async function fetchAppointmentsApi(url, role) {
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { role },
+    cache: 'no-store',
+  });
+
+  console.log(res);
+
+  const payload = await res.json().catch(() => null);
+  console.log(payload);
+
+  if (!res.ok) {
+    throw new Error('API error');
+  }
+
+  return payload;
+}
+
+function startAppointmentStatusRefresh() {
+  if (appointmentRefreshTimer) return;
+
+  appointmentRefreshTimer = window.setInterval(async () => {
+    if (document.hidden) return;
+    try {
+      await loadUserAppointments();
+      refreshApptLists();
+    } catch (_) {}
+  }, 5000);
+
+  window.addEventListener('focus', async () => {
+    try {
+      await loadAllDoctors();
+      doctors = allDoctors;
+      renderSpecializationOptions();
+      await loadUserAppointments();
+      refreshApptLists();
+    } catch (_) {}
+  });
+}
+
+async function loadAllDoctors() {
+  const payload = await fetchAppointmentsApi(
+    `${APPOINTMENTS_API_BASE_URL}/doctors`,
+    'patient',
+  );
+  console.log('GET /doctors response (patient):', payload);
+  allDoctors = payload.map(normalizeDoctor);
+}
+
+async function loadDoctorsBySpecialization(specialization) {
+  const payload = await fetchAppointmentsApi(
+    `${APPOINTMENTS_API_BASE_URL}/doctors?specialization=${encodeURIComponent(specialization)}`,
+    'patient',
+  );
+  console.log('GET /doctors by specialization response (patient):', payload);
+  doctors = payload.map(normalizeDoctor);
+}
+
+function normalizeDoctor(doctor) {
+  return {
+    ...doctor,
+    id: doctor.userId || doctor.id,
+    userId: doctor.userId || doctor.id,
+    slots: Array.isArray(doctor.slots) ? doctor.slots : [],
+  };
+}
+
+async function loadUserAppointments() {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  console.log(user);
+
+  if (!user?.id) {
+    throw new Error('Patient session not found');
+  }
+
+  return fetch(
+    `${APPOINTMENTS_API_BASE_URL}/appointments/user/${encodeURIComponent(user.id)}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        role: 'patient',
+      },
+      cache: 'no-store',
+    },
+  )
+    .then((res) => {
+      console.log(res);
+      if (!res.ok) throw new Error('API failed');
+      return res.json();
+    })
+    .then((data) => {
+      console.log('Appointments:', data);
+      userAppointments = data;
+      return data;
+    })
+    .catch((err) => {
+      console.error(err);
+      throw err;
+    });
+}
 
 function renderAppointments() {
   selectedDoctor = null;
-  selectedSlot   = null;
+  selectedSlot = null;
+  renderSpecializationOptions();
+  renderSpecialtyBrowseCards();
+  refreshApptLists();
+  document.getElementById('doctorSection').style.display = 'none';
+}
 
-  // Fill speciality dropdown from DB
-  const specs = [...new Set(DB.doctors.map(d => d.speciality))];
-  const sel   = document.getElementById('specSelect');
+function renderSpecializationOptions() {
+  const sel = document.getElementById('specSelect');
+  const currentValue = sel.value;
+  const specializations = [...new Set(allDoctors.map((doctor) => doctor.specialization))];
+
   sel.innerHTML = '';
   const blank = document.createElement('option');
-  blank.value = ''; blank.textContent = 'Choose a specialty…';
+  blank.value = '';
+  blank.textContent = 'Choose a specialty...';
   sel.appendChild(blank);
-  specs.forEach(s => {
+
+  specializations.forEach((specialization) => {
     const opt = document.createElement('option');
-    opt.value = s; opt.textContent = s;
+    opt.value = specialization;
+    opt.textContent = specialization;
     sel.appendChild(opt);
   });
 
-  // Hide the doctor section until a specialty is picked
-  document.getElementById('doctorSection').style.display = 'none';
-
-  refreshApptLists();
+  if (currentValue && specializations.includes(currentValue)) {
+    sel.value = currentValue;
+  }
 }
 
-// ── APPOINTMENT LISTS ─────────────────────────────────────────────
+function renderSpecialtyBrowseCards() {
+  const grid = document.getElementById('specialtyBrowseGrid');
+  if (!grid) return;
+
+  const specializations = [...new Set(allDoctors.map((doctor) => doctor.specialization))];
+
+  if (!specializations.length) {
+    grid.innerHTML = '<p class="text-muted">No specialties available.</p>';
+    return;
+  }
+
+  grid.innerHTML = specializations
+    .map(
+      (specialization) => `
+        <div class="cat-card" data-spec="${specialization}">
+          <div class="cat-icon"><i class="fa-solid fa-user-doctor"></i></div>
+          <div class="cat-name">${specialization}</div>
+        </div>
+      `,
+    )
+    .join('');
+
+  grid.querySelectorAll('.cat-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      selectSpeciality(card.dataset.spec);
+    });
+  });
+}
 
 function refreshApptLists() {
-  const upcoming = DB.appointments.filter(a => a.status === 'upcoming');
-  const past     = DB.appointments.filter(a => a.status === 'completed');
+  const upcoming = userAppointments.filter((item) => item.status === 'upcoming');
+  const past = userAppointments.filter((item) => item.status === 'completed');
   fillApptList('upcomingList', upcoming, false);
-  fillApptList('pastList',     past,     true);
+  fillApptList('pastList', past, true);
 }
 
-function fillApptList(containerId, appts, isPast) {
+function fillApptList(containerId, appointments, isPast) {
   const el = document.getElementById(containerId);
   if (!el) return;
-  el.innerHTML = '';   // clear first
+  el.innerHTML = '';
 
-  if (!appts.length) {
+  if (!appointments.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
     const icon = document.createElement('div');
     icon.className = 'empty-icon';
-    icon.textContent = isPast ? '✅' : '📅';
+    icon.textContent = isPast ? '✓' : '...';
     const msg = document.createElement('p');
     msg.textContent = isPast ? 'No past appointments' : 'No upcoming appointments';
     empty.appendChild(icon);
@@ -67,57 +212,64 @@ function fillApptList(containerId, appts, isPast) {
     return;
   }
 
-  appts.forEach(a => {
-    // Clone the right template
+  appointments.forEach((appointment) => {
     const frag = useTemplate(isPast ? 'tpl-appt-past' : 'tpl-appt-upcoming');
     const card = frag.querySelector('.list-item');
+    card.querySelector('.appt-doctor').textContent = appointment.doctor.name;
+    card.querySelector('.appt-info').textContent =
+      `${appointment.doctor.specialization} | ${formatDate(appointment.date)} at ${appointment.slot}`;
 
-    // Fill text
-    card.querySelector('.appt-doctor').textContent = a.doctor;
-    card.querySelector('.appt-info').textContent   = a.speciality + ' · ' + formatDate(a.date) + ' at ' + a.time;
-
-    // Wire buttons (upcoming only)
     if (!isPast) {
-      card.dataset.id = a.id;
-      card.querySelector('.appt-modify').onclick = function() { openModifyAppointment(a.id); };
-      card.querySelector('.appt-cancel').onclick = function() { cancelAppointment(a.id); };
+      card.querySelector('.appt-edit-btn').onclick = function () {
+        void openAppointmentEditModal(appointment.id);
+      };
+      card.querySelector('.appt-cancel-btn').onclick = function () {
+        void cancelAppointment(appointment.id);
+      };
     }
 
     el.appendChild(frag);
   });
 }
 
-// ── FIND DOCTOR ───────────────────────────────────────────────────
-
-function filterDoctors() {
-  const spec    = document.getElementById('specSelect').value;
+async function filterDoctors() {
+  const specialization = document.getElementById('specSelect').value;
   const section = document.getElementById('doctorSection');
 
-  if (!spec) { section.style.display = 'none'; return; }
+  await loadAllDoctors();
+  renderSpecializationOptions();
+  document.getElementById('specSelect').value = specialization;
 
-  // Show the search bar
+  if (!specialization) {
+    section.style.display = 'none';
+    return;
+  }
+
+  await loadDoctorsBySpecialization(specialization);
   document.getElementById('docSearchWrap').style.display = 'block';
-  document.getElementById('docSearchLabel').textContent  = 'Search ' + spec + 's';
-
-  // Load matching doctors
-  fillDoctorList(DB.doctors.filter(d => d.speciality === spec));
-
-  // Reset schedule panel to default text
-  const panel = document.getElementById('schedulePanel');
-  panel.innerHTML = '';
-  const h = document.createElement('h3'); h.textContent = 'Schedule Appointment';
-  const p = document.createElement('p'); p.className = 'text-muted'; p.textContent = 'Click a doctor to see available slots.';
-  panel.appendChild(h); panel.appendChild(p);
-
+  document.getElementById('docSearchLabel').textContent = `Search ${specialization}s`;
+  fillDoctorList(doctors);
+  resetSchedulePanel();
   section.style.display = 'block';
 }
 
+function resetSchedulePanel() {
+  const panel = document.getElementById('schedulePanel');
+  panel.innerHTML = '';
+  const h = document.createElement('h3');
+  h.textContent = 'Schedule Appointment';
+  const p = document.createElement('p');
+  p.className = 'text-muted';
+  p.textContent = 'Click a doctor to see available slots.';
+  panel.appendChild(h);
+  panel.appendChild(p);
+}
+
 function searchDoctors(q) {
-  const spec = document.getElementById('specSelect').value;
-  if (!spec) return;
-  const matches = DB.doctors.filter(d =>
-    d.speciality === spec && d.name.toLowerCase().includes(q.toLowerCase())
-  );
+  const query = q.trim().toLowerCase();
+  const matches = query
+    ? doctors.filter((doctor) => doctor.name.toLowerCase().includes(query))
+    : doctors;
   fillDoctorList(matches);
 }
 
@@ -126,215 +278,345 @@ function fillDoctorList(docs) {
   list.innerHTML = '';
 
   if (!docs.length) {
-    list.innerHTML = '';
     const msg = document.createElement('p');
-    msg.className = 'text-muted'; msg.style.padding = '16px';
+    msg.className = 'text-muted';
+    msg.style.padding = '16px';
     msg.textContent = 'No doctors found.';
     list.appendChild(msg);
     return;
   }
 
-  docs.forEach(d => {
-    // Clone the doctor card template
+  docs.forEach((doctor) => {
     const frag = useTemplate('tpl-doc-card');
     const card = frag.querySelector('.doc-card');
 
-    // Set the card id so selectDoctor can highlight it
-    card.id = 'dcard-' + d.id;
-
-    // Fill data
-    card.querySelector('.doc-icon').textContent     = d.gender === 'female' ? '👩‍⚕️' : '👨‍⚕️';
-    card.querySelector('.doc-name').textContent     = d.name;
-    card.querySelector('.doc-exp-qual').textContent = d.exp + ' · ' + d.qual;
-    card.querySelector('.doc-hospital').textContent = d.hospital;
-    card.querySelector('.doc-fee').textContent      = '₹ ' + d.fee;
-
-    // Wire click: whole card and the Book button both call selectDoctor
-    card.onclick = function() { selectDoctor(d.id); };
-    const bookBtn = card.querySelector('.btn');
-    bookBtn.onclick = function(e) { e.stopPropagation(); selectDoctor(d.id); };
+    card.id = `dcard-${doctor.id}`;
+    card.querySelector('.doc-icon').innerHTML = '<i class="fa-solid fa-user-doctor"></i>';
+    card.querySelector('.doc-name').textContent = doctor.name;
+    card.querySelector('.doc-exp-qual').textContent = doctor.specialization;
+    card.querySelector('.doc-hospital').textContent = `${doctor.slots.length} slots available`;
+    card.querySelector('.doc-fee').innerHTML = '<i class="fa-regular fa-calendar"></i>';
+    card.onclick = function () {
+      void selectDoctor(doctor.id);
+    };
+    card.querySelector('.btn').onclick = function (event) {
+      event.stopPropagation();
+      void selectDoctor(doctor.id);
+    };
 
     list.appendChild(frag);
   });
 }
 
-// Called by Browse-by-Specialty chips
-function selectSpeciality(spec) {
-  document.getElementById('specSelect').value = spec;
-
-  // Highlight the clicked chip
-  document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active-cat'));
-  const chip = document.querySelector('.cat-card[data-spec="' + spec + '"]');
+function selectSpeciality(specialization) {
+  document.getElementById('specSelect').value = specialization;
+  document.querySelectorAll('.cat-card').forEach((card) => card.classList.remove('active-cat'));
+  const chip = document.querySelector(`.cat-card[data-spec="${specialization}"]`);
   if (chip) chip.classList.add('active-cat');
-
-  filterDoctors();
+  void filterDoctors();
   document.getElementById('doctorSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Called when a doctor card is clicked
-function selectDoctor(id) {
-  selectedDoctor = DB.doctors.find(d => d.id === id);
+async function selectDoctor(id) {
+  selectedDoctor = doctors.find((doctor) => doctor.id === id) || null;
   if (!selectedDoctor) return;
 
   selectedSlot = null;
-
-  // Highlight selected card
-  document.querySelectorAll('.doc-card').forEach(c => c.classList.remove('selected'));
-  const card = document.getElementById('dcard-' + id);
+  document.querySelectorAll('.doc-card').forEach((card) => card.classList.remove('selected'));
+  const card = document.getElementById(`dcard-${id}`);
   if (card) card.classList.add('selected');
 
-  // Clone and fill the schedule panel template
-  const frag  = useTemplate('tpl-schedule-panel');
+  const frag = useTemplate('tpl-schedule-panel');
   const panel = document.getElementById('schedulePanel');
   panel.innerHTML = '';
 
-  const d    = selectedDoctor;
-  const icon = d.gender === 'female' ? '👩‍⚕️' : '👨‍⚕️';
+  frag.querySelector('.sched-icon').innerHTML = '<i class="fa-solid fa-user-doctor"></i>';
+  frag.querySelector('.sched-name').textContent = selectedDoctor.name;
+  frag.querySelector('.sched-spec').textContent = selectedDoctor.specialization;
 
-  frag.querySelector('.sched-icon').textContent  = icon;
-  frag.querySelector('.sched-name').textContent  = d.name;
-  frag.querySelector('.sched-spec').textContent  = d.speciality + ' · ' + d.exp;
-  frag.querySelector('.sched-fee').textContent   = '₹ ' + d.fee;
-  frag.querySelector('#schedDate').min           = today();
-
-  // Build slot buttons from template
-  fillSlots(frag.querySelector('#morningSlots'), MORNING_SLOTS, '');
-  fillSlots(frag.querySelector('#eveningSlots'), EVENING_SLOTS, '');
+  const dateInput = frag.querySelector('#schedDate');
+  dateInput.min = today();
+  const preferredDate = val('apptDateSearch');
+  dateInput.value = preferredDate || today();
+  dateInput.addEventListener('change', function () {
+    void loadSlotsForSelectedDoctor(this.value);
+  });
 
   panel.appendChild(frag);
+  await loadSlotsForSelectedDoctor(dateInput.value);
 }
 
-// Fill a slot-grid element with slot buttons
-function fillSlots(container, slots, activeTime) {
-  slots.forEach(t => {
+async function loadSlotsForSelectedDoctor(date) {
+  if (!selectedDoctor || !date) return;
+
+  selectedSlot = null;
+  const response = await fetch(
+    `${APPOINTMENTS_API_BASE_URL}/doctors/${encodeURIComponent(selectedDoctor.id)}/slots?date=${encodeURIComponent(date)}`,
+    {
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    showToast('Unable to load slots', 'error');
+    return;
+  }
+
+  const slots = await response.json();
+  fillSlots(document.getElementById('allSlots'), slots);
+}
+
+function fillSlots(container, slots) {
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!slots.length) {
+    const msg = document.createElement('p');
+    msg.className = 'text-muted';
+    msg.textContent = 'No available slots for this date.';
+    container.appendChild(msg);
+    return;
+  }
+
+  slots.forEach((slot) => {
     const frag = useTemplate('tpl-slot-btn');
-    const btn  = frag.querySelector('.slot-btn');
-    btn.textContent = t;
-    if (t === activeTime) btn.classList.add('selected');
-    btn.onclick = function() { selectSlot(btn, t); };
+    const btn = frag.querySelector('.slot-btn');
+    btn.textContent = slot;
+    btn.onclick = function () {
+      selectSlot(btn, slot);
+    };
     container.appendChild(frag);
   });
 }
 
-function selectSlot(btn, time) {
-  // Clear all slot selections inside the schedule panel
-  document.querySelectorAll('#schedulePanel .slot-btn').forEach(b => b.classList.remove('selected'));
+function selectSlot(btn, slot) {
+  document.querySelectorAll('#schedulePanel .slot-btn').forEach((item) => item.classList.remove('selected'));
   btn.classList.add('selected');
-  selectedSlot = time;
+  selectedSlot = slot;
 }
 
-function confirmAppointment() {
-  const dateEl = document.getElementById('schedDate');
-  const date   = dateEl ? dateEl.value : '';
+async function confirmAppointment() {
+  const session = requireRole('patient');
+  const date = val('schedDate');
 
-  if (!selectedDoctor) { showToast('Please select a doctor', 'error');  return; }
-  if (!date)           { showToast('Please select a date', 'error');    return; }
-  if (!selectedSlot)   { showToast('Please pick a time slot', 'error'); return; }
+  if (!session) return;
+  if (!selectedDoctor) {
+    showToast('Please select a doctor', 'error');
+    return;
+  }
+  if (!date) {
+    showToast('Please select a date', 'error');
+    return;
+  }
+  if (!selectedSlot) {
+    showToast('Please pick a time slot', 'error');
+    return;
+  }
 
-  DB.appointments.push({
-    id: 'APT' + Date.now(),
-    doctor: selectedDoctor.name, speciality: selectedDoctor.speciality,
-    date, time: selectedSlot, fee: selectedDoctor.fee, status: 'upcoming'
+  const response = await fetch(`${APPOINTMENTS_API_BASE_URL}/appointments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      role: 'patient',
+    },
+    body: JSON.stringify({
+      userId: session.id,
+      doctorId: selectedDoctor.id,
+      date,
+      slot: selectedSlot,
+    }),
   });
 
-  // Reset everything
-  selectedDoctor = null;
-  selectedSlot   = null;
-  document.getElementById('doctorSection').style.display = 'none';
-  document.getElementById('specSelect').value = '';
-  document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active-cat'));
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    showToast(errorBody?.message || 'Unable to book appointment', 'error');
+    return;
+  }
 
+  await loadUserAppointments();
+  refreshApptLists();
   showToast('Appointment booked!', 'success');
-  refreshApptLists();
+  await loadSlotsForSelectedDoctor(date);
 }
 
-// ── ADD / MODIFY / CANCEL ─────────────────────────────────────────
+async function openAppointmentEditModal(appointmentId) {
+  editingAppointment = userAppointments.find(
+    (appointment) => appointment.id === appointmentId && appointment.status === 'upcoming',
+  ) || null;
 
-function openAddAppointment() {
-  // Clone template into modal
-  const frag = useTemplate('tpl-addAppt');
+  if (!editingAppointment) {
+    showToast('Only upcoming appointments can be edited', 'error');
+    return;
+  }
 
-  // Fill the speciality dropdown inside the template
-  const specs = [...new Set(DB.doctors.map(d => d.speciality))];
-  const sel   = frag.querySelector('#na-spec');
-  specs.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s; opt.textContent = s;
-    sel.appendChild(opt);
+  editingAppointmentId = appointmentId;
+  currentEditId = appointmentId;
+  selectedSlot = editingAppointment.slot;
+
+  openModal(`
+    <div class="modal-title">Edit Appointment</div>
+    <div class="form-group mb-16">
+      <label>Doctor</label>
+      <input id="editAppointmentDoctor" value="${editingAppointment.doctor.name}" disabled>
+    </div>
+    <div class="form-group mb-16">
+      <label>Date</label>
+      <input type="date" id="editAppointmentDate" min="${today()}" value="${editingAppointment.date}">
+    </div>
+    <div class="form-group mb-16">
+      <label>Available Slots</label>
+      <div id="editAppointmentSlots" class="slot-grid"></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveAppointmentEdit()">Save Changes</button>
+  `);
+
+  document.getElementById('editAppointmentDate').addEventListener('change', function () {
+    selectedSlot = null;
+    void loadEditSlots(this.value);
   });
 
-  // Set the min date
-  frag.querySelector('#na-date').min = today();
-
-  // Put it in the modal
-  const modalContent = document.getElementById('modalContent');
-  modalContent.innerHTML = '';
-  modalContent.appendChild(frag);
-  document.getElementById('modalOverlay').classList.add('open');
+  await loadEditSlots(editingAppointment.date);
 }
 
-function addAppointment() {
-  const doctor = val('na-doc').trim();
-  const date   = val('na-date');
-  const time   = val('na-time').trim();
+async function loadEditSlots(date) {
+  if (!editingAppointment || !date) return;
 
-  if (!doctor) { showToast('Enter doctor name', 'error'); return; }
-  if (!date)   { showToast('Select a date', 'error');     return; }
-  if (!time)   { showToast('Enter a time', 'error');      return; }
+  const response = await fetch(
+    `${APPOINTMENTS_API_BASE_URL}/doctors/${encodeURIComponent(editingAppointment.doctorId)}/slots?date=${encodeURIComponent(date)}`,
+    {
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
 
-  DB.appointments.push({
-    id: 'APT' + Date.now(), doctor,
-    speciality: val('na-spec'), date, time,
-    fee: +val('na-fee'), status: 'upcoming'
+  if (!response.ok) {
+    showToast('Unable to load slots', 'error');
+    return;
+  }
+
+  const slots = await response.json();
+  const displaySlots = new Set(slots);
+  if (date === editingAppointment.date) {
+    displaySlots.add(editingAppointment.slot);
+  }
+
+  if (!displaySlots.has(selectedSlot)) {
+    selectedSlot = date === editingAppointment.date ? editingAppointment.slot : null;
+  }
+
+  renderEditSlots(Array.from(displaySlots));
+}
+
+function renderEditSlots(slots) {
+  const container = document.getElementById('editAppointmentSlots');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!slots.length) {
+    const msg = document.createElement('p');
+    msg.className = 'text-muted';
+    msg.textContent = 'No available slots for this date.';
+    container.appendChild(msg);
+    return;
+  }
+
+  slots.forEach((slot) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'slot-btn';
+    button.textContent = slot;
+    if (slot === selectedSlot) {
+      button.classList.add('selected');
+    }
+    button.onclick = function () {
+      selectedSlot = slot;
+      renderEditSlots(slots);
+    };
+    container.appendChild(button);
   });
+}
 
-  closeModal();
-  showToast('Appointment added!', 'success');
+async function saveAppointmentEdit() {
+  if (!editingAppointment || !editingAppointmentId) {
+    showToast('No appointment selected', 'error');
+    return;
+  }
+
+  const date = val('editAppointmentDate');
+  if (!date) {
+    showToast('Please choose a date', 'error');
+    return;
+  }
+
+  if (!selectedSlot) {
+    showToast('Please choose a slot', 'error');
+    return;
+  }
+
+  const response = await fetch(
+    `${APPOINTMENTS_API_BASE_URL}/appointments/${encodeURIComponent(editingAppointmentId)}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        role: 'patient',
+      },
+      body: JSON.stringify({
+        date,
+        slot: selectedSlot,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    showToast(errorBody?.message || 'Unable to update appointment', 'error');
+    return;
+  }
+
+  await loadUserAppointments();
   refreshApptLists();
-}
-
-function openModifyAppointment(id) {
-  const a = DB.appointments.find(x => x.id === id);
-  if (!a) return;
-  currentEditId = id;
-  selectedSlot  = a.time;
-
-  // Clone template
-  const frag = useTemplate('tpl-modifyAppt');
-
-  // Fill static info
-  frag.querySelector('#mod-doctor').textContent = a.doctor;
-  frag.querySelector('#mod-spec').textContent   = a.speciality;
-  frag.querySelector('#mod-date').value         = a.date;
-  frag.querySelector('#mod-date').min           = today();
-  frag.querySelector('#mod-fee').textContent    = '₹ ' + a.fee;
-
-  // Fill slot buttons with the current time pre-selected
-  fillSlots(frag.querySelector('#mod-morning'), MORNING_SLOTS, a.time);
-  fillSlots(frag.querySelector('#mod-evening'), EVENING_SLOTS, a.time);
-
-  const modalContent = document.getElementById('modalContent');
-  modalContent.innerHTML = '';
-  modalContent.appendChild(frag);
-  document.getElementById('modalOverlay').classList.add('open');
-}
-
-function saveModifyAppointment() {
-  const date = val('mod-date');
-  if (!date)         { showToast('Select a date', 'error');    return; }
-  if (!selectedSlot) { showToast('Pick a time slot', 'error'); return; }
-
-  const a = DB.appointments.find(x => x.id === currentEditId);
-  if (a) { a.date = date; a.time = selectedSlot; }
-
+  editingAppointment = null;
+  editingAppointmentId = null;
   closeModal();
-  showToast('Appointment rescheduled!', 'success');
-  refreshApptLists();
+  showToast('Appointment updated', 'success');
 }
 
-function cancelAppointment(id) {
-  if (!confirm('Cancel this appointment?')) return;
-  DB.appointments = DB.appointments.filter(a => a.id !== id);
+async function cancelAppointment(appointmentId) {
+  const appointment = userAppointments.find(
+    (item) => item.id === appointmentId && item.status === 'upcoming',
+  );
+
+  if (!appointment) {
+    showToast('Only upcoming appointments can be cancelled', 'error');
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Cancel appointment with ${appointment.doctor.name} on ${formatDate(appointment.date)} at ${appointment.slot}?`,
+  );
+  if (!confirmed) return;
+
+  const response = await fetch(
+    `${APPOINTMENTS_API_BASE_URL}/appointments/${encodeURIComponent(appointmentId)}`,
+    {
+      method: 'DELETE',
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    showToast(errorBody?.message || 'Unable to cancel appointment', 'error');
+    return;
+  }
+
+  await loadUserAppointments();
+  refreshApptLists();
   showToast('Appointment cancelled', 'info');
-  refreshApptLists();
 }

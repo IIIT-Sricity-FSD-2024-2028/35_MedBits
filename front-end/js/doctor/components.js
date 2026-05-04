@@ -3,15 +3,31 @@
    interactions (sidebar toggle, dropdowns, notifications)
    ============================================================ */
 
+function getAuthenticatedDoctor() {
+  const raw = localStorage.getItem('user');
+  const user = raw ? JSON.parse(raw) : null;
+  if (!user || user.role !== 'doctor') {
+    window.location.href = '../login.html';
+    return null;
+  }
+  return user;
+}
+
 /* ── Shared doctor profile data (persisted in localStorage) ── */
 function getDoctorProfile() {
-  const saved = localStorage.getItem('doctorProfile');
-  if (saved) return JSON.parse(saved);
-  return { name: 'Dr. Sarah Johnson', role: 'Consultant Physician', initials: 'SJ' };
+  const user = getAuthenticatedDoctor();
+  const name = user?.name || 'Doctor';
+  const initials = name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return { name, role: 'Doctor', initials };
 }
 
 function logoutDoctor() {
-  localStorage.removeItem('medbits_session');
+  localStorage.removeItem('user');
   window.location.replace('../login.html');
 }
 
@@ -125,6 +141,7 @@ function getHeaderTemplate() {
 }
 
 async function loadComponents(activePage, pageTitle) {
+  if (!getAuthenticatedDoctor()) return;
   const sidebarHTML = getSidebarTemplate();
   const headerHTML = getHeaderTemplate();
 

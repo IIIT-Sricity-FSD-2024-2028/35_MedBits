@@ -11,7 +11,7 @@
    ============================================ */
 
 // ── SESSION KEY (must match auth.js exactly) ──────────────────────
-const SESSION_KEY = 'medbits_session';
+const SESSION_KEY = 'user';
 
 // Read the current session from localStorage.
 // Returns the session object, or null if not logged in.
@@ -27,6 +27,15 @@ function getSession() {
 // Remove the session (used by logout in components.js)
 function clearSession() {
   localStorage.removeItem(SESSION_KEY);
+}
+
+function requireRole(expectedRole) {
+  const user = getSession();
+  if (!user || user.role !== expectedRole) {
+    window.location.href = '../login.html';
+    return null;
+  }
+  return user;
 }
 
 // ── DATE HELPERS ──────────────────────────────────────────────────
@@ -83,8 +92,7 @@ function closeModal() {
 
 // ── TOPBAR USER ───────────────────────────────────────────────────
 // Shows the logged-in user's name and initials in the topbar.
-// Reads from the session first (real logged-in user),
-// falls back to DB.patient only if no session exists.
+// Reads only from the authenticated session.
 function updateTopbarUser() {
   const session = getSession();  // now always works — defined above
 
@@ -95,10 +103,10 @@ function updateTopbarUser() {
     // Use the real logged-in user's name from the session
     firstName = session.firstName;
     lastName  = session.lastName || '';
-  } else if (typeof DB !== 'undefined' && DB.patient) {
-    // Fallback to seed data (should not normally happen on a protected page)
-    firstName = DB.patient.firstName;
-    lastName  = DB.patient.lastName;
+  } else if (session && session.name) {
+    const [derivedFirstName, ...rest] = session.name.trim().split(/\s+/);
+    firstName = derivedFirstName || '';
+    lastName = rest.join(' ');
   }
 
   const initial1 = firstName ? firstName[0].toUpperCase() : '?';

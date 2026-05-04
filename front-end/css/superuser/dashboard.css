@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -5,33 +7,41 @@
 }
 
 :root {
-    --dashboard-bg: #eef4f8;
-    --panel-bg: rgba(255, 255, 255, 0.88);
-    --panel-border: rgba(148, 163, 184, 0.18);
-    --text-strong: #10243e;
-    --text-muted: #526277;
-    --hero-start: #1d4ed8;
-    --hero-mid: #0f766e;
-    --hero-end: #f59e0b;
-    --doctor-start: #0f766e;
-    --doctor-end: #14b8a6;
-    --frontdesk-start: #2563eb;
-    --frontdesk-end: #60a5fa;
-    --leave-start: #ea580c;
-    --leave-end: #fbbf24;
-    --appointment-start: #0f766e;
-    --appointment-end: #2dd4bf;
-    --alert-start: #b45309;
-    --alert-end: #f59e0b;
+    --teal: #0f766e;
+    --teal-light: #14b8a6;
+    --teal-pale: #ccfbf1;
+    --pastel-purple: #ede9fe;
+    --pastel-purple-text: #7c3aed;
+    --pastel-orange: #ffedd5;
+    --pastel-orange-text: #c2410c;
+    --pastel-green: #dcfce7;
+    --pastel-green-text: #16a34a;
+    --surface: #ffffff;
+    --bg: #f0fdf9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --shadow: 0 4px 20px rgba(15,118,110,0.08);
+
+    --hero-start: var(--teal);
+    --hero-mid: var(--teal-light);
+    --hero-end: var(--teal);
+    --doctor-start: var(--teal);
+    --doctor-end: var(--teal-light);
+    --frontdesk-start: var(--teal);
+    --frontdesk-end: var(--teal-light);
+    --leave-start: var(--teal);
+    --leave-end: var(--teal-light);
+    --appointment-start: var(--teal);
+    --appointment-end: var(--teal-light);
+    --alert-start: var(--teal);
+    --alert-end: var(--teal-light);
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background:
-        radial-gradient(circle at top left, rgba(96, 165, 250, 0.22), transparent 30%),
-        radial-gradient(circle at top right, rgba(45, 212, 191, 0.18), transparent 28%),
-        linear-gradient(180deg, #f8fbfd 0%, var(--dashboard-bg) 100%);
-    color: var(--text-strong);
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
 }
 
 /* Container */
@@ -124,8 +134,8 @@ body {
     background:
         linear-gradient(135deg, var(--hero-start) 0%, var(--hero-mid) 56%, var(--hero-end) 100%);
     color: white;
-    border-radius: 1.5rem;
-    padding: 2rem;
+    border-radius: 1.25rem;
+    padding: 1.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
     position: relative;
@@ -154,7 +164,7 @@ body {
 }
 
 .welcome-banner h3 {
-    font-size: 1.875rem;
+    font-size: 1.5rem;
     font-weight: bold;
     margin-bottom: 0.5rem;
     position: relative;
@@ -162,29 +172,27 @@ body {
 }
 
 .welcome-banner p {
-    font-size: 1.125rem;
+    font-size: 1rem;
     max-width: 720px;
     color: rgba(255, 255, 255, 0.92);
     position: relative;
     z-index: 1;
 }
 
-/* Card */
 .card {
-    background: var(--panel-bg);
-    border-radius: 1.5rem;
-    padding: 2rem;
-    border: 1px solid var(--panel-border);
-    box-shadow: 0 18px 35px rgba(148, 163, 184, 0.16);
-    backdrop-filter: blur(10px);
+    background: var(--surface);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
     margin-bottom: 2rem;
 }
 
 .card-title {
-    font-size: 1.5rem;
+    font-size: 1.125rem;
     font-weight: bold;
     margin-bottom: 1.5rem;
-    color: var(--text-strong);
+    color: var(--text);
 }
 
 /* Quick Actions */
@@ -195,26 +203,23 @@ body {
 }
 
 .action-btn {
-    background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-    color: white;
     border: none;
     border-radius: 1rem;
-    padding: 2rem;
+    padding: 1.5rem;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;   /* center properly */
-    gap: 1rem;
-    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+    gap: 0.75rem;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease, background-color 0.22s ease;
     width: 100%;              /* important */
-    height: 180px;
-    box-shadow: 0 16px 24px rgba(15, 118, 110, 0.22);
+    height: 140px;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.05);
 }
 
 .action-btn:hover {
     transform: translateY(-4px);
-    filter: saturate(1.05);
 }
 
 .action-btn i {
@@ -223,25 +228,29 @@ body {
 }
 
 .action-btn span {
-    font-size: 1.25rem;
+    font-size: 1rem;
     text-align: center;
     font-weight: 600;
 }
 
 .quick-actions a:nth-child(1) .action-btn {
-    background: linear-gradient(135deg, var(--doctor-start) 0%, var(--doctor-end) 100%);
-    box-shadow: 0 16px 26px rgba(20, 184, 166, 0.24);
+    background: var(--pastel-purple);
+    color: var(--pastel-purple-text);
 }
 
 .quick-actions a:nth-child(2) .action-btn {
-    background: linear-gradient(135deg, var(--frontdesk-start) 0%, var(--frontdesk-end) 100%);
-    box-shadow: 0 16px 26px rgba(37, 99, 235, 0.22);
+    background: var(--pastel-orange);
+    color: var(--pastel-orange-text);
 }
 
 .quick-actions a:nth-child(3) .action-btn {
-    background: linear-gradient(135deg, var(--leave-start) 0%, var(--leave-end) 100%);
-    box-shadow: 0 16px 26px rgba(234, 88, 12, 0.22);
+    background: var(--pastel-green);
+    color: var(--pastel-green-text);
 }
+
+.quick-actions a:nth-child(1) .action-btn:hover { background-color: #ddd6fe; }
+.quick-actions a:nth-child(2) .action-btn:hover { background-color: #fed7aa; }
+.quick-actions a:nth-child(3) .action-btn:hover { background-color: #bbf7d0; }
 
 /* Bottom Section */
 .bottom-section {
@@ -258,21 +267,21 @@ body {
 }
 
 .appointment-item {
-    background: linear-gradient(135deg, var(--appointment-start) 0%, var(--appointment-end) 100%);
-    color: white;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    color: var(--text);
     border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 14px 24px rgba(13, 148, 136, 0.16);
+    padding: 1rem;
 }
 
 .patient-name {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .appointment-details {
-    font-size: 1.125rem;
+    font-size: 0.875rem;
 }
 
 /* Alerts */
@@ -283,24 +292,25 @@ body {
 }
 
 .alert-item {
-    background: linear-gradient(135deg, var(--alert-start) 0%, var(--alert-end) 100%);
-    color: white;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    color: var(--text);
     border-radius: 1rem;
-    padding: 1.5rem;
+    padding: 1rem;
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-    box-shadow: 0 14px 24px rgba(217, 119, 6, 0.16);
 }
 
 .alert-item i {
     width: 32px;
     height: 32px;
     flex-shrink: 0;
+    color: var(--rejected-accent);
 }
 
 .alert-item p {
-    font-size: 1.125rem;
+    font-size: 0.875rem;
 }
 
 /* Responsive Design */

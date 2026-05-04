@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Follow-Up Coordination — MEDBITS Frontdesk</title>
+    <title>Follow-Up & Referral Coordination — MEDBITS Frontdesk</title>
     <link rel="stylesheet" href="../../css/front-desk/base.css" />
     <link rel="stylesheet" href="../../css/front-desk/followup.css" />
   </head>
@@ -20,7 +20,7 @@
       <!-- Topbar -->
       <header class="topbar">
         <div class="topbar-title">
-          <h1 id="topbar-title-h1">Follow-Up</h1>
+          <h1 id="topbar-title-h1">Follow-Up & Referral Coordination</h1>
           <span id="topbar-subtitle">Frontdesk Portal</span>
         </div>
         <div class="topbar-right">
@@ -54,7 +54,7 @@
             </div>
             <div class="topbar-user-info">
               <span class="topbar-user-name" id="topbar-username"
-                >Sarah Williams</span
+                >Loading...</span
               >
               <span class="topbar-user-role">Frontdesk</span>
             </div>
@@ -91,22 +91,21 @@
           </div>
         </div>
 
-        <!-- Follow-Up List -->
-        <div id="followup-list" class="followup-list"></div>
+        <!-- Referrals List -->
+        <div class="followup-search-header" style="margin-top: 24px; margin-bottom: 12px;">
+          <span class="section-title">Referrals</span>
+        </div>
+        <div id="referral-list" class="followup-list"></div>
+        <div id="referral-empty" class="empty-state hidden">
+          <p>No referrals found</p>
+        </div>
 
-        <!-- Empty State -->
+        <!-- Follow-Up List -->
+        <div class="followup-search-header" style="margin-top: 24px; margin-bottom: 12px;">
+          <span class="section-title">Follow-Ups</span>
+        </div>
+        <div id="followup-list" class="followup-list"></div>
         <div id="followup-empty" class="empty-state hidden">
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <polyline points="1 4 1 10 7 10" />
-            <path d="M3.51 15a9 9 0 1 0 .49-3.51" />
-          </svg>
           <p>No follow-ups found</p>
         </div>
       </main>

@@ -2,71 +2,23 @@
    WALKIN.JS - Walk-in Registration page logic
    ============================================================ */
 
-let allPatients = [];
+const WALKINS_API_BASE_URL = 'http://localhost:3000';
+let walkins = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   renderShell('walkin');
 
-  const data = await loadData();
-  if (!data) {
-    showToast('Failed to load data.', 'error');
-    return;
-  }
+  await refreshWalkIns();
 
-  allPatients = data.patients;
-  renderRecentRegistrations(getRecentRegistrations(allPatients));
-
-  const searchInput = document.getElementById('patient-search');
-  const searchResults = document.getElementById('search-results');
-
-  searchInput.addEventListener('input', () => {
-    const query = searchInput.value.trim().toLowerCase();
-    if (!query) {
-      searchResults.classList.add('hidden');
-      return;
-    }
-
-    const matches = allPatients.filter(p =>
-      p.phone.includes(query) ||
-      p.patientId.toLowerCase().includes(query) ||
-      `${p.firstName} ${p.lastName}`.toLowerCase().includes(query)
-    );
-
-    if (!matches.length) {
-      searchResults.innerHTML = '<div class="search-result-item"><div class="search-result-info"><span class="search-result-name">No patients found</span></div></div>';
-    } else {
-      searchResults.innerHTML = matches.map(p => `
-        <div class="search-result-item" data-id="${p.id}">
-          <div class="search-result-info">
-            <span class="search-result-name">${p.firstName} ${p.lastName}</span>
-            <span class="search-result-meta">${p.age} ${p.gender[0]} &bull; ${p.phone}</span>
-          </div>
-          <span class="search-result-id">${p.patientId}</span>
-        </div>
-      `).join('');
-
-      searchResults.querySelectorAll('.search-result-item[data-id]').forEach(item => {
-        item.addEventListener('click', () => {
-          const patient = allPatients.find(p => p.id === item.dataset.id);
-          if (patient) fillForm(patient);
-          searchResults.classList.add('hidden');
-          searchInput.value = '';
-        });
-      });
-    }
-
-    searchResults.classList.remove('hidden');
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!searchResults.contains(e.target) && e.target !== searchInput) {
-      searchResults.classList.add('hidden');
-    }
-  });
-
-  document.getElementById('register-btn').addEventListener('click', handleRegister);
-  document.getElementById('close-success-modal').addEventListener('click', closeModal);
-  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+  document
+    .getElementById('register-btn')
+    .addEventListener('click', handleRegister);
+  document
+    .getElementById('close-success-modal')
+    .addEventListener('click', closeModal);
+  document
+    .getElementById('modal-close-btn')
+    .addEventListener('click', closeModal);
   document.getElementById('modal-book-appointment').addEventListener('click', () => {
     closeModal();
     navigateTo('appointments');
@@ -75,21 +27,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindRegistrationModals();
 });
 
-function fillForm(patient) {
-  document.getElementById('first-name').value = patient.firstName;
-  document.getElementById('last-name').value = patient.lastName;
-  document.getElementById('email').value = patient.email;
-  document.getElementById('phone').value = patient.phone;
-  document.getElementById('dob').value = patient.dob;
-  document.getElementById('gender').value = patient.gender;
-  document.getElementById('blood-group').value = patient.bloodGroup;
-  document.getElementById('guardian').value = patient.guardian || '';
+async function refreshWalkIns() {
+  try {
+    const response = await fetch(`${WALKINS_API_BASE_URL}/walkins`, {
+      headers: { role: 'frontdesk' }
+    });
 
-  setSelectedPatient(patient);
-  showToast(`Loaded patient: ${patient.firstName} ${patient.lastName}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch walk-ins');
+    }
+
+    walkins = await response.json();
+    renderRecentRegistrations(walkins);
+  } catch (error) {
+    console.error('Walk-in fetch error:', error);
+    showToast('Failed to load recent registrations.', 'error');
+  }
 }
 
-function handleRegister() {
+async function handleRegister() {
   const fields = [
     { id: 'first-name', errId: 'err-first-name', rules: { required: true } },
     { id: 'last-name', errId: 'err-last-name', rules: { required: true } },
@@ -112,9 +68,7 @@ function handleRegister() {
     return;
   }
 
-  const newPatient = {
-    id: 'P_NEW_' + Date.now(),
-    patientId: 'S' + Math.floor(10000 + Math.random() * 90000),
+  const newWalkIn = {
     firstName: document.getElementById('first-name').value.trim(),
     lastName: document.getElementById('last-name').value.trim(),
     email: document.getElementById('email').value.trim(),
@@ -122,24 +76,33 @@ function handleRegister() {
     dob: document.getElementById('dob').value.trim(),
     gender: document.getElementById('gender').value,
     bloodGroup: document.getElementById('blood-group').value,
-    guardian: document.getElementById('guardian').value.trim(),
-    age: calculateAge(document.getElementById('dob').value.trim())
+    guardianName: document.getElementById('guardian').value.trim()
   };
 
-  setSelectedPatient(newPatient);
-  saveRecentRegistration(newPatient);
-  renderRecentRegistrations(getRecentRegistrations(allPatients));
+  try {
+    const response = await fetch(`${WALKINS_API_BASE_URL}/walkins`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        role: 'frontdesk'
+      },
+      body: JSON.stringify(newWalkIn)
+    });
 
-  document.getElementById('modal-success-body').innerHTML = `
-    <div class="modal-success-row"><span>Patient Name</span><span>${newPatient.firstName} ${newPatient.lastName}</span></div>
-    <div class="modal-success-row"><span>Patient ID</span><span>${newPatient.patientId}</span></div>
-    <div class="modal-success-row"><span>Age &amp; Gender</span><span>${newPatient.age} ${newPatient.gender}</span></div>
-    <div class="modal-success-row"><span>Phone Number</span><span>${newPatient.phone}</span></div>
-    <div class="modal-success-row"><span>Blood Group</span><span>${newPatient.bloodGroup}</span></div>
-  `;
-  document.getElementById('success-modal').classList.remove('hidden');
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(payload?.message || 'Failed to create walk-in registration');
+    }
 
-  clearForm();
+    setSelectedPatient(normalizeRegisteredPatient(payload));
+    clearForm();
+    await refreshWalkIns();
+    openSuccessModal(payload);
+    showToast('Walk-in registered successfully.');
+  } catch (error) {
+    console.error('Walk-in registration error:', error);
+    showToast(error.message || 'Failed to register walk-in.', 'error');
+  }
 }
 
 function renderRecentRegistrations(registrations) {
@@ -152,13 +115,13 @@ function renderRecentRegistrations(registrations) {
   }
 
   const visibleRegistrations = registrations.slice(0, 4);
-  container.innerHTML = visibleRegistrations.map(patient => `
+  container.innerHTML = visibleRegistrations.map(walkin => `
     <div class="recent-reg-entry">
       <div>
-        <div class="recent-reg-name">${patient.firstName} ${patient.lastName}</div>
-        <div class="recent-reg-meta">${patient.patientId} | ${patient.age} ${patient.gender} | ${patient.phone}</div>
+        <div class="recent-reg-name">${walkin.firstName} ${walkin.lastName}</div>
+        <div class="recent-reg-meta">${walkin.id} | ${calculateAge(walkin.dob)} ${walkin.gender} | ${walkin.phone}</div>
       </div>
-      <button class="btn btn-outline btn-sm" data-registration-view="${patient.patientId}">View details</button>
+      <button class="btn btn-outline btn-sm" data-registration-view="${walkin.id}">View details</button>
     </div>
   `).join('');
 
@@ -168,8 +131,8 @@ function renderRecentRegistrations(registrations) {
 function bindRegistrationButtons(registrations) {
   document.querySelectorAll('[data-registration-view]').forEach(button => {
     button.onclick = () => {
-      const patient = registrations.find(item => item.patientId === button.dataset.registrationView);
-      if (patient) openRegistrationDetail(patient);
+      const walkin = registrations.find(item => item.id === button.dataset.registrationView);
+      if (walkin) openRegistrationDetail(walkin);
     };
   });
 }
@@ -181,24 +144,23 @@ function bindRegistrationModals() {
 
   viewAllButton?.addEventListener('click', (event) => {
     event.preventDefault();
-    const registrations = getRecentRegistrations(allPatients);
 
-    listContainer.innerHTML = registrations.map(patient => `
+    listContainer.innerHTML = walkins.map(walkin => `
       <div class="modal-reg-entry">
         <div>
-          <div class="recent-reg-name">${patient.firstName} ${patient.lastName}</div>
-          <div class="recent-reg-meta">${patient.patientId} | ${patient.age} ${patient.gender} | ${patient.phone}</div>
+          <div class="recent-reg-name">${walkin.firstName} ${walkin.lastName}</div>
+          <div class="recent-reg-meta">${walkin.id} | ${calculateAge(walkin.dob)} ${walkin.gender} | ${walkin.phone}</div>
         </div>
-        <button class="btn btn-outline btn-sm" data-modal-registration-view="${patient.patientId}">View details</button>
+        <button class="btn btn-outline btn-sm" data-modal-registration-view="${walkin.id}">View details</button>
       </div>
     `).join('');
 
     listContainer.querySelectorAll('[data-modal-registration-view]').forEach(button => {
       button.onclick = () => {
-        const patient = registrations.find(item => item.patientId === button.dataset.modalRegistrationView);
-        if (patient) {
+        const walkin = walkins.find(item => item.id === button.dataset.modalRegistrationView);
+        if (walkin) {
           listModal.classList.add('hidden');
-          openRegistrationDetail(patient);
+          openRegistrationDetail(walkin);
         }
       };
     });
@@ -216,18 +178,59 @@ function bindRegistrationModals() {
 function openRegistrationDetail(patient) {
   const container = document.getElementById('registration-detail-body');
   const modal = document.getElementById('registration-detail-modal');
+  const age = calculateAge(patient.dob);
+  const registrationLabel = patient.registrationId || patient.id;
 
   container.innerHTML = `
     <div class="modal-success-row"><span>Patient Name</span><span>${patient.firstName} ${patient.lastName}</span></div>
-    <div class="modal-success-row"><span>Patient ID</span><span>${patient.patientId}</span></div>
-    <div class="modal-success-row"><span>Age &amp; Gender</span><span>${patient.age} ${patient.gender}</span></div>
+    <div class="modal-success-row"><span>Registration ID</span><span>${registrationLabel}</span></div>
+    <div class="modal-success-row"><span>Age &amp; Gender</span><span>${age} ${patient.gender}</span></div>
     <div class="modal-success-row"><span>Email</span><span>${patient.email || '-'}</span></div>
     <div class="modal-success-row"><span>Phone Number</span><span>${patient.phone}</span></div>
     <div class="modal-success-row"><span>Blood Group</span><span>${patient.bloodGroup || '-'}</span></div>
-    <div class="modal-success-row"><span>Guardian</span><span>${patient.guardian || '-'}</span></div>
+    <div class="modal-success-row"><span>Guardian</span><span>${patient.guardianName || '-'}</span></div>
   `;
 
   modal.classList.remove('hidden');
+}
+
+function openSuccessModal(patient) {
+  const age = calculateAge(patient.dob);
+  const registrationLabel = patient.registrationId || patient.id;
+
+  document.getElementById('modal-success-body').innerHTML = `
+    <div class="modal-success-row"><span>Patient Name</span><span>${patient.firstName} ${patient.lastName}</span></div>
+    <div class="modal-success-row"><span>Registration ID</span><span>${registrationLabel}</span></div>
+    <div class="modal-success-row"><span>Age &amp; Gender</span><span>${age} ${patient.gender}</span></div>
+    <div class="modal-success-row"><span>Phone Number</span><span>${patient.phone}</span></div>
+    <div class="modal-success-row"><span>Blood Group</span><span>${patient.bloodGroup}</span></div>
+  `;
+  document.getElementById('success-modal').classList.remove('hidden');
+}
+
+function normalizeRegisteredPatient(patient) {
+  const userId = patient.userId || patient.patientId || patient.id;
+
+  return {
+    ...patient,
+    id: userId,
+    userId,
+    patientId: userId,
+    name:
+      patient.name ||
+      `${patient.firstName || ''} ${patient.lastName || ''}`.trim() ||
+      userId,
+    dob: normalizeDobToIso(patient.dob),
+  };
+}
+
+function normalizeDobToIso(dob) {
+  if (!dob) return dob;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) return dob;
+
+  const [day, month, year] = dob.split('-');
+  if (!day || !month || !year) return dob;
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
 function clearForm() {
@@ -246,8 +249,16 @@ function closeModal() {
 
 function calculateAge(dob) {
   if (!dob) return '';
-  const [d, m, y] = dob.split('-').map(Number);
-  const birth = new Date(y, m - 1, d);
+  let birth;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+    birth = new Date(`${dob}T00:00:00`);
+  } else {
+    const [d, m, y] = dob.split('-').map(Number);
+    birth = new Date(y, m - 1, d);
+  }
+
+  if (Number.isNaN(birth.getTime())) return '';
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();

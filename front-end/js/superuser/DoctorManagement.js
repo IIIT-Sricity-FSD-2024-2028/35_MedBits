@@ -1,54 +1,58 @@
-const DEFAULT_DOCTORS = [
-    { id: 1, firstName: 'Alisha', lastName: 'Sharma', dob: '1985-05-12', email: 'alisha.sharma@medbits.com', gender: 'Female', contact: '9999999999', specialization: 'Cardiology', qualification: 'DM', department: 'Cardiology', experience: '168 months', experienceMonths: '168', availableDays: '6 day(s)/week', availableDaysCount: '6', timeSlots: '8:00 AM to 1:00 PM', slotDuration: '20 minutes', slotDurationMinutes: '20' },
-    { id: 2, firstName: 'Elizabeth', lastName: 'O', dob: '1980-11-30', email: 'elizabeth.o@medbits.com', gender: 'Female', contact: '8888888888', specialization: 'Neurology', qualification: 'DM', department: 'Cardiology', experience: '216 months', experienceMonths: '216', availableDays: '5 day(s)/week', availableDaysCount: '5', timeSlots: '10:00 AM to 3:00 PM', slotDuration: '30 minutes', slotDurationMinutes: '30' },
-    { id: 3, firstName: 'Ana', lastName: 'Mary', dob: '1990-08-07', email: 'ana.mary@medbits.com', gender: 'Female', contact: '7777777777', specialization: 'Nephrology', qualification: 'MD', department: 'Dermatology', experience: '108 months', experienceMonths: '108', availableDays: '5 day(s)/week', availableDaysCount: '5', timeSlots: '9:00 AM to 2:00 PM', slotDuration: '15 minutes', slotDurationMinutes: '15' },
-    { id: 4, firstName: 'Sarah', lastName: 'Johnson', dob: '1989-10-23', email: 'doc112@gmail.com', gender: 'Female', contact: '9823165784', specialization: 'Dermatology', qualification: 'MD', department: 'Dermatology', experience: '132 months', experienceMonths: '132', availableDays: '5 day(s)/week', availableDaysCount: '5', timeSlots: '9:00 AM to 2:00 PM', slotDuration: '15 minutes', slotDurationMinutes: '15' },
-    { id: 5, firstName: 'Sarah', lastName: 'Williams', dob: '1987-03-15', email: 'sarah.williams@medbits.com', gender: 'Female', contact: '6666666666', specialization: 'Cardiology', qualification: 'MBBS', department: 'FrontDesk', experience: '84 months', experienceMonths: '84', availableDays: '5 day(s)/week', availableDaysCount: '5', timeSlots: '9:00 AM to 5:00 PM', slotDuration: '15 minutes', slotDurationMinutes: '15' },
-];
+const API_BASE_URL = 'http://localhost:3000';
 
 window.DoctorStore = {
-    key: 'medbits_doctors',
-    getAll() {
-        try {
-            const raw = localStorage.getItem(this.key);
-            if (raw) return JSON.parse(raw);
-        } catch {}
-        this.saveAll(DEFAULT_DOCTORS);
-        return DEFAULT_DOCTORS;
+    doctors: [],
+    async load() {
+        const response = await fetch(`${API_BASE_URL}/doctors`, {
+            headers: { role: getCurrentRole() },
+        });
+        if (!response.ok) throw new Error(await getErrorMessage(response));
+        const payload = await response.json();
+        console.log('GET /doctors response (admin):', payload);
+        this.doctors = payload.map(normalizeDoctor);
+        return this.doctors;
     },
-    saveAll(doctors) { try { localStorage.setItem(this.key, JSON.stringify(doctors)); } catch {} },
-    getById(id) { return this.getAll().find(d => d.id === Number(id)) || null; },
-    add(doctor) {
-        const all = this.getAll();
-        doctor.id = all.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-        all.push(doctor);
-        this.saveAll(all);
+    getAll() { return this.doctors; },
+    getById(id) { return this.doctors.find(d => d.userId === id || d.id === id) || null; },
+    async add(doctor) {
+        const response = await fetch(`${API_BASE_URL}/doctors`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', role: getCurrentRole() },
+            body: JSON.stringify(doctor),
+        });
+        if (!response.ok) throw new Error(await getErrorMessage(response));
+        const created = normalizeDoctor(await response.json());
+        await this.load();
+        return created;
     },
-    update(id, updates) {
-        const all = this.getAll();
-        const index = all.findIndex(d => d.id === Number(id));
-        if (index < 0) return false;
-        all[index] = { ...all[index], ...updates };
-        this.saveAll(all);
-        return true;
+    async update(userId, updates) {
+        const response = await fetch(`${API_BASE_URL}/doctors/${encodeURIComponent(userId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', role: getCurrentRole() },
+            body: JSON.stringify(updates),
+        });
+        if (!response.ok) throw new Error(await getErrorMessage(response));
+        const updated = normalizeDoctor(await response.json());
+        await this.load();
+        return updated;
     },
     search(query) {
         const q = query.trim().toLowerCase();
         return !q ? this.getAll() : this.getAll().filter(d =>
-            `${d.firstName} ${d.lastName}`.toLowerCase().includes(q) ||
+            d.name.toLowerCase().includes(q) ||
             d.department.toLowerCase().includes(q) ||
             d.specialization.toLowerCase().includes(q) ||
-            d.contact.includes(q)
+            d.phone.includes(q)
         );
     },
-    fullName: doctor => `${doctor.firstName} ${doctor.lastName}`,
+    fullName: doctor => doctor.name,
 };
 
 const PAGES = ['page-view-doctor', 'page-view-all-doctor', 'page-add-doctor', 'page-edit-doctor'];
 const DETAIL_FIELDS = {
-    'detail-personal': [['firstName', 'First Name'], ['lastName', 'Last Name'], ['dob', 'Date of Birth'], ['email', 'E-Mail Id'], ['gender', 'Gender'], ['contact', 'Contact No']],
-    'detail-employment': [['specialization', 'Specialization'], ['qualification', 'Qualification'], ['department', 'Department'], ['experience', 'Experience']],
-    'detail-availability': [['availableDays', 'Available Days'], ['timeSlots', 'Time Slots'], ['slotDuration', 'Slot Duration']],
+    'detail-personal': [['name', 'Doctor Name'], ['userId', 'User ID'], ['email', 'E-Mail Id'], ['gender', 'Gender'], ['phone', 'Contact No']],
+    'detail-employment': [['specialization', 'Specialization'], ['qualification', 'Qualification'], ['department', 'Department'], ['experienceLabel', 'Experience']],
+    'detail-availability': [['slotsLabel', 'Slots']],
 };
 const FORM_FIELDS = ['firstName', 'lastName', 'specialization', 'qualification', 'department'];
 const formState = { add: false, edit: false };
@@ -58,20 +62,45 @@ let editDoctorId = null;
 const $ = id => document.getElementById(id);
 const setInvalid = (el, invalid) => el && el.classList.toggle('invalid', invalid);
 const removeEditDropdown = () => $('mb-search-dropdown')?.remove();
+
+function getCurrentRole() {
+    try {
+        return JSON.parse(localStorage.getItem('user'))?.role || 'admin';
+    } catch {
+        return 'admin';
+    }
+}
+
+async function getErrorMessage(response) {
+    const body = await response.json().catch(() => null);
+    return Array.isArray(body?.message) ? body.message.join(', ') : body?.message || 'Request failed.';
+}
+
+function normalizeDoctor(doctor) {
+    const [firstName = '', ...rest] = (doctor.name || '').replace(/^Dr\.\s*/i, '').split(' ');
+    const experience = Number(doctor.experience) || 0;
+    const slots = Array.isArray(doctor.slots) ? doctor.slots : [];
+    return {
+        ...doctor,
+        id: doctor.id || doctor.userId,
+        userId: doctor.userId || doctor.id,
+        firstName,
+        lastName: rest.join(' '),
+        department: doctor.department || '',
+        specialization: doctor.specialization || '',
+        phone: doctor.phone || '',
+        contact: doctor.phone || '',
+        experience,
+        experienceLabel: `${experience} year(s)`,
+        slots,
+        slotsLabel: slots.join(', ') || '-',
+    };
+}
+
 const formatTime = value => {
     if (!value) return '';
     const [h, m] = value.split(':').map(Number);
     return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
-};
-const to24h = value => {
-    if (!value || /^\d{2}:\d{2}$/.test(value)) return value || '';
-    const match = value.match(/(\d+):(\d+)\s*(AM|PM)/i);
-    if (!match) return '';
-    let [, h, m, meridiem] = match;
-    h = Number(h);
-    if (/PM/i.test(meridiem) && h !== 12) h += 12;
-    if (/AM/i.test(meridiem) && h === 12) h = 0;
-    return `${String(h).padStart(2, '0')}:${m}`;
 };
 
 function showToast(message, type = 'success') {
@@ -95,12 +124,21 @@ function navigateTo(pageId, doctorId = null) {
     lucide.createIcons();
 }
 
-function initViewPage() {
-    renderDoctorRows(DoctorStore.getAll());
+async function initViewPage() {
+    await refreshDoctors();
     const search = $('view-search-input');
+    renderDoctorRows(DoctorStore.search(search?.value || ''));
     if (!search || search.dataset.bound) return;
     search.dataset.bound = 'true';
     search.addEventListener('input', () => renderDoctorRows(DoctorStore.search(search.value)));
+}
+
+async function refreshDoctors() {
+    try {
+        await DoctorStore.load();
+    } catch (error) {
+        showToast(error.message || 'Unable to load doctors.', 'error');
+    }
 }
 
 function renderDoctorRows(doctors) {
@@ -108,11 +146,11 @@ function renderDoctorRows(doctors) {
     if (!tbody) return;
     tbody.innerHTML = doctors.length ? doctors.map(d => `
         <tr>
-            <td class="doctor-name">${DoctorStore.fullName(d)}</td>
-            <td>${d.department}</td>
-            <td>${d.specialization}</td>
-            <td>${d.contact}</td>
-            <td><button class="view-link" data-view-id="${d.id}">view all</button></td>
+            <td class="doctor-name">${d.name}</td>
+            <td>${d.department || '-'}</td>
+            <td>${d.specialization || '-'}</td>
+            <td>${d.phone || '-'}</td>
+            <td><button class="view-link" data-view-id="${d.userId}">view all</button></td>
         </tr>
     `).join('') : '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:2rem;">No doctors found.</td></tr>';
 }
@@ -120,7 +158,7 @@ function renderDoctorRows(doctors) {
 function initDetailPage(id) {
     const doctor = DoctorStore.getById(id);
     if (!doctor) return;
-    currentDoctorId = doctor.id;
+    currentDoctorId = doctor.userId;
     $('detail-title').textContent = `All Details of ${DoctorStore.fullName(doctor)}`;
     Object.entries(DETAIL_FIELDS).forEach(([gridId, fields]) => {
         $(gridId).innerHTML = fields.map(([key, label]) => `
@@ -136,22 +174,21 @@ function clearInvalid(form) {
     form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 }
 
-function validateForm(form, start, end) {
+function validateForm(form, start, end, type) {
     let valid = true;
     const checks = [
         ['firstName', value => /^[A-Za-z]+$/.test(value.trim())],
         ['lastName', value => /^[A-Za-z]+$/.test(value.trim())],
         ['specialization', value => /^[A-Za-z]+$/.test(value.trim())],
-        ['qualification', value => /^[A-Za-z]+$/.test(value.trim())],
-        ['department', value => /^[A-Za-z]+$/.test(value.trim())],
-        ['dob', value => !!value],
+        ['qualification', value => value.trim() === '' || /^[A-Za-z]+$/.test(value.trim())],
+        ['department', value => value.trim() === '' || /^[A-Za-z]+$/.test(value.trim())],
         ['email', value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())],
         ['gender', value => !!value],
-        ['contact', value => /^\d{10}$/.test(value.trim())],
+        ['contact', value => value.trim() === '' || /^\d{10}$/.test(value.trim())],
         ['experience', value => value !== '' && Number(value) >= 0],
-        ['availableDays', value => value !== '' && Number(value) >= 1 && Number(value) <= 7],
         ['slotDuration', value => value !== '' && Number(value) >= 5],
     ];
+    if (type === 'add') checks.push(['password', value => value.length > 0]);
     checks.forEach(([name, rule]) => {
         const input = form.querySelector(`[name="${name}"]`);
         const ok = !!input && rule(input.value);
@@ -164,17 +201,37 @@ function validateForm(form, start, end) {
     return valid && slotOk;
 }
 
-function buildPayload(form) {
+function buildSlots(start, end, durationMinutes) {
+    const [startHour, startMinute] = start.split(':').map(Number);
+    const [endHour, endMinute] = end.split(':').map(Number);
+    const slots = [];
+    let cursor = startHour * 60 + startMinute;
+    const last = endHour * 60 + endMinute;
+    while (cursor < last) {
+        const hour = Math.floor(cursor / 60);
+        const minute = cursor % 60;
+        slots.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+        cursor += durationMinutes;
+    }
+    return slots;
+}
+
+function buildPayload(form, start, end) {
     const data = Object.fromEntries(new FormData(form).entries());
-    return {
-        ...data,
-        experienceMonths: data.experience,
-        experience: `${data.experience} months`,
-        availableDaysCount: data.availableDays,
-        availableDays: `${data.availableDays} day(s)/week`,
-        slotDurationMinutes: data.slotDuration,
-        slotDuration: `${data.slotDuration} minutes`,
+    const name = `Dr. ${data.firstName.trim()} ${data.lastName.trim()}`.trim();
+    const payload = {
+        name,
+        email: data.email.trim().toLowerCase(),
+        specialization: data.specialization.trim(),
+        department: data.department.trim() || data.specialization.trim(),
+        qualification: data.qualification.trim(),
+        experience: Number(data.experience) || 0,
+        gender: data.gender,
+        phone: data.contact.trim(),
+        slots: buildSlots(start.value, end.value, Number(data.slotDuration)),
     };
+    if (data.password) payload.password = data.password;
+    return payload;
 }
 
 function bindWordField(field) {
@@ -183,18 +240,33 @@ function bindWordField(field) {
 }
 
 function populateForm(form, doctor, start, end, hidden) {
-    ['firstName', 'lastName', 'dob', 'email', 'gender', 'contact', 'specialization', 'qualification', 'department'].forEach(name => {
-        const input = form.querySelector(`[name="${name}"]`);
-        if (input) input.value = doctor[name] || '';
-    });
-    form.querySelector('[name="experience"]').value = parseInt(doctor.experienceMonths || doctor.experience) || '';
-    form.querySelector('[name="availableDays"]').value = parseInt(doctor.availableDaysCount || doctor.availableDays) || '';
-    form.querySelector('[name="slotDuration"]').value = parseInt(doctor.slotDurationMinutes || doctor.slotDuration) || '';
-    const [from = '', to = ''] = (doctor.timeSlots || '').split(' to ');
-    start.value = to24h(from.trim());
-    end.value = to24h(to.trim());
+    form.querySelector('[name="firstName"]').value = doctor.firstName || '';
+    form.querySelector('[name="lastName"]').value = doctor.lastName || '';
+    form.querySelector('[name="email"]').value = doctor.email || '';
+    form.querySelector('[name="gender"]').value = doctor.gender || '';
+    form.querySelector('[name="contact"]').value = doctor.phone || '';
+    form.querySelector('[name="specialization"]').value = doctor.specialization || '';
+    form.querySelector('[name="qualification"]').value = doctor.qualification || '';
+    form.querySelector('[name="department"]').value = doctor.department || '';
+    form.querySelector('[name="experience"]').value = doctor.experience || 0;
+    const slots = doctor.slots || [];
+    start.value = slots[0] || '';
+    end.value = slots.length > 1 ? addMinutes(slots[slots.length - 1], timeDiffMinutes(slots[0], slots[1])) : '';
+    form.querySelector('[name="slotDuration"]').value = slots.length > 1 ? timeDiffMinutes(slots[0], slots[1]) : 30;
     hidden.value = start.value && end.value ? `${formatTime(start.value)} to ${formatTime(end.value)}` : '';
-    editDoctorId = doctor.id;
+    editDoctorId = doctor.userId;
+}
+
+function timeDiffMinutes(start, end) {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    return (eh * 60 + em) - (sh * 60 + sm);
+}
+
+function addMinutes(time, minutesToAdd) {
+    const [hour, minute] = time.split(':').map(Number);
+    const total = hour * 60 + minute + minutesToAdd;
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 function renderEditDropdown(doctors, searchBox, onPick) {
@@ -241,7 +313,7 @@ function wireForm(type) {
         search.addEventListener('blur', () => setTimeout(removeEditDropdown, 150));
     }
 
-    form.addEventListener('submit', event => {
+    form.addEventListener('submit', async event => {
         event.preventDefault();
         clearInvalid(form);
         if (type === 'edit' && !editDoctorId) {
@@ -250,19 +322,22 @@ function wireForm(type) {
             return;
         }
         syncTime();
-        if (!validateForm(form, start, end)) return showToast('Please fix the highlighted fields.', 'error');
-        const payload = buildPayload(form);
-        if (type === 'add') {
-            DoctorStore.add(payload);
-            form.reset();
-            hidden.value = '';
-            showToast('Doctor profile added successfully!');
-        } else if (DoctorStore.update(editDoctorId, payload)) {
-            showToast('Doctor profile updated successfully!');
-        } else {
-            return showToast('Update failed. Doctor not found.', 'error');
+        if (!validateForm(form, start, end, type)) return showToast('Please fix the highlighted fields.', 'error');
+        const payload = buildPayload(form, start, end);
+        try {
+            if (type === 'add') {
+                await DoctorStore.add(payload);
+                form.reset();
+                hidden.value = '';
+                showToast('Doctor profile added successfully!');
+            } else {
+                await DoctorStore.update(editDoctorId, payload);
+                showToast('Doctor profile updated successfully!');
+            }
+            setTimeout(() => navigateTo('page-view-doctor'), 1000);
+        } catch (error) {
+            showToast(error.message || 'Save failed.', 'error');
         }
-        setTimeout(() => navigateTo('page-view-doctor'), 1500);
     });
 
     $(`${type}-cancel-btn`)?.addEventListener('click', () => {
@@ -270,7 +345,8 @@ function wireForm(type) {
     });
 }
 
-function initManagedForm(type, preloadId) {
+async function initManagedForm(type, preloadId) {
+    await refreshDoctors();
     wireForm(type);
     const form = $(`${type}DoctorForm`);
     const start = $(`${type}-timeSlotStart`);
@@ -297,7 +373,7 @@ document.addEventListener('click', event => {
     const button = event.target.closest('[data-action], [data-view-id], #back-to-list-btn');
     if (!button) return;
     if (button.id === 'back-to-list-btn') return navigateTo('page-view-doctor');
-    if (button.dataset.viewId) return navigateTo('page-view-all-doctor', currentDoctorId = Number(button.dataset.viewId));
+    if (button.dataset.viewId) return navigateTo('page-view-all-doctor', currentDoctorId = button.dataset.viewId);
     const page = { 'view-doctor': 'page-view-doctor', 'add-doctor': 'page-add-doctor', 'edit-doctor': 'page-edit-doctor' }[button.dataset.action];
     if (page) navigateTo(page, currentDoctorId);
 });

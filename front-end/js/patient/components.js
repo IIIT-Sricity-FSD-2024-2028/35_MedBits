@@ -13,9 +13,10 @@
    ============================================ */
 
 // SESSION_KEY must match the one in auth.js and utils.js
-const _SESSION_KEY = 'medbits_session';
+const _SESSION_KEY = 'user';
 
 async function loadComponents(activePage, pageTitle) {
+  if (!requireRole('patient')) return;
 
   // Fetch sidebar and navbar HTML fragments.
   // Patient pages are at:  html/patient/*.html

@@ -3,9 +3,10 @@
    MEDBITS Frontdesk Portal
    ============================================================ */
 
+const FRONTDESK_API_BASE_URL = 'http://localhost:3000';
+
 // --- Data Store (loaded once, shared globally) ---
 const AppState = {
-  data: null,
   currentUser: null
 };
 
@@ -15,36 +16,38 @@ const STORAGE_KEYS = {
   bookedFollowUps: 'medbits_frontdesk_booked_followups'
 };
 
-// --- Load JSON data ---
-async function loadData() {
-  if (AppState.data) return AppState.data;
-
-  try {
-    const resp = await fetch('../../js/data/data.json') 
-
-    if (!resp.ok) throw new Error('Failed to load data');
-
-    AppState.data = await resp.json();
-    return AppState.data;
-
-  } catch (e) {
-    console.error('Data load error:', e);
-    return null;
-  }
-}
-
 // --- Session management (localStorage) ---
 function getSession() {
-  const raw = localStorage.getItem('medbits_session');
+  const raw = localStorage.getItem('user');
   return raw ? JSON.parse(raw) : null;
 }
 
 function setSession(data) {
-  localStorage.setItem('medbits_session', JSON.stringify(data));
+  localStorage.setItem('user', JSON.stringify(data));
+}
+
+async function loadCurrentFrontdeskProfile() {
+  const session = getSession();
+  if (!session?.id || session.role !== 'frontdesk') return null;
+
+  const response = await fetch(
+    `${FRONTDESK_API_BASE_URL}/frontdesk/${encodeURIComponent(session.id)}`,
+    { headers: { role: 'frontdesk' } },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to load frontdesk profile');
+  }
+
+  const profile = await response.json();
+  const updatedSession = { ...session, name: profile.name, email: profile.email };
+  setSession(updatedSession);
+  AppState.currentUser = profile;
+  return profile;
 }
 
 function clearSession() {
-  localStorage.removeItem('medbits_session');
+  localStorage.removeItem('user');
   localStorage.removeItem('medbits_selected_patient');
   localStorage.removeItem('medbits_selected_specialty');
   localStorage.removeItem('medbits_selected_doctor');
@@ -118,20 +121,7 @@ function getQueueItems() {
   const storedQueue = getStoredQueue();
   if (Array.isArray(storedQueue) && storedQueue.length > 0) return storedQueue;
 
-  const defaultQueue = AppState.data?.queue;
-  if (Array.isArray(defaultQueue) && defaultQueue.length > 0) {
-    saveQueue(defaultQueue);
-    return defaultQueue;
-  }
-
   return Array.isArray(storedQueue) ? storedQueue : [];
-}
-
-function ensureQueueStore() {
-  const storedQueue = getStoredQueue();
-  if ((!Array.isArray(storedQueue) || storedQueue.length === 0) && AppState.data?.queue?.length) {
-    saveQueue(AppState.data.queue);
-  }
 }
 
 function getBookedFollowUpIds() {
@@ -186,13 +176,17 @@ function navigateTo(page) {
 // --- Render sidebar + topbar into page ---
 function renderShell(activePage) {
   const session = getSession();
-  const userName = session?.displayName || 'Sarah Williams';
+  if (!session || session.role !== 'frontdesk') {
+    window.location.href = '../login.html';
+    return;
+  }
+  const userName = session?.name || 'Frontdesk User';
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', href: 'dashboard.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>` },
     { id: 'walkin', label: 'Walk-in Registrations', href: 'walkin.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>` },
     { id: 'appointments', label: 'Appointment Management', href: 'appointments.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>` },
-    { id: 'followup', label: 'Follow-Up Coordination', href: 'followup.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>` },
+    { id: 'followup', label: 'Follow-Up & Referral Coordination', href: 'followup.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>` },
     { id: 'queue', label: 'Queue Management', href: 'queue.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="23" cy="15" r="4"/></svg>` },
     { id: 'profile', label: 'Profile', href: 'profile.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>` },
     { id: 'logout', label: 'Logout', href: '#', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>` }
@@ -210,7 +204,7 @@ function renderShell(activePage) {
     dashboard: ['Dashboard', 'Frontdesk Portal'],
     walkin: ['Walk-in Registration', 'Frontdesk Portal'],
     appointments: ['Appointment Management', 'Frontdesk Portal'],
-    followup: ['Follow-Up', 'Frontdesk Portal'],
+    followup: ['Follow-Up & Referral Coordination', 'Frontdesk Portal'],
     queue: ['Queue Management', 'Frontdesk Portal'],
     profile: ['Profile', 'Frontdesk Portal']
   };
@@ -221,6 +215,15 @@ function renderShell(activePage) {
   document.getElementById('topbar-title-h1').textContent = title;
   document.getElementById('topbar-subtitle').textContent = subtitle;
   document.getElementById('topbar-username').textContent = userName;
+  loadCurrentFrontdeskProfile()
+    .then((profile) => {
+      if (profile?.name) {
+        document.getElementById('topbar-username').textContent = profile.name;
+      }
+    })
+    .catch((error) => {
+      console.error('Frontdesk shell profile load error:', error);
+    });
   setupNotifications();
 
   // Logout handler
@@ -273,25 +276,47 @@ function renderNotifications() {
   const container = document.getElementById('notification-list');
   if (!container) return;
 
-  const queueItems = getQueueItems();
-  const waitingCount = queueItems.filter(item => item.status === 'Waiting').length;
-  const consultingCount = queueItems.filter(item => item.status === 'In Consultation').length;
+  fetch('http://localhost:3000/queue', {
+    headers: { role: 'frontdesk' },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Failed to load queue notifications');
+      }
 
-  const notifications = [
-    { title: `${waitingCount} patients waiting`, meta: 'Queue management', tone: 'warning' },
-    { title: `${consultingCount} consultations in progress`, meta: 'Doctor desks', tone: 'info' },
-    { title: 'Walk-in counter is active', meta: 'Front desk operations', tone: 'success' }
-  ];
+      return response.json();
+    })
+    .then((queueItems) => {
+      const waitingCount = queueItems.filter(item => item.status === 'waiting').length;
+      const consultingCount = queueItems.filter(item => item.status === 'in-consultation').length;
 
-  container.innerHTML = notifications.map(item => `
-    <div class="notification-item">
-      <span class="notification-dot notification-dot--${item.tone}"></span>
-      <div class="notification-copy">
-        <div class="notification-title">${item.title}</div>
-        <div class="notification-meta">${item.meta}</div>
-      </div>
-    </div>
-  `).join('');
+      const notifications = [
+        { title: `${waitingCount} patients waiting`, meta: 'Queue management', tone: 'warning' },
+        { title: `${consultingCount} consultations in progress`, meta: 'Doctor desks', tone: 'info' },
+        { title: 'Walk-in counter is active', meta: 'Front desk operations', tone: 'success' }
+      ];
+
+      container.innerHTML = notifications.map(item => `
+        <div class="notification-item">
+          <span class="notification-dot notification-dot--${item.tone}"></span>
+          <div class="notification-copy">
+            <div class="notification-title">${item.title}</div>
+            <div class="notification-meta">${item.meta}</div>
+          </div>
+        </div>
+      `).join('');
+    })
+    .catch(() => {
+      container.innerHTML = `
+        <div class="notification-item">
+          <span class="notification-dot notification-dot--info"></span>
+          <div class="notification-copy">
+            <div class="notification-title">Queue updates unavailable</div>
+            <div class="notification-meta">Backend connection needed</div>
+          </div>
+        </div>
+      `;
+    });
 }
 
 // --- Validate form fields ---

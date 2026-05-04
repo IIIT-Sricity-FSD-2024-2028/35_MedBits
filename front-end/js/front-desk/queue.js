@@ -1,187 +1,269 @@
 /* ============================================================
-   QUEUE.JS — Queue Management page logic
+   QUEUE.JS - Queue Management page logic
    ============================================================ */
+
+const QUEUE_API_BASE_URL = 'http://localhost:3000';
 
 let queueItems = [];
 let allPatients = [];
-let allSpecialties = [];
-let tokenCounters = {};
+let allDoctors = [];
+let queueRefreshTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   renderShell('queue');
 
-  const data = await loadData();
-  if (!data) {
-    showToast('Failed to load data.', 'error');
+  try {
+    await Promise.all([loadPatients(), loadDoctors(), loadAllQueueItems()]);
+    populatePatientSelect();
+    populateDoctorSelect();
+    renderQueue();
+  } catch (error) {
+    console.error('Queue init error:', error);
+    showToast('Failed to load queue.', 'error');
     return;
   }
 
-  ensureQueueStore();
-  queueItems = [...getQueueItems()];
-  allPatients = data.patients;
-  allSpecialties = data.specialties;
-  initializeTokenCounters();
-
-  // Populate patient dropdown
-  const patientSelect = document.getElementById('patient-select');
-  allPatients.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = `PAT-00${allPatients.indexOf(p) + 1} ${p.firstName} ${p.lastName}`;
-    patientSelect.appendChild(opt);
-  });
-
-  // Populate specialty dropdown
-  const specSelect = document.getElementById('specialty-select');
-  allSpecialties.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s.id;
-    opt.textContent = s.name;
-    specSelect.appendChild(opt);
-  });
-
-  specSelect.addEventListener('change', renderQueue);
-
-  // Render queue
-  renderQueue();
-
-  // Generate token button
-  document.getElementById('generate-token-btn').addEventListener('click', generateToken);
-
-  // Close token modal
+  document.getElementById('doctor-select').addEventListener('change', renderQueue);
+  document
+    .getElementById('generate-token-btn')
+    .addEventListener('click', () => void generateToken());
   document.getElementById('close-token-modal').addEventListener('click', () => {
     document.getElementById('token-modal').classList.add('hidden');
   });
+
+  startQueueRefresh();
 });
 
-// --- Render Queue List ---
+async function loadPatients() {
+  const response = await fetch(`${QUEUE_API_BASE_URL}/patients`, {
+    headers: { role: 'frontdesk' },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load patients');
+  }
+
+  allPatients = await response.json();
+}
+
+async function loadDoctors() {
+  const response = await fetch(`${QUEUE_API_BASE_URL}/doctors`, {
+    headers: { role: 'frontdesk' },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load doctors');
+  }
+
+  const payload = await response.json();
+  console.log('GET /doctors response (frontdesk queue):', payload);
+  allDoctors = payload.map((doctor) => ({
+    ...doctor,
+    id: doctor.userId || doctor.id,
+    userId: doctor.userId || doctor.id,
+    slots: Array.isArray(doctor.slots) ? doctor.slots : [],
+  }));
+}
+
+async function loadAllQueueItems() {
+  const response = await fetch(`${QUEUE_API_BASE_URL}/queue`, {
+    headers: { role: 'frontdesk' },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load queue');
+  }
+
+  queueItems = await response.json();
+}
+
+function populatePatientSelect() {
+  const patientSelect = document.getElementById('patient-select');
+  patientSelect.innerHTML = '<option value="">Select Patient...</option>';
+
+  allPatients.forEach((patient) => {
+    const option = document.createElement('option');
+    option.value = patient.userId;
+    option.textContent = `${patient.userId} ${patient.firstName} ${patient.lastName}`;
+    patientSelect.appendChild(option);
+  });
+}
+
+function populateDoctorSelect() {
+  const doctorSelect = document.getElementById('doctor-select');
+  doctorSelect.innerHTML = '<option value="">All Doctors</option>';
+
+  allDoctors.forEach((doctor) => {
+    const option = document.createElement('option');
+    option.value = doctor.id;
+    option.textContent = `${doctor.name} - ${doctor.specialization}`;
+    doctorSelect.appendChild(option);
+  });
+}
+
 function renderQueue() {
   const container = document.getElementById('waiting-list-container');
   const countBadge = document.getElementById('queue-count');
-  const selectedSpecialtyId = document.getElementById('specialty-select').value;
-  const selectedSpecialty = allSpecialties.find(s => s.id === selectedSpecialtyId);
-  const visibleQueueItems = selectedSpecialty
-    ? queueItems.filter(item => item.specialty === selectedSpecialty.name)
+  const selectedDoctorId = document.getElementById('doctor-select').value;
+
+  const visibleItems = selectedDoctorId
+    ? queueItems.filter((item) => item.doctorId === selectedDoctorId)
     : queueItems;
 
-  countBadge.textContent = `${visibleQueueItems.length} patient${visibleQueueItems.length !== 1 ? 's' : ''}`;
+  countBadge.textContent = `${visibleItems.length} patient${visibleItems.length !== 1 ? 's' : ''}`;
 
-  if (!visibleQueueItems.length) {
+  if (!visibleItems.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <circle cx="23" cy="15" r="4"/>
-        </svg>
-        <p>${selectedSpecialty ? `No patients in ${selectedSpecialty.name} queue` : 'No patients in queue'}</p>
-      </div>`;
+        <p>${selectedDoctorId ? 'No patients in this doctor queue' : 'No patients in queue'}</p>
+      </div>
+    `;
     return;
   }
 
-  // Status order: In Consultation first, then Confirmed, Waiting, Pending
-  const order = { 'In Consultation': 0, 'Confirmed': 1, 'Waiting': 2, 'Pending': 3 };
-  const sorted = [...visibleQueueItems].sort((a, b) => (order[a.status] ?? 4) - (order[b.status] ?? 4));
-
-  container.innerHTML = sorted.map(item => {
-    const statusClass = item.status.toLowerCase().replace(' ', '-');
-    const badgeClass = getBadgeClass(item.status);
-
-    return `
-      <div class="queue-entry queue-entry--${statusClass}">
-        <div class="queue-entry-info">
-          <span class="queue-entry-name">${item.patientName}</span>
-          <div class="queue-entry-meta">
-            <span>${item.age}</span>
-            <span>${item.gender}</span>
-            <span>${item.specialty}</span>
-            ${item.doctorName ? `<span>${item.doctorName}</span>` : ''}
+  container.innerHTML = visibleItems
+    .map(
+      (item) => `
+        <div class="queue-entry queue-entry--${item.status}">
+          <div class="queue-entry-info">
+            <span class="queue-entry-name">${item.patient?.name || item.userId}</span>
+            <div class="queue-entry-meta">
+              <span>${item.doctor.name}</span>
+              <span>${item.doctor.specialization}</span>
+              <span>${item.patient?.phone || item.userId}</span>
+            </div>
+          </div>
+          <div class="queue-entry-right">
+            <span class="badge ${getBadgeClass(item.status)}">${item.status}</span>
+            <span class="queue-entry-token">Token ${item.tokenNumber}</span>
+            <div class="queue-entry-actions">
+              ${renderStatusButtons(item)}
+            </div>
           </div>
         </div>
-        <div class="queue-entry-right">
-          ${item.time ? `<span class="queue-entry-time">${item.time}</span>` : ''}
-          <span class="badge ${badgeClass}">${item.status}</span>
-          <span class="queue-entry-token">${item.code}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
+      `,
+    )
+    .join('');
+
+  container.querySelectorAll('[data-next-status]').forEach((button) => {
+    button.addEventListener('click', () =>
+      updateQueueStatus(button.dataset.id, button.dataset.nextStatus),
+    );
+  });
+}
+
+function renderStatusButtons(item) {
+  if (item.status === 'waiting') {
+    return `<button class="btn btn-outline btn-sm" data-id="${item.id}" data-next-status="in-consultation">Start</button>`;
+  }
+
+  if (item.status === 'in-consultation') {
+    return `<button class="btn btn-outline btn-sm" data-id="${item.id}" data-next-status="done">Done</button>`;
+  }
+
+  return '';
 }
 
 function getBadgeClass(status) {
   switch (status) {
-    case 'In Consultation': return 'badge-info';
-    case 'Confirmed': return 'badge-success';
-    case 'Waiting': return 'badge-purple';
-    case 'Pending': return 'badge-warning';
-    default: return 'badge-purple';
+    case 'in-consultation':
+      return 'badge-info';
+    case 'done':
+      return 'badge-success';
+    default:
+      return 'badge-purple';
   }
 }
 
-function initializeTokenCounters() {
-  tokenCounters = {};
-
-  queueItems.forEach(item => {
-    const match = item.code.match(/^([A-Z]{2})-(\d+)$/);
-    if (!match) return;
-
-    const [, prefix, num] = match;
-    const nextValue = Number(num) + 1;
-    tokenCounters[prefix] = Math.max(tokenCounters[prefix] || 1, nextValue);
-  });
-}
-
-// --- Generate Token ---
-function generateToken() {
+async function generateToken() {
   const patientId = document.getElementById('patient-select').value;
-  const specialtyId = document.getElementById('specialty-select').value;
+  const doctorId = document.getElementById('doctor-select').value;
 
   if (!patientId) {
     showToast('Please select a patient.', 'error');
     return;
   }
-  if (!specialtyId) {
-    showToast('Please select a speciality.', 'error');
+
+  if (!doctorId) {
+    showToast('Please select a doctor.', 'error');
     return;
   }
 
-  const patient = allPatients.find(p => p.id === patientId);
-  const specialty = allSpecialties.find(s => s.id === specialtyId);
+  const response = await fetch(`${QUEUE_API_BASE_URL}/queue`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      role: 'frontdesk',
+    },
+    body: JSON.stringify({
+      userId: patientId,
+      doctorId,
+    }),
+  });
 
-  // Generate token code
-  const prefix = specialty.name.substring(0, 2).toUpperCase();
-  if (!tokenCounters[prefix]) tokenCounters[prefix] = 1;
-  const num = String(tokenCounters[prefix]++).padStart(3, '0');
-  const tokenCode = `${prefix}-${num}`;
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    showToast(payload?.message || 'Unable to generate token.', 'error');
+    return;
+  }
 
-  // Add to queue
-  const newEntry = {
-    token: `T-NEW-${Date.now()}`,
-    code: tokenCode,
-    patientId: patient.id,
-    patientName: `${patient.firstName} ${patient.lastName}`,
-    age: patient.age,
-    gender: patient.gender,
-    specialty: specialty.name,
-    doctorName: '',
-    time: '',
-    status: 'Waiting'
-  };
-
-  queueItems.unshift(newEntry);
-  saveQueue(queueItems);
+  await loadAllQueueItems();
   renderQueue();
   renderNotifications();
 
-  // Show token modal
-  document.getElementById('token-display').textContent = tokenCode;
+  document.getElementById('token-display').textContent = `#${payload.tokenNumber}`;
   document.getElementById('token-modal-details').innerHTML = `
-    <strong>${patient.firstName} ${patient.lastName}</strong><br/>
-    ${specialty.name}
+    <strong>${payload.patient?.name || payload.userId}</strong><br/>
+    ${payload.doctor.name}
   `;
   document.getElementById('token-modal').classList.remove('hidden');
-
-  // Reset selects
   document.getElementById('patient-select').value = '';
-  document.getElementById('specialty-select').value = '';
+}
+
+async function updateQueueStatus(id, status) {
+  if (status === 'in-consultation') {
+    const itemToUpdate = queueItems.find(item => item.id === id);
+    if (itemToUpdate) {
+      const doctorId = itemToUpdate.doctorId;
+      const inConsultationCount = queueItems.filter(
+        item => item.doctorId === doctorId && item.status === 'in-consultation'
+      ).length;
+
+      if (inConsultationCount >= 1) {
+        showToast('Only one patient can be in-consultation at a time for this doctor.', 'error');
+        return;
+      }
+    }
+  }
+
+  const response = await fetch(`${QUEUE_API_BASE_URL}/queue/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      role: 'frontdesk',
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    showToast(payload?.message || 'Unable to update queue status.', 'error');
+    return;
+  }
+
+  await loadAllQueueItems();
+  renderQueue();
+  renderNotifications();
+}
+
+function startQueueRefresh() {
+  if (queueRefreshTimer) return;
+
+  queueRefreshTimer = window.setInterval(async () => {
+    if (document.hidden) return;
+    try {
+      await loadAllQueueItems();
+      renderQueue();
+    } catch (_) {}
+  }, 5000);
 }

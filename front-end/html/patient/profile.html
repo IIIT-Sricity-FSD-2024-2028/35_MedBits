@@ -79,16 +79,18 @@
 </div>
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="../../js/patient/data.js"></script>
 <script src="../../js/patient/utils.js"></script>
 <script src="../../js/patient/components.js"></script>
 <script src="../../js/patient/profile.js"></script>
 <script>
   (async () => {
-    await loadDB();
     await loadComponents('profile', 'Profile');
     updateTopbarUser();
-    renderProfile();
+    try {
+      await loadPatientProfile();
+    } catch (_error) {
+      showToast('Unable to load profile from backend', 'error');
+    }
   })();
 </script>
 </body>

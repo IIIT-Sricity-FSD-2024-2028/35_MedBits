@@ -54,7 +54,7 @@
             </div>
             <div class="topbar-user-info">
               <span class="topbar-user-name" id="topbar-username"
-                >Sarah Williams</span
+                >Loading...</span
               >
               <span class="topbar-user-role">Frontdesk</span>
             </div>
@@ -74,13 +74,13 @@
 
           <div class="token-controls">
             <div class="form-group" style="flex: 1">
-              <label class="form-label">Select Speciality</label>
-              <select class="input-field" id="specialty-select">
-                <option value="">Search Speciality...</option>
+              <label class="form-label">Select Doctor</label>
+              <select class="input-field" id="doctor-select">
+                <option value="">All Doctors</option>
               </select>
             </div>
             <div class="generate-token-group">
-              <label class="form-label">Generate Token</label>
+              <label class="form-label">Check In</label>
               <button class="btn btn-primary" id="generate-token-btn">
                 <svg
                   width="14"
@@ -93,16 +93,16 @@
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Generate New Token
+                Generate Token
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Waiting List -->
+        <!-- Queue List -->
         <div class="card" style="margin-top: var(--space-5)">
           <div class="section-header">
-            <span class="section-title">Waiting List</span>
+            <span class="section-title">Doctor Queue</span>
             <span class="queue-count badge badge-purple" id="queue-count"
               >0 patients</span
             >

@@ -18,11 +18,11 @@
         <div class="card">
           <div class="cn-toolbar">
             <div class="search-bar-inline patient-search-shell">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" class="search-input" id="searchInput" placeholder="Search and select patient..." autocomplete="off"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="search-input" id="searchInput" placeholder="Search and select appointment..." autocomplete="off"/>
+              <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
               <div class="patient-search-dropdown" id="patientSearchResults"></div>
             </div>
-            <div class="selected-patient-chip" id="selectedPatientChip">No patient selected</div>
             <button class="btn btn-primary" id="createNoteBtn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Create Note
@@ -30,78 +30,19 @@
           </div>
         </div>
 
-        <div class="card" id="savedNotesCard" style="display:none;">
+        <div class="card">
           <div class="card-header">
-            <span class="card-title">My Saved Notes</span>
+            <span class="card-title">Upcoming Appointments</span>
           </div>
-          <div id="savedNotesList"></div>
+          <div id="upcomingAppointmentsList"></div>
         </div>
 
         <div class="card">
           <div class="card-header">
             <span class="card-title">Patient Consultation Records</span>
-            <a href="#" class="card-link">View All</a>
+            <a href="#" class="card-link" id="viewAllRecordsLink">View All</a>
           </div>
-          <div id="recordsList">
-
-            <div class="patient-row" data-patient="Neil Verma" data-patient-id="PAT-002">
-              <div class="patient-left">
-                <div class="avatar cn-avatar-ag">NV</div>
-                <div>
-                  <div class="patient-name">Neil Verma <span class="meta-inline">45 | Male</span></div>
-                  <div class="patient-meta">Patient presented with high blood pressure and dizziness. Prescribed medication.</div>
-                </div>
-              </div>
-              <div class="patient-right">
-                <span class="date-label">Mar 5, 2026</span>
-                <button class="btn-view view-btn"
-                  data-id="PAT-002"
-                  data-name="Neil Verma" data-age="45" data-gender="Male" data-initials="NV"
-                  data-notes="Patient presented with high blood pressure and dizziness."
-                  data-meds="Lisinopril 10 mg - Take once daily|Hydrochlorthiazide 25 mg - Take once daily"
-                  data-labs="Blood Test" data-date="05/03/2026">View</button>
-              </div>
-            </div>
-
-            <div class="patient-row" data-patient="Dev Patel" data-patient-id="PAT-003">
-              <div class="patient-left">
-                <div class="avatar cn-avatar-am">DP</div>
-                <div>
-                  <div class="patient-name">Dev Patel <span class="meta-inline">36 | Male</span></div>
-                  <div class="patient-meta">Chest pain check-up.</div>
-                </div>
-              </div>
-              <div class="patient-right">
-                <span class="date-label">Mar 5, 2026</span>
-                <button class="btn-view view-btn"
-                  data-id="PAT-003"
-                  data-name="Dev Patel" data-age="36" data-gender="Male" data-initials="DP"
-                  data-notes="Chest pain check-up."
-                  data-meds="Aspirin 75 mg - Take once daily"
-                  data-labs="ECG|Blood Test" data-date="05/03/2026">View</button>
-              </div>
-            </div>
-
-            <div class="patient-row" data-patient="Ria Sharma" data-patient-id="PAT-004">
-              <div class="patient-left">
-                <div class="avatar cn-avatar-sr">RS</div>
-                <div>
-                  <div class="patient-name">Ria Sharma <span class="meta-inline">19 | Female</span></div>
-                  <div class="patient-meta">Knee pain and started therapy.</div>
-                </div>
-              </div>
-              <div class="patient-right">
-                <span class="date-label">Mar 5, 2026</span>
-                <button class="btn-view view-btn"
-                  data-id="PAT-004"
-                  data-name="Ria Sharma" data-age="19" data-gender="Female" data-initials="RS"
-                  data-notes="Knee pain and started therapy."
-                  data-meds="Ibuprofen 400 mg - Twice daily"
-                  data-labs="X-Ray" data-date="05/03/2026">View</button>
-              </div>
-            </div>
-
-          </div>
+          <div id="recordsList"></div>
         </div>
       </div>
 
@@ -124,7 +65,7 @@
         <div class="card">
           <div class="form-group">
             <label class="form-label">Date</label>
-            <input type="date" class="form-control" id="noteDate" style="max-width:220px;"/>
+            <input type="date" class="form-control" id="noteDate" style="max-width:220px;" readonly/>
           </div>
           <div class="form-group">
             <label class="form-label">Consultation Notes</label>
@@ -165,6 +106,15 @@
       </div>
 
     </main>
+  </div>
+</div>
+<div class="cn-modal" id="recordsModal" aria-hidden="true">
+  <div class="cn-modal-panel">
+    <div class="cn-modal-header">
+      <span class="card-title">All Consultation Records</span>
+      <button class="cn-modal-close" id="closeRecordsModal" aria-label="Close">&times;</button>
+    </div>
+    <div id="allRecordsList"></div>
   </div>
 </div>
 <div class="toast-container" id="toastContainer"></div>

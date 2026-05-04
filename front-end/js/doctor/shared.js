@@ -11,7 +11,7 @@ function getDoctorProfile() {
 }
 
 function logoutDoctor() {
-  localStorage.removeItem('medbits_session');
+  localStorage.removeItem('user');
   window.location.replace('../login.html');
 }
 

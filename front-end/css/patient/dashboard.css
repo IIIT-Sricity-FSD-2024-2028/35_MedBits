@@ -148,6 +148,49 @@
 .dash-item:last-child  { margin-bottom: 0; }
 .dash-item-title { font-weight: 600; font-size: 14px; }
 .dash-item-sub   { font-size: 12px; opacity: 0.65; margin-top: 2px; }
+.dash-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.dash-action-btn {
+  border-color: rgba(255,255,255,0.22);
+  color: #fff;
+}
+.dash-action-btn:hover {
+  border-color: rgba(255,255,255,0.4);
+}
+.dash-slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.slot-btn {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--navy);
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.dash-slot-grid .slot-btn {
+  background: #f8fafc;
+}
+.dash-slot-grid .slot-btn:hover {
+  border-color: #2563eb;
+}
+.dash-slot-grid .slot-btn.selected {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
 
 /* ── ANIMATIONS ── */
 @keyframes slideDown {

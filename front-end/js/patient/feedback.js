@@ -1,128 +1,184 @@
-/* MEDBITS – feedback.js
-   Pure logic. HTML templates live in feedback.html.
-*/
+/* MEDBITS - feedback.js */
+
+const FEEDBACK_API_BASE_URL = 'http://localhost:3000';
 
 const RATING_COLOURS = {
-  Bad: 'badge-red', Average: 'badge-orange',
-  Good: 'badge-green', Better: 'badge-green', Excellent: 'badge-green'
+  Bad: 'badge-red',
+  Average: 'badge-orange',
+  Good: 'badge-green',
+  Better: 'badge-green',
+  Excellent: 'badge-green',
 };
 
-// ── PAGE INIT ─────────────────────────────────────────────────────
+let completedAppointments = [];
+let userFeedback = [];
+
+async function initializeFeedbackPage() {
+  await Promise.all([loadCompletedAppointments(), loadUserFeedback()]);
+  renderFeedback();
+}
+
+async function loadCompletedAppointments() {
+  const session = requireRole('patient');
+  if (!session) return;
+
+  const response = await fetch(
+    `${FEEDBACK_API_BASE_URL}/appointments/completed/${encodeURIComponent(session.id)}`,
+    {
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to load completed appointments');
+  }
+
+  completedAppointments = await response.json();
+}
+
+async function loadUserFeedback() {
+  const session = requireRole('patient');
+  if (!session) return;
+
+  const response = await fetch(
+    `${FEEDBACK_API_BASE_URL}/feedback/user/${encodeURIComponent(session.id)}`,
+    {
+      headers: {
+        role: 'patient',
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to load feedback');
+  }
+
+  userFeedback = await response.json();
+}
 
 function renderFeedback() {
-  // Fill the doctor dropdown from completed appointments
-  const completed = DB.appointments.filter(a => a.status === 'completed');
   const select = document.getElementById('fbDoctor');
   if (select) {
     select.innerHTML = '';
-    completed.forEach(a => {
+
+    const feedbackDoctorIds = new Set(
+      userFeedback.map((feedback) => feedback.doctorId),
+    );
+    const seenDoctorIds = new Set();
+    const availableAppointments = completedAppointments.filter(
+      (appointment) => !feedbackDoctorIds.has(appointment.doctor.id),
+    );
+
+    if (!availableAppointments.length) {
       const opt = document.createElement('option');
-      opt.value = a.doctor;
-      opt.textContent = a.doctor + ' – ' + a.speciality;
+      opt.value = '';
+      opt.textContent = 'No completed appointments available for feedback';
+      select.appendChild(opt);
+    }
+
+    availableAppointments.forEach((appointment) => {
+      if (seenDoctorIds.has(appointment.doctor.id)) {
+        return;
+      }
+      seenDoctorIds.add(appointment.doctor.id);
+
+      const opt = document.createElement('option');
+      opt.value = appointment.doctor.id;
+      opt.textContent = `${appointment.doctor.name} - ${appointment.doctor.specialization}`;
       select.appendChild(opt);
     });
-    const other = document.createElement('option');
-    other.value = 'Other'; other.textContent = 'Other…';
-    select.appendChild(other);
   }
 
   renderFbList();
 }
-
-// ── FEEDBACK LIST ─────────────────────────────────────────────────
 
 function renderFbList() {
   const list = document.getElementById('fbList');
   if (!list) return;
   list.innerHTML = '';
 
-  if (!DB.feedback.length) {
-    const empty = document.createElement('div'); empty.className = 'empty-state';
-    empty.innerHTML = ''; 
-    const icon = document.createElement('div'); icon.className = 'empty-icon'; icon.textContent = '💬';
-    const msg  = document.createElement('p');  msg.textContent = 'No feedback yet';
-    empty.appendChild(icon); empty.appendChild(msg); list.appendChild(empty);
+  if (!userFeedback.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    const icon = document.createElement('div');
+    icon.className = 'empty-icon';
+    icon.textContent = '...';
+    const msg = document.createElement('p');
+    msg.textContent = 'No feedback yet';
+    empty.appendChild(icon);
+    empty.appendChild(msg);
+    list.appendChild(empty);
     return;
   }
 
-  DB.feedback.forEach(f => {
+  userFeedback.forEach((feedback) => {
     const frag = document.getElementById('tpl-fb-card').content.cloneNode(true);
     const card = frag.querySelector('.fb-card');
 
-    card.id = 'fbcard-' + f.id;
-
-    card.querySelector('.fb-doctor').textContent  = f.doctor;
-    card.querySelector('.fb-date').textContent    = f.date;
-    card.querySelector('.fb-comment').textContent = f.comment;
+    card.querySelector('.fb-doctor').textContent = feedback.doctor.name;
+    card.querySelector('.fb-date').textContent = feedback.doctor.specialization;
+    card.querySelector('.fb-comment').textContent = feedback.comment;
 
     const badge = card.querySelector('.fb-badge');
-    badge.textContent = f.rating;
-    badge.classList.add(RATING_COLOURS[f.rating] || 'badge-blue');
-
-    card.querySelector('.fb-edit').onclick   = function() { editFeedback(f.id); };
-    card.querySelector('.fb-delete').onclick = function() { deleteFeedback(f.id); };
+    badge.textContent = feedback.rating;
+    badge.classList.add(RATING_COLOURS[feedback.rating] || 'badge-blue');
 
     list.appendChild(frag);
   });
 }
 
-// ── SUBMIT ────────────────────────────────────────────────────────
-
 function selectRating(btn, rating) {
-  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.rating-btn').forEach((button) => button.classList.remove('selected'));
   btn.classList.add('selected');
   window._rating = rating;
 }
 
-function submitFeedback() {
-  const doctor  = val('fbDoctor');
+async function submitFeedback() {
+  const session = requireRole('patient');
+  const doctorId = val('fbDoctor');
   const comment = val('fbComment').trim();
-  const rating  = window._rating;
+  const rating = window._rating;
 
-  if (!rating)  { showToast('Please select a rating', 'error'); return; }
-  if (!comment) { showToast('Please write your feedback', 'error'); return; }
+  if (!session) return;
+  if (!doctorId) {
+    showToast('Please select a consulted doctor', 'error');
+    return;
+  }
+  if (!rating) {
+    showToast('Please select a rating', 'error');
+    return;
+  }
+  if (!comment) {
+    showToast('Please write your feedback', 'error');
+    return;
+  }
 
-  DB.feedback.unshift({
-    id:      'FB' + Date.now(), doctor,
-    date:    new Date().toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' }),
-    rating,  comment
+  const response = await fetch(`${FEEDBACK_API_BASE_URL}/feedback`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      role: 'patient',
+    },
+    body: JSON.stringify({
+      userId: session.id,
+      doctorId,
+      rating,
+      comment,
+    }),
   });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    showToast(errorBody?.message || 'Unable to submit feedback', 'error');
+    return;
+  }
 
   window._rating = '';
   document.getElementById('fbComment').value = '';
-  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.rating-btn').forEach((button) => button.classList.remove('selected'));
+  await loadUserFeedback();
+  renderFeedback();
   showToast('Feedback submitted!', 'success');
-  renderFbList();
-}
-
-// ── EDIT / DELETE ─────────────────────────────────────────────────
-
-function editFeedback(id) {
-  const f = DB.feedback.find((x) => x.id === id);
-  currentEditId = id;
-
-  // 1. Open modal FIRST
-  openModal(document.getElementById("tpl-editFeedback").innerHTML);
-
-  // 2. THEN set values
-  setTimeout(() => {
-    document.getElementById("ef-rating").value = f.rating;
-    document.getElementById("ef-comment").value = f.comment;
-  }, 0);
-}
-
-function saveFeedback() {
-  const f = DB.feedback.find(x => x.id === currentEditId);
-  f.rating  = val('ef-rating');
-  f.comment = val('ef-comment');
-  closeModal();
-  showToast('Feedback updated', 'success');
-  renderFbList();
-}
-
-function deleteFeedback(id) {
-  if (!confirm('Delete this feedback?')) return;
-  DB.feedback = DB.feedback.filter(x => x.id !== id);
-  showToast('Feedback deleted', 'info');
-  renderFbList();
 }

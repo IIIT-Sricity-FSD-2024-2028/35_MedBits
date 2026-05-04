@@ -26,13 +26,13 @@
       <div class="stat-grid">
         <div class="stat-card">
           <div class="stat-label">Today's Appointments</div>
-          <div class="stat-value">3</div>
-          <div class="stat-delta positive">+ 2 from yesterday</div>
+          <div class="stat-value" id="statToday">—</div>
+          <div class="stat-delta positive" id="statTodayDelta">Scheduled today</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Total Patients</div>
-          <div class="stat-value">148</div>
-          <div class="stat-delta positive">+ 5 this week</div>
+          <div class="stat-label">Completed Appointments</div>
+          <div class="stat-value" id="statCompleted">—</div>
+          <div class="stat-delta positive">All time</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Pending Lab Tests</div>
@@ -47,50 +47,11 @@
         <!-- Upcoming Appointments -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Upcoming Appointments</span>
+            <span class="card-title">Appointments</span>
             <a>View All</a>
           </div>
-
-          <div class="patient-row">
-            <div class="patient-left">
-              <div class="avatar">PJ</div>
-              <div>
-                <div class="patient-name">Mr. Paul Johnson</div>
-                <div class="patient-meta">25 Days</div>
-              </div>
-            </div>
-            <div class="patient-right">
-              <span class="badge badge-confirm-outline">Confirm</span>
-              <span class="appt-time">10:00 a.m</span>
-            </div>
-          </div>
-
-          <div class="patient-row">
-            <div class="patient-left">
-              <div class="avatar" style="background:#7a5c60;">AR</div>
-              <div>
-                <div class="patient-name">Mrs. Ananya Reddy</div>
-                <div class="patient-meta">4 Months</div>
-              </div>
-            </div>
-            <div class="patient-right">
-              <span class="badge badge-confirm-outline">Confirm</span>
-              <span class="appt-time">11:00 a.m</span>
-            </div>
-          </div>
-
-          <div class="patient-row">
-            <div class="patient-left">
-              <div class="avatar" style="background:#5c6a7a;">MS</div>
-              <div>
-                <div class="patient-name">Mr. Tom Sharma</div>
-                <div class="patient-meta">45 Days</div>
-              </div>
-            </div>
-            <div class="patient-right">
-              <span class="badge badge-confirm-outline">Confirm</span>
-              <span class="appt-time">12:00 p.m</span>
-            </div>
+          <div id="appointmentsList">
+            <p style="color:var(--text-muted);font-size:.875rem;padding:16px 0;">Loading appointments...</p>
           </div>
         </div>
 
@@ -119,6 +80,15 @@
           </div>
         </div>
 
+      </div>
+
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <span class="card-title">My Queue</span>
+        </div>
+        <div id="doctorQueueList">
+          <p style="color:var(--text-muted);font-size:.875rem;padding:16px 0;">Loading queue...</p>
+        </div>
       </div>
 
     </main>

@@ -160,7 +160,7 @@
 
 <script src="../js/auth.js"></script>
 <script>
-  function doSignup() {
+  async function doSignup() {
     const g   = id => document.getElementById(id).value.trim();
     const err = document.getElementById('errBox');
 
@@ -198,28 +198,30 @@
     btn.textContent = 'Creating account…';
     btn.disabled = true;
 
-    setTimeout(() => {
-      const result = handleSignup({
-        firstName:  fn,
-        lastName:   ln,
-        email,
-        phone,
-        dob:        g('su-dob'),
-        gender:     g('su-gender'),
-        bloodGroup: g('su-blood'),
-        guardian:   g('su-guardian'),
-        password:   pass
-      });
-      if (result) {
-        err.textContent = result;
-        err.classList.add('show');
-        btn.textContent = 'Create My Account';
-        btn.disabled = false;
-      }
-    }, 500);
+    const result = await handleSignup({
+      firstName: fn,
+      lastName: ln,
+      email,
+      phone,
+      dob: g('su-dob'),
+      gender: g('su-gender'),
+      bloodGroup: g('su-blood'),
+      guardianName: g('su-guardian'),
+      password: pass
+    });
+
+    if (result) {
+      err.textContent = result;
+      err.classList.add('show');
+      btn.textContent = 'Create My Account';
+      btn.disabled = false;
+      return;
+    }
+
+    window.location.replace('login.html');
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') void doSignup(); });
 </script>
 </body>
 </html>

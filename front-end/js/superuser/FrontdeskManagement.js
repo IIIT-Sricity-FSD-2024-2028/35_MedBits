@@ -1,27 +1,10 @@
 (function () {
-    const DEFAULT_STAFF = [
-        { id: 1, firstName: 'Ananya', lastName: 'Sharma', dob: '1996-03-14', email: 'ananya.sharma@medbits.com', gender: 'Female', contact: '9999999999', reportingManagerId: 'AH101', languageCount: 2, languages: ['English', 'Hindi'], dateJoining: '2021-06-01', counter: '1', shiftStart: '08:00', shiftEnd: '16:00' },
-        { id: 2, firstName: 'Elizabeth', lastName: 'O', dob: '1991-07-22', email: 'elizabeth.o@medbits.com', gender: 'Female', contact: '8888888888', reportingManagerId: 'AH102', languageCount: 3, languages: ['English', 'French', 'Spanish'], dateJoining: '2019-09-15', counter: '2', shiftStart: '09:00', shiftEnd: '17:00' },
-        { id: 3, firstName: 'Ana', lastName: 'Mary', dob: '1993-11-05', email: 'ana.mary@medbits.com', gender: 'Female', contact: '7777777777', reportingManagerId: 'AH103', languageCount: 2, languages: ['English', 'Malayalam'], dateJoining: '2020-02-10', counter: '3', shiftStart: '10:00', shiftEnd: '18:00' },
-        { id: 4, firstName: 'Sarah', lastName: 'Williams', dob: '1995-08-30', email: 'sarah.williams@medbits.com', gender: 'Female', contact: '6666666666', reportingManagerId: 'AH104', languageCount: 1, languages: ['English'], dateJoining: '2022-01-03', counter: '4', shiftStart: '07:00', shiftEnd: '15:00' },
-    ];
-
+    const API_BASE_URL = 'http://localhost:3000';
     const formState = { add: false, edit: false };
     let currentViewAllId = null;
     let editCurrentStaffId = null;
 
     const $ = id => document.getElementById(id);
-    const fullName = member => `${member.firstName} ${member.lastName}`;
-    const formatTime12 = value => {
-        if (!value) return '';
-        const [h, m] = value.split(':').map(Number);
-        return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
-    };
-    const formatDate = value => {
-        if (!value) return '-';
-        const [y, m, d] = value.split('-');
-        return y && m && d ? `${d}/${m}/${y}` : value;
-    };
     const setInvalid = (el, invalid) => el && el.classList.toggle('invalid', invalid);
     const clearInvalid = form => form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
     const bindSingleWord = el => {
@@ -30,50 +13,94 @@
     };
     const bindDigits = (el, max) => el?.addEventListener('input', () => { el.value = el.value.replace(/\D/g, '').slice(0, max); });
     const today = () => new Date().toISOString().split('T')[0];
+    const fullName = member => member.name || `${member.firstName || ''} ${member.lastName || ''}`.trim();
+
+    const formatTime12 = value => {
+        if (!value) return '';
+        const [h, m] = value.split(':').map(Number);
+        return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    };
+
+    const formatDate = value => {
+        if (!value) return '-';
+        const [y, m, d] = value.split('-');
+        return y && m && d ? `${d}/${m}/${y}` : value;
+    };
+
+    function getCurrentRole() {
+        try {
+            return JSON.parse(localStorage.getItem('user'))?.role || 'admin';
+        } catch {
+            return 'admin';
+        }
+    }
+
+    async function getErrorMessage(response) {
+        const body = await response.json().catch(() => null);
+        return Array.isArray(body?.message) ? body.message.join(', ') : body?.message || 'Request failed.';
+    }
+
+    function normalizeMember(member) {
+        const [firstName = '', ...rest] = (member.name || '').split(' ');
+        return {
+            ...member,
+            id: member.userId,
+            firstName,
+            lastName: rest.join(' '),
+            contact: member.phone || '',
+            languages: Array.isArray(member.languages) ? member.languages : [],
+            languageCount: Array.isArray(member.languages) ? member.languages.length : 0,
+            counter: member.counter || '',
+            shiftStart: member.shiftStart || '',
+            shiftEnd: member.shiftEnd || '',
+        };
+    }
 
     window.StaffStore = {
-        key: 'medbits_staff',
-        getAll() {
-            try {
-                const raw = localStorage.getItem(this.key);
-                if (raw) return JSON.parse(raw);
-            } catch {}
-            this.saveAll(DEFAULT_STAFF);
-            return DEFAULT_STAFF;
+        staff: [],
+        async load() {
+            const response = await fetch(`${API_BASE_URL}/frontdesk`, {
+                headers: { role: getCurrentRole() },
+            });
+            if (!response.ok) throw new Error(await getErrorMessage(response));
+            this.staff = (await response.json()).map(normalizeMember);
+            return this.staff;
         },
-        saveAll(staff) { try { localStorage.setItem(this.key, JSON.stringify(staff)); } catch {} },
-        getById(id) { return this.getAll().find(s => s.id === Number(id)) || null; },
-        add(member) {
-            const all = this.getAll();
-            member.id = all.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-            all.push(member);
-            this.saveAll(all);
+        getAll() { return this.staff; },
+        getById(id) { return this.staff.find(s => s.userId === id || s.id === id) || null; },
+        async add(member) {
+            const response = await fetch(`${API_BASE_URL}/frontdesk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', role: getCurrentRole() },
+                body: JSON.stringify(member),
+            });
+            if (!response.ok) throw new Error(await getErrorMessage(response));
+            const created = normalizeMember(await response.json());
+            this.staff.push(created);
+            return created;
         },
-        update(id, updates) {
-            const all = this.getAll();
-            const index = all.findIndex(s => s.id === Number(id));
-            if (index < 0) return false;
-            all[index] = { ...all[index], ...updates };
-            this.saveAll(all);
-            return true;
-        },
-        delete(id) {
-            const all = this.getAll();
-            const filtered = all.filter(s => s.id !== Number(id));
-            if (filtered.length === all.length) return false;
-            this.saveAll(filtered);
-            return true;
+        async update(userId, updates) {
+            const response = await fetch(`${API_BASE_URL}/frontdesk/${encodeURIComponent(userId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', role: getCurrentRole() },
+                body: JSON.stringify(updates),
+            });
+            if (!response.ok) throw new Error(await getErrorMessage(response));
+            const updated = normalizeMember(await response.json());
+            const index = this.staff.findIndex(s => s.userId === updated.userId);
+            if (index >= 0) this.staff[index] = updated;
+            return updated;
         },
         search(query) {
             const q = query.trim().toLowerCase();
             return !q ? this.getAll() : this.getAll().filter(s =>
                 fullName(s).toLowerCase().includes(q) ||
-                s.contact.includes(q) ||
+                (s.contact || '').includes(q) ||
                 (s.languages || []).some(l => l.toLowerCase().includes(q))
             );
         },
         fullName,
-        formatShift: member => `${formatTime12(member.shiftStart)} - ${formatTime12(member.shiftEnd)}`,
+        formatShift: member => member.shiftStart && member.shiftEnd ? `${formatTime12(member.shiftStart)} - ${formatTime12(member.shiftEnd)}` : '-',
     };
 
     function showToast(message, type = 'success') {
@@ -98,11 +125,25 @@
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 2800);
     }
 
-    function showPage(name) {
+    async function refreshStaff() {
+        try {
+            await StaffStore.load();
+        } catch (error) {
+            showToast(error.message || 'Unable to load frontdesk staff.', 'error');
+        }
+    }
+
+    async function showPage(name) {
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
         $(`page-${name}`)?.classList.add('active');
-        if (name === 'view') renderStaffTable(StaffStore.getAll());
-        if (name === 'edit') initForm('edit');
+        if (name === 'view') {
+            await refreshStaff();
+            renderStaffTable(StaffStore.search($('viewSearchInput')?.value || ''));
+        }
+        if (name === 'edit') {
+            await refreshStaff();
+            initForm('edit');
+        }
         document.querySelector('.content').scrollTop = 0;
         lucide.createIcons();
     }
@@ -117,15 +158,10 @@
         tbody.innerHTML = members.length ? members.map(m => `
             <tr>
                 <td class="staff-name">${StaffStore.fullName(m)}</td>
-                <td>Counter ${m.counter}</td>
+                <td>${m.counter ? `Counter ${m.counter}` : '-'}</td>
                 <td>${(m.languages || []).join(', ') || '-'}</td>
-                <td>${m.contact}</td>
-                <td class="view-all">
-                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.35rem;">
-                        <button class="delete-btn" onclick="deleteStaff(${m.id})">Delete</button>
-                        <a href="javascript:void(0)" onclick="openViewAll(${m.id})">view all</a>
-                    </div>
-                </td>
+                <td>${m.contact || '-'}</td>
+                <td class="view-all"><a href="javascript:void(0)" onclick="openViewAll('${m.userId}')">view all</a></td>
             </tr>
         `).join('') : '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:2rem;">No staff members found.</td></tr>';
     }
@@ -134,25 +170,23 @@
         const member = StaffStore.getById(id);
         if (!member) {
             $('profileTitle').textContent = 'Staff member not found';
-            ['personalGrid', 'professionalGrid', 'availabilityGrid'].forEach(id => $(id).innerHTML = '');
+            ['personalGrid', 'professionalGrid', 'availabilityGrid'].forEach(gridId => $(gridId).innerHTML = '');
             return;
         }
         $('profileTitle').textContent = `All Details of ${StaffStore.fullName(member)}`;
         $('personalGrid').innerHTML = [
-            field('First Name', member.firstName),
-            field('Last Name', member.lastName),
-            field('Date of Birth', formatDate(member.dob)),
+            field('User ID', member.userId),
+            field('Name', StaffStore.fullName(member)),
             field('E-Mail Id', member.email),
             field('Gender', member.gender),
             field('Contact No', member.contact),
         ].join('');
         $('professionalGrid').innerHTML = [
             field('Reporting Manager ID', member.reportingManagerId),
-            field('Language Proficiency', (member.languages || []).length ? member.languages.map((l, i) => `Language ${i + 1}: ${l}`).join(' | ') : '-'),
-            field('Date of Joining', formatDate(member.dateJoining)),
+            field('Language Proficiency', (member.languages || []).join(', ')),
         ].join('');
         $('availabilityGrid').innerHTML = [
-            field('Counter Number', `Counter ${member.counter}`),
+            field('Counter Number', member.counter ? `Counter ${member.counter}` : '-'),
             field('Current Shift', StaffStore.formatShift(member)),
         ].join('');
     }
@@ -176,72 +210,57 @@
     }
 
     function collectLanguages(prefix) {
-        const count = parseInt($(`${prefix}_languageCountHidden`).value, 10);
+        const count = parseInt($(`${prefix}_languageCountHidden`).value, 10) || 0;
         const values = [];
         for (let i = 1; i <= count; i += 1) {
             const box = document.querySelector(`[name="${prefix}_language_${i}"]`);
-            if (box) values.push(box.value.trim());
+            if (box?.value.trim()) values.push(box.value.trim());
         }
-        return { count, values };
+        return values;
     }
 
-    function validateForm(prefix) {
+    function validateForm(prefix, type) {
         let valid = true;
-        ['firstName', 'lastName', 'reportingManagerId'].forEach(name => {
+        ['firstName', 'lastName'].forEach(name => {
             const el = $(`${prefix}_${name}`);
-            const ok = !!el?.value.trim() && /^[A-Za-z0-9]+$/.test(el.value.trim());
+            const ok = !!el?.value.trim() && /^[A-Za-z]+$/.test(el.value.trim());
             setInvalid(el, !ok);
             if (!ok) valid = false;
         });
-        const checks = [
-            ['dob', v => !!v],
-            ['email', v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())],
-            ['gender', v => !!v],
-            ['contact', v => /^\d{10}$/.test(v.trim())],
-            ['dateJoining', v => !!v],
-            ['counter', v => v !== '' && parseInt(v, 10) >= 1],
-        ];
-        checks.forEach(([name, rule]) => {
-            const el = $(`${prefix}_${name}`);
-            const ok = !!el && rule(el.value);
-            setInvalid(el, !ok);
-            if (!ok) valid = false;
-        });
-        const countInput = $(`${prefix}_languageCount`);
-        const count = parseInt($(`${prefix}_languageCountHidden`).value, 10);
-        if (!count || count < 1 || count > 3) {
-            setInvalid(countInput, true);
-            valid = false;
-        } else {
-            setInvalid(countInput, false);
-            for (let i = 1; i <= count; i += 1) {
-                const box = document.querySelector(`[name="${prefix}_language_${i}"]`);
-                const ok = !!box?.value.trim();
-                setInvalid(box, !ok);
-                if (!ok) valid = false;
-            }
+        const email = $(`${prefix}_email`);
+        const emailOk = !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+        setInvalid(email, !emailOk);
+        if (!emailOk) valid = false;
+
+        const password = $(`${prefix}_password`);
+        if (type === 'add') {
+            const passwordOk = !!password?.value;
+            setInvalid(password, !passwordOk);
+            if (!passwordOk) valid = false;
         }
+
+        const contact = $(`${prefix}_contact`);
+        const contactOk = !contact?.value.trim() || /^\d{10}$/.test(contact.value.trim());
+        setInvalid(contact, !contactOk);
+        if (!contactOk) valid = false;
+
         const start = $(`${prefix}_shiftStart`);
         const end = $(`${prefix}_shiftEnd`);
-        const shiftOk = !!start?.value && !!end?.value && start.value < end.value;
+        const shiftOk = (!start?.value && !end?.value) || (start.value && end.value && start.value < end.value);
         setInvalid(start, !shiftOk);
         setInvalid(end, !shiftOk);
         return valid && shiftOk;
     }
 
     function buildMember(prefix) {
-        const { count, values } = collectLanguages(prefix);
         return {
-            firstName: $(`${prefix}_firstName`).value.trim(),
-            lastName: $(`${prefix}_lastName`).value.trim(),
-            dob: $(`${prefix}_dob`).value,
-            email: $(`${prefix}_email`).value.trim(),
+            name: `${$(`${prefix}_firstName`).value.trim()} ${$(`${prefix}_lastName`).value.trim()}`.trim(),
+            email: $(`${prefix}_email`).value.trim().toLowerCase(),
+            password: $(`${prefix}_password`)?.value || undefined,
+            phone: $(`${prefix}_contact`).value.trim(),
             gender: $(`${prefix}_gender`).value,
-            contact: $(`${prefix}_contact`).value.trim(),
             reportingManagerId: $(`${prefix}_reportingManagerId`).value.trim(),
-            languageCount: count,
-            languages: values,
-            dateJoining: $(`${prefix}_dateJoining`).value,
+            languages: collectLanguages(prefix),
             counter: $(`${prefix}_counter`).value.trim(),
             shiftStart: $(`${prefix}_shiftStart`).value,
             shiftEnd: $(`${prefix}_shiftEnd`).value,
@@ -249,13 +268,19 @@
     }
 
     function populateEditForm(member) {
-        ['firstName', 'lastName', 'dob', 'email', 'gender', 'contact', 'reportingManagerId', 'dateJoining', 'counter', 'shiftStart', 'shiftEnd'].forEach(name => {
-            $(`edit_${name}`).value = member[name] || '';
-        });
+        $('edit_firstName').value = member.firstName || '';
+        $('edit_lastName').value = member.lastName || '';
+        $('edit_email').value = member.email || '';
+        $('edit_gender').value = member.gender || '';
+        $('edit_contact').value = member.contact || '';
+        $('edit_reportingManagerId').value = member.reportingManagerId || '';
+        $('edit_counter').value = member.counter || '';
+        $('edit_shiftStart').value = member.shiftStart || '';
+        $('edit_shiftEnd').value = member.shiftEnd || '';
         const count = member.languageCount || (member.languages || []).length || 1;
         $('edit_languageCount').value = count;
         buildLangBoxes('edit', count, member.languages || []);
-        editCurrentStaffId = member.id;
+        editCurrentStaffId = member.userId;
     }
 
     function removeDropdown() {
@@ -312,8 +337,8 @@
         formState[type] = true;
         const prefix = type === 'add' ? 'add' : 'edit';
         const form = $(`${type === 'add' ? 'addStaffForm' : 'editStaffForm'}`);
-        $(`${prefix}_dob`).max = today();
-        $(`${prefix}_dateJoining`).max = today();
+        if ($(`${prefix}_dob`)) $(`${prefix}_dob`).max = today();
+        if ($(`${prefix}_dateJoining`)) $(`${prefix}_dateJoining`).max = today();
         [`${prefix}_firstName`, `${prefix}_lastName`, `${prefix}_reportingManagerId`].forEach(id => bindSingleWord($(id)));
         bindDigits($(`${prefix}_contact`), 10);
 
@@ -337,27 +362,30 @@
             search.addEventListener('blur', () => setTimeout(removeDropdown, 150));
         }
 
-        form.addEventListener('submit', event => {
+        form.addEventListener('submit', async event => {
             event.preventDefault();
             clearInvalid(form);
             if (type === 'edit' && !editCurrentStaffId) {
                 showToast('Please search and select a staff member first.', 'error');
                 return $('editSearchInput').focus();
             }
-            if (!validateForm(prefix)) return showToast('Please fix the highlighted fields.', 'error');
+            if (!validateForm(prefix, type)) return showToast('Please fix the highlighted fields.', 'error');
             const payload = buildMember(prefix);
-            if (type === 'add') {
-                StaffStore.add(payload);
-                form.reset();
-                $(`${prefix}_languageBoxes`).innerHTML = '';
-                $(`${prefix}_languageCountHidden`).value = '';
-                showToast('Staff profile added successfully!');
-            } else if (StaffStore.update(editCurrentStaffId, payload)) {
-                showToast('Staff profile updated successfully!');
-            } else {
-                return showToast('Update failed. Staff not found.', 'error');
+            try {
+                if (type === 'add') {
+                    await StaffStore.add(payload);
+                    form.reset();
+                    $(`${prefix}_languageBoxes`).innerHTML = '';
+                    $(`${prefix}_languageCountHidden`).value = '';
+                    showToast('Staff profile added successfully!');
+                } else {
+                    await StaffStore.update(editCurrentStaffId, payload);
+                    showToast('Staff profile updated successfully!');
+                }
+                setTimeout(() => showPage('view'), 1000);
+            } catch (error) {
+                showToast(error.message || 'Save failed.', 'error');
             }
-            setTimeout(() => showPage('view'), 1500);
         });
 
         $(`${prefix === 'add' ? 'add' : 'edit'}_cancelBtn`)?.addEventListener('click', () => {
@@ -365,7 +393,8 @@
         });
     }
 
-    function initViewPage() {
+    async function initViewPage() {
+        await refreshStaff();
         renderStaffTable(StaffStore.getAll());
         const search = $('viewSearchInput');
         if (!search || search.dataset.bound) return;
@@ -374,8 +403,8 @@
     }
 
     window.showPage = showPage;
-    window.goEditFromView = function () {
-        showPage('edit');
+    window.goEditFromView = async function () {
+        await showPage('edit');
         const member = currentViewAllId ? StaffStore.getById(currentViewAllId) : null;
         if (member) {
             populateEditForm(member);
@@ -387,20 +416,11 @@
         renderViewAll(id);
         showPage('viewall');
     };
-    window.deleteStaff = function (id) {
-        const member = StaffStore.getById(id);
-        if (!member || !confirm(`Delete ${StaffStore.fullName(member)}? This cannot be undone.`)) return;
-        StaffStore.delete(id);
-        showToast(`${StaffStore.fullName(member)} deleted successfully.`);
-        renderStaffTable(StaffStore.getAll());
-    };
     window.formatTime12 = formatTime12;
 
     document.addEventListener('DOMContentLoaded', () => {
         initViewPage();
         initForm('add');
-        $('add_dob').max = today();
-        $('add_dateJoining').max = today();
         lucide.createIcons();
     });
 })();
