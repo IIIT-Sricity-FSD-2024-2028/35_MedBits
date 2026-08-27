@@ -1,16 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Header,
-  Param,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Header, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -32,16 +20,15 @@ export class DoctorsController {
     private readonly appointmentsService: AppointmentsService,
   ) {}
 
-  // ─── Doctor Listing & Profile ────────────────────────────────────────────────
-
   @ApiOperation({ summary: 'List all doctors, optionally filtered by specialization' })
   @ApiQuery({ name: 'specialization', required: false, description: 'Filter by specialization (e.g. Cardiologist)' })
+  @ApiQuery({ name: 'branchId', required: false, description: 'Filter by hospital branch UUID' })
   @ApiResponse({ status: 200, description: 'Array of doctor profiles' })
   @Roles('patient', 'doctor', 'frontdesk', 'admin')
   @Header('Cache-Control', 'no-store')
   @Get()
-  listDoctors(@Query('specialization') specialization?: string) {
-    return this.doctorsService.findAll(specialization);
+  listDoctors(@Query('specialization') specialization?: string, @Query('branchId') branchId?: string) {
+    return this.doctorsService.findAll(specialization, branchId);
   }
 
   @ApiOperation({ summary: 'Add a doctor and create matching doctor login user' })
@@ -50,12 +37,13 @@ export class DoctorsController {
   @Roles('admin')
   @Post()
   @ApiBody({ type: CreateDoctorDto })
-  addDoctor(@Body() body: CreateDoctorDto) {
+  async addDoctor(@Body() body: CreateDoctorDto) {
     return this.doctorsService.createDoctor({
       name: body.name?.trim() ?? '',
       email: body.email?.trim() ?? '',
       password: body.password ?? '',
       specialization: body.specialization?.trim() ?? '',
+      branchId: body.branchId?.trim() ?? '',
       slots: body.slots ?? [],
       department: body.department?.trim(),
       qualification: body.qualification?.trim(),
@@ -75,11 +63,12 @@ export class DoctorsController {
   @Roles('admin')
   @Put(':userId')
   @ApiBody({ type: UpdateDoctorDto })
-  updateDoctor(@Param('userId') userId: string, @Body() body: UpdateDoctorDto) {
+  async updateDoctor(@Param('userId') userId: string, @Body() body: UpdateDoctorDto) {
     return this.doctorsService.updateDoctor(userId, {
       name: body.name?.trim(),
       email: body.email?.trim(),
       specialization: body.specialization?.trim(),
+      branchId: body.branchId?.trim(),
       slots: body.slots,
       department: body.department?.trim(),
       qualification: body.qualification?.trim(),
@@ -90,6 +79,16 @@ export class DoctorsController {
       licenseNo: body.licenseNo?.trim(),
       bio: body.bio?.trim(),
     });
+  }
+
+  @ApiOperation({ summary: 'Remove a doctor from the branch (Soft Delete)' })
+  @ApiParam({ name: 'userId', description: 'Doctor user ID' })
+  @ApiResponse({ status: 200, description: 'Doctor removed' })
+  @Roles('admin')
+  @Delete(':userId')
+  async removeDoctor(@Param('userId') userId: string) {
+    await this.doctorsService.removeDoctor(userId);
+    return { success: true };
   }
 
   @ApiOperation({ summary: 'Get a single doctor profile by ID' })
@@ -108,11 +107,11 @@ export class DoctorsController {
   @ApiResponse({ status: 200, description: 'Array of available slot time strings' })
   @Roles('patient', 'doctor', 'frontdesk')
   @Get(':doctorId/slots')
-  getAvailableSlots(
+  async getAvailableSlots(
     @Param('doctorId') doctorId: string,
     @Query('date') date?: string,
   ) {
-    const doctor = this.doctorsService.getDoctorById(doctorId);
+    const doctor = await this.doctorsService.getDoctorById(doctorId);
     if (!date?.trim()) {
       return doctor.slots;
     }
@@ -126,19 +125,17 @@ export class DoctorsController {
   @ApiResponse({ status: 200, description: 'Array of appointment objects' })
   @Roles('doctor', 'frontdesk')
   @Get(':doctorId/appointments')
-  getAppointmentsByDoctorId(
+  async getAppointmentsByDoctorId(
     @Param('doctorId') doctorId: string,
     @Query('status') status?: string,
   ) {
-    this.doctorsService.getDoctorById(doctorId);
-    const appointments = this.appointmentsService.getAppointmentsByDoctorId(doctorId);
+    await this.doctorsService.getDoctorById(doctorId);
+    const appointments = await this.appointmentsService.getAppointmentsByDoctorId(doctorId);
     if (status === 'upcoming' || status === 'completed') {
       return appointments.filter((a) => a.status === status);
     }
     return appointments;
   }
-
-  // ─── Slot Blocks ─────────────────────────────────────────────────────────────
 
   @ApiOperation({ summary: 'Get all blocked time slots for a doctor (optionally filter by date)' })
   @ApiParam({ name: 'doctorId', description: 'Doctor ID' })
@@ -160,16 +157,15 @@ export class DoctorsController {
   @ApiResponse({ status: 400, description: 'Slot already blocked / invalid slot / date fully unavailable' })
   @Roles('doctor')
   @Post(':doctorId/slot-blocks')
-  blockSlot(
+  async blockSlot(
     @Param('doctorId') doctorId: string,
     @Body() body: CreateSlotBlockDto,
   ) {
     const date = body.date?.trim() ?? '';
     const slot = body.slot?.trim() ?? '';
 
-    // Prevent blocking a slot that already has a booked appointment
     if (date && slot) {
-      const existingAppointments = this.appointmentsService.getAppointmentsByDoctorId(doctorId);
+      const existingAppointments = await this.appointmentsService.getAppointmentsByDoctorId(doctorId);
       const hasBooking = existingAppointments.some(
         (a) => a.date === date && a.slot === slot && a.status === 'upcoming',
       );
@@ -197,8 +193,6 @@ export class DoctorsController {
     return this.doctorsService.unblockSlot(doctorId, blockId);
   }
 
-  // ─── Unavailable Dates ───────────────────────────────────────────────────────
-
   @ApiOperation({ summary: 'Get all fully-unavailable dates for a doctor' })
   @ApiParam({ name: 'doctorId', description: 'Doctor ID' })
   @ApiResponse({ status: 200, description: 'Array of UnavailableDate records' })
@@ -215,15 +209,14 @@ export class DoctorsController {
   @ApiResponse({ status: 400, description: 'Date already marked unavailable' })
   @Roles('doctor')
   @Post(':doctorId/unavailable-dates')
-  markDateUnavailable(
+  async markDateUnavailable(
     @Param('doctorId') doctorId: string,
     @Body() body: MarkUnavailableDateDto,
   ) {
     const date = body.date?.trim() ?? '';
 
-    // Prevent marking a date unavailable if any upcoming appointments exist on that date
     if (date) {
-      const existingAppointments = this.appointmentsService.getAppointmentsByDoctorId(doctorId);
+      const existingAppointments = await this.appointmentsService.getAppointmentsByDoctorId(doctorId);
       const bookedSlots = existingAppointments
         .filter((a) => a.date === date && a.status === 'upcoming')
         .map((a) => a.slot);
@@ -251,8 +244,6 @@ export class DoctorsController {
   ) {
     return this.doctorsService.removeUnavailableDate(doctorId, unavailId);
   }
-
-  // ─── Weekly Availability Overview ────────────────────────────────────────────
 
   @ApiOperation({ summary: 'Get weekly availability overview for a doctor (Mon–Sun)' })
   @ApiParam({ name: 'doctorId', description: 'Doctor ID' })
@@ -288,3 +279,4 @@ export class DoctorsController {
     return this.doctorsService.getWeeklyAvailability(doctorId, weekStart);
   }
 }
+

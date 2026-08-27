@@ -8,13 +8,12 @@ import { LoginDto, SignupDto } from './dto/users.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // Public — no role required (user has no session yet)
   @Post()
   @ApiOperation({ summary: 'Register a new patient' })
   @ApiBody({ type: SignupDto })
   @ApiResponse({ status: 201, description: 'Patient registered successfully.' })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
-  signup(@Body() body: SignupDto) {
+  async signup(@Body() body: SignupDto) {
     return this.usersService.signupPatient({
       firstName: body.firstName.trim(),
       lastName: body.lastName.trim(),
@@ -23,26 +22,26 @@ export class UsersController {
       dob: body.dob.trim(),
       gender: body.gender.trim(),
       bloodGroup: body.bloodGroup.trim(),
+      branchId: body.branchId.trim(),
       guardianName: body.guardianName?.trim() ?? '',
       password: body.password,
     });
   }
 
-  // Public — no role required (authenticates and returns session)
   @Post('login')
   @ApiOperation({ summary: 'Log in to the system' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Logged in successfully.' })
   @ApiResponse({ status: 401, description: 'Invalid email or password.' })
-  login(@Body() body: LoginDto) {
+  async login(@Body() body: LoginDto) {
     const email = body.email.trim();
     const password = body.password;
-    
+
     if (!email || !password) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const user = this.usersService.login(email, password);
+    const user = await this.usersService.login(email, password);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }

@@ -10,9 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody, ApiParam } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
-import {
-  PatientsService,
-} from './patients.service';
+import { PatientsService } from './patients.service';
 import { CreatePatientDto, UpdatePatientProfileDto } from './dto/patients.dto';
 
 @ApiTags('Patients')
@@ -27,8 +25,8 @@ export class PatientsController {
   @ApiOperation({ summary: 'Create a patient profile' })
   @ApiBody({ type: CreatePatientDto })
   @ApiResponse({ status: 201, description: 'Patient profile created successfully' })
-  createPatient(@Body() body: CreatePatientDto) {
-    const patient = this.patientsService.createPatient({
+  async createPatient(@Body() body: CreatePatientDto) {
+    const patient = await this.patientsService.createPatient({
       firstName: body.firstName.trim(),
       lastName: body.lastName.trim(),
       dob: body.dob.trim(),
@@ -86,3 +84,4 @@ export class PatientsController {
     });
   }
 }
+
