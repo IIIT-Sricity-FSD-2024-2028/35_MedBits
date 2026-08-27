@@ -17,7 +17,21 @@ async function bootstrap() {
     prefix: '/uploads',
   });
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:5500', 'http://localhost:8080', 'http://127.0.0.1:5500'],
+    origin(origin, callback) {
+      if (!origin || origin === 'null') {
+        // Allow local file:// and non-browser requests during development.
+        callback(null, true);
+        return;
+      }
+
+      const isLocalOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+      if (isLocalOrigin) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked origin: ${origin}`), false);
+    },
     credentials: true,
   });
 

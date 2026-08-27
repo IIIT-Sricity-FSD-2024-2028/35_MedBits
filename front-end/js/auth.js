@@ -1,5 +1,15 @@
-﻿const USER_STORAGE_KEY = 'user';
-const API_BASE_URL = 'http://localhost:3000';
+const USER_STORAGE_KEY = 'user';
+
+function getApiBaseUrl() {
+  const override =
+    window.__MEDBITS_API_BASE_URL__ ||
+    localStorage.getItem('medbitsApiBaseUrl') ||
+    '';
+
+  return String(override).trim().replace(/\/$/, '') || 'http://localhost:3000';
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 function getSession() {
   try {
@@ -54,7 +64,7 @@ async function handleLogin(email, password) {
     redirectByRole(user);
     return null;
   } catch (_error) {
-    return 'Unable to reach server. Ensure backend is running on port 3000.';
+    return `Unable to reach the MEDBITS API at ${API_BASE_URL}. Start the backend or check your local CORS/origin setup.`;
   }
 }
 
@@ -75,6 +85,6 @@ async function handleSignup(payload) {
 
     return null;
   } catch (_error) {
-    return 'Unable to reach server. Ensure backend is running on port 3000.';
+    return `Unable to reach the MEDBITS API at ${API_BASE_URL}. Start the backend or check your local CORS/origin setup.`;
   }
 }
