@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags, ApiHeader, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -36,11 +36,12 @@ export class FrontdeskController {
   @ApiResponse({ status: 400, description: 'Invalid input or duplicate email' })
   @Roles('admin')
   @Post()
-  addFrontdesk(@Body() body: CreateFrontdeskDto) {
+  async addFrontdesk(@Body() body: CreateFrontdeskDto) {
     return this.frontdeskService.createFrontdesk({
       name: body.name.trim(),
       email: body.email.trim(),
       password: body.password,
+      branchId: body.branchId.trim(),
       phone: body.phone?.trim(),
       gender: body.gender?.trim(),
       reportingManagerId: body.reportingManagerId?.trim(),
@@ -58,13 +59,14 @@ export class FrontdeskController {
   @ApiResponse({ status: 404, description: 'Frontdesk profile not found' })
   @Roles('admin')
   @Put(':userId')
-  updateFrontdesk(
+  async updateFrontdesk(
     @Param('userId') userId: string,
     @Body() body: UpdateFrontdeskDto,
   ) {
     return this.frontdeskService.updateFrontdesk(userId, {
       name: body.name?.trim(),
       email: body.email?.trim(),
+      branchId: body.branchId?.trim(),
       phone: body.phone?.trim(),
       gender: body.gender?.trim(),
       reportingManagerId: body.reportingManagerId?.trim(),
@@ -74,5 +76,14 @@ export class FrontdeskController {
       shiftEnd: body.shiftEnd?.trim(),
     });
   }
-}
 
+  @ApiOperation({ summary: 'Remove frontdesk staff from the branch (Soft Delete)' })
+  @ApiParam({ name: 'userId', description: 'Frontdesk user ID' })
+  @ApiResponse({ status: 200, description: 'Frontdesk staff removed' })
+  @Roles('admin')
+  @Delete(':userId')
+  async removeFrontdesk(@Param('userId') userId: string) {
+    await this.frontdeskService.removeFrontdesk(userId);
+    return { success: true };
+  }
+}

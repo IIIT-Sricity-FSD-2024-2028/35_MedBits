@@ -71,6 +71,47 @@
         ]
       }
     },
+    "/super-admin/branch-admins": {
+      "post": {
+        "operationId": "SuperAdminBranchAdminController_create",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchAdminDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Branch Admin account created"
+          },
+          "400": {
+            "description": "Invalid branch or account details"
+          },
+          "409": {
+            "description": "Email is already registered"
+          }
+        },
+        "summary": "Create a Branch Admin account",
+        "tags": [
+          "Super Admin - Branch Admins"
+        ]
+      }
+    },
     "/patients": {
       "post": {
         "operationId": "PatientsController_createPatient",
@@ -202,6 +243,383 @@
         "summary": "Update patient profile",
         "tags": [
           "Patients"
+        ]
+      }
+    },
+    "/hospital-branches": {
+      "post": {
+        "operationId": "HospitalBranchController_create",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHospitalBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Hospital branch created"
+          },
+          "409": {
+            "description": "Branch email already exists"
+          }
+        },
+        "summary": "Create a hospital branch",
+        "tags": [
+          "Hospital Branches"
+        ]
+      },
+      "get": {
+        "operationId": "HospitalBranchController_findAll",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hospital branch list"
+          }
+        },
+        "summary": "List all hospital branches",
+        "tags": [
+          "Hospital Branches"
+        ]
+      }
+    },
+    "/hospital-branches/{id}": {
+      "get": {
+        "operationId": "HospitalBranchController_findOne",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hospital branch found"
+          },
+          "404": {
+            "description": "Hospital branch not found"
+          }
+        },
+        "summary": "Get a hospital branch by ID",
+        "tags": [
+          "Hospital Branches"
+        ]
+      },
+      "patch": {
+        "operationId": "HospitalBranchController_update",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHospitalBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hospital branch updated"
+          }
+        },
+        "summary": "Update a hospital branch",
+        "tags": [
+          "Hospital Branches"
+        ]
+      },
+      "delete": {
+        "operationId": "HospitalBranchController_remove",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Hospital branch deleted"
+          }
+        },
+        "summary": "Delete a hospital branch",
+        "tags": [
+          "Hospital Branches"
+        ]
+      }
+    },
+    "/super-admin/hospital-branches": {
+      "post": {
+        "operationId": "SuperAdminHospitalBranchController_create",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHospitalBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Hospital branch created"
+          },
+          "409": {
+            "description": "Branch email already exists"
+          }
+        },
+        "summary": "Create a hospital branch",
+        "tags": [
+          "Super Admin - Hospital Branches"
+        ]
+      },
+      "get": {
+        "operationId": "SuperAdminHospitalBranchController_findAll",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hospital branch list"
+          }
+        },
+        "summary": "List all hospital branches",
+        "tags": [
+          "Super Admin - Hospital Branches"
+        ]
+      }
+    },
+    "/super-admin/hospital-branches/{id}": {
+      "get": {
+        "operationId": "SuperAdminHospitalBranchController_findOne",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Hospital branch not found"
+          }
+        },
+        "summary": "Get a hospital branch by ID",
+        "tags": [
+          "Super Admin - Hospital Branches"
+        ]
+      },
+      "patch": {
+        "operationId": "SuperAdminHospitalBranchController_update",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateHospitalBranchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Update a hospital branch",
+        "tags": [
+          "Super Admin - Hospital Branches"
+        ]
+      }
+    },
+    "/super-admin/hospital-branches/{id}/enable": {
+      "patch": {
+        "operationId": "SuperAdminHospitalBranchController_enable",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Enable a hospital branch",
+        "tags": [
+          "Super Admin - Hospital Branches"
+        ]
+      }
+    },
+    "/super-admin/hospital-branches/{id}/disable": {
+      "patch": {
+        "operationId": "SuperAdminHospitalBranchController_disable",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Disable a hospital branch",
+        "tags": [
+          "Super Admin - Hospital Branches"
         ]
       }
     },
@@ -630,181 +1048,6 @@
         ]
       }
     },
-    "/labtests/assignments": {
-      "post": {
-        "operationId": "LabTestsController_createLabAssignment",
-        "parameters": [
-          {
-            "name": "role",
-            "in": "header",
-            "description": "User role (admin, doctor, patient, frontdesk)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateLabAssignmentDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Lab assignment created successfully"
-          }
-        },
-        "summary": "Create a new lab test assignment",
-        "tags": [
-          "Lab Tests"
-        ]
-      }
-    },
-    "/labtests/assignments/user/{userId}": {
-      "get": {
-        "operationId": "LabTestsController_getAssignmentsByUserId",
-        "parameters": [
-          {
-            "name": "role",
-            "in": "header",
-            "description": "User role (admin, doctor, patient, frontdesk)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "userId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Get lab assignments by user ID",
-        "tags": [
-          "Lab Tests"
-        ]
-      }
-    },
-    "/labtests/assignments/doctor/{doctorId}": {
-      "get": {
-        "operationId": "LabTestsController_getAssignmentsByDoctorId",
-        "parameters": [
-          {
-            "name": "role",
-            "in": "header",
-            "description": "User role (admin, doctor, patient, frontdesk)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "doctorId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Get lab assignments by doctor ID",
-        "tags": [
-          "Lab Tests"
-        ]
-      }
-    },
-    "/labtests/assignments/{assignmentId}": {
-      "put": {
-        "operationId": "LabTestsController_updateLabAssignment",
-        "parameters": [
-          {
-            "name": "role",
-            "in": "header",
-            "description": "User role (admin, doctor, patient, frontdesk)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assignmentId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLabAssignmentDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Update a lab assignment",
-        "tags": [
-          "Lab Tests"
-        ]
-      },
-      "delete": {
-        "operationId": "LabTestsController_deleteLabAssignment",
-        "parameters": [
-          {
-            "name": "role",
-            "in": "header",
-            "description": "User role (admin, doctor, patient, frontdesk)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "assignmentId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Delete a lab assignment",
-        "tags": [
-          "Lab Tests"
-        ]
-      }
-    },
     "/medical-records/doctor/{doctorId}": {
       "get": {
         "operationId": "MedicalRecordsController_getRecordsByDoctorId",
@@ -1199,6 +1442,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "branchId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by hospital branch UUID",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1290,6 +1542,38 @@
           }
         },
         "summary": "Edit a doctor profile by userId",
+        "tags": [
+          "Doctors"
+        ]
+      },
+      "delete": {
+        "operationId": "DoctorsController_removeDoctor",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (patient | doctor | frontdesk)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Doctor user ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Doctor removed"
+          }
+        },
+        "summary": "Remove a doctor from the branch (Soft Delete)",
         "tags": [
           "Doctors"
         ]
@@ -1759,6 +2043,880 @@
         ]
       }
     },
+    "/lab-requests": {
+      "get": {
+        "operationId": "LabRequestsController_findForTechnician",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branch-scoped lab requests"
+          }
+        },
+        "summary": "List lab requests for the logged-in technician branch",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/patient": {
+      "get": {
+        "operationId": "LabRequestsController_findForPatient",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Patient lab requests"
+          }
+        },
+        "summary": "List lab requests for the authenticated patient",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}": {
+      "get": {
+        "operationId": "LabRequestsController_findOne",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab request details"
+          }
+        },
+        "summary": "Get a branch-scoped lab request by ID",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}/accept": {
+      "patch": {
+        "operationId": "LabRequestsController_accept",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab request accepted"
+          }
+        },
+        "summary": "Accept a lab request",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}/reject": {
+      "patch": {
+        "operationId": "LabRequestsController_reject",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab request rejected"
+          }
+        },
+        "summary": "Reject a lab request",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}/start": {
+      "patch": {
+        "operationId": "LabRequestsController_start",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab request marked in progress"
+          }
+        },
+        "summary": "Start processing a lab request",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}/report": {
+      "get": {
+        "operationId": "LabRequestsController_getReport",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab report details"
+          }
+        },
+        "summary": "Get lab report for a lab request",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}/report/draft": {
+      "patch": {
+        "operationId": "LabRequestsController_saveDraft",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLabReportDraftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Draft lab report saved"
+          }
+        },
+        "summary": "Save draft lab report",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}/report/upload": {
+      "post": {
+        "operationId": "LabRequestsController_uploadReport",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "report": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "report"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lab report file uploaded"
+          }
+        },
+        "summary": "Upload a lab report file",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-requests/{id}/report/submit": {
+      "patch": {
+        "operationId": "LabRequestsController_submit",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in lab technician ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitLabReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lab report submitted and request completed"
+          }
+        },
+        "summary": "Submit final lab report",
+        "tags": [
+          "Lab Requests"
+        ]
+      }
+    },
+    "/lab-reports": {
+      "get": {
+        "operationId": "LabReportsController_findAll",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in user ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech, doctor, patient)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Branch-scoped lab reports"
+          }
+        },
+        "summary": "List all lab reports for the logged-in technician branch",
+        "tags": [
+          "Lab Reports"
+        ]
+      }
+    },
+    "/lab-reports/doctor": {
+      "get": {
+        "operationId": "LabReportsController_findForDoctor",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in user ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech, doctor, patient)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Doctor requested submitted lab reports"
+          }
+        },
+        "summary": "List all submitted lab reports requested by the logged-in doctor",
+        "tags": [
+          "Lab Reports"
+        ]
+      }
+    },
+    "/lab-reports/patient": {
+      "get": {
+        "operationId": "LabReportsController_findForPatient",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in user ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech, doctor, patient)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Patient submitted lab reports"
+          }
+        },
+        "summary": "List all submitted lab reports for the logged-in patient",
+        "tags": [
+          "Lab Reports"
+        ]
+      }
+    },
+    "/lab-reports/{id}": {
+      "get": {
+        "operationId": "LabReportsController_findOne",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Logged-in user ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (labtech, doctor, patient)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Lab report ID or lab request ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab report details"
+          }
+        },
+        "summary": "Get a specific lab report by ID with role-based authorization",
+        "tags": [
+          "Lab Reports"
+        ]
+      }
+    },
+    "/lab-technicians": {
+      "get": {
+        "operationId": "LabTechniciansController_findAll",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Required for branch_admin scoping",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin, branch_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of lab technicians"
+          }
+        },
+        "summary": "List branch-scoped lab technicians",
+        "tags": [
+          "Lab Technicians"
+        ]
+      },
+      "post": {
+        "operationId": "LabTechniciansController_create",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Required for branch_admin scoping",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin, branch_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLabTechnicianDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lab technician created"
+          }
+        },
+        "summary": "Create a branch-scoped lab technician account",
+        "tags": [
+          "Lab Technicians"
+        ]
+      }
+    },
+    "/lab-technicians/{id}": {
+      "put": {
+        "operationId": "LabTechniciansController_update",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Required for branch_admin scoping",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin, branch_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab technician updated"
+          }
+        },
+        "summary": "Update a lab technician account",
+        "tags": [
+          "Lab Technicians"
+        ]
+      },
+      "delete": {
+        "operationId": "LabTechniciansController_remove",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "Required for branch_admin scoping",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin, branch_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lab technician deleted"
+          }
+        },
+        "summary": "Delete a lab technician account",
+        "tags": [
+          "Lab Technicians"
+        ]
+      }
+    },
     "/queue": {
       "post": {
         "operationId": "QueueController_createQueueToken",
@@ -2171,6 +3329,38 @@
         "tags": [
           "Frontdesk"
         ]
+      },
+      "delete": {
+        "operationId": "FrontdeskController_removeFrontdesk",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role (admin, doctor, patient, frontdesk)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "Frontdesk user ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Frontdesk staff removed"
+          }
+        },
+        "summary": "Remove frontdesk staff from the branch (Soft Delete)",
+        "tags": [
+          "Frontdesk"
+        ]
       }
     },
     "/walkins": {
@@ -2260,7 +3450,7 @@
             "description": "Leave request created"
           }
         },
-        "summary": "Create a new leave request (Doctor)",
+        "summary": "Create a new leave request (Doctor or Lab Technician)",
         "tags": [
           "Leave Requests"
         ]
@@ -2332,6 +3522,292 @@
           "Leave Requests"
         ]
       }
+    },
+    "/notifications/user/{userId}": {
+      "get": {
+        "operationId": "NotificationsController_getNotifications",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "User ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications"
+          }
+        },
+        "summary": "Get all notifications for a user",
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "delete": {
+        "operationId": "NotificationsController_clearAll",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "description": "User ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications cleared"
+          }
+        },
+        "summary": "Clear all notifications for a user",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/notifications/{id}/read": {
+      "put": {
+        "operationId": "NotificationsController_markAsRead",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Notification ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read"
+          }
+        },
+        "summary": "Mark a notification as read",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/departments": {
+      "post": {
+        "operationId": "DepartmentsController_create",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Department created"
+          }
+        },
+        "summary": "Create a department within a hospital branch",
+        "tags": [
+          "Departments"
+        ]
+      },
+      "get": {
+        "operationId": "DepartmentsController_findAll",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List departments",
+        "tags": [
+          "Departments"
+        ]
+      }
+    },
+    "/departments/{id}": {
+      "get": {
+        "operationId": "DepartmentsController_findOne",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Department UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Departments"
+        ]
+      },
+      "patch": {
+        "operationId": "DepartmentsController_update",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDepartmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Departments"
+        ]
+      },
+      "delete": {
+        "operationId": "DepartmentsController_remove",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Departments"
+        ]
+      }
+    },
+    "/super-admin/dashboard": {
+      "get": {
+        "operationId": "SuperAdminDashboardController_getDashboard",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "Must be super_admin",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard snapshot"
+          }
+        },
+        "summary": "Get super admin dashboard summary and branch table data",
+        "tags": [
+          "Super Admin - Dashboard"
+        ]
+      }
     }
   },
   "info": {
@@ -2383,6 +3859,11 @@
             "type": "string",
             "example": "O+"
           },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
+          },
           "guardianName": {
             "type": "string",
             "example": "Jane Doe"
@@ -2400,6 +3881,7 @@
           "dob",
           "gender",
           "bloodGroup",
+          "branchId",
           "password"
         ]
       },
@@ -2418,6 +3900,39 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "CreateBranchAdminDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Banjara Hills Administrator"
+          },
+          "email": {
+            "type": "string",
+            "example": "branch.admin@medbits.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "password": {
+            "type": "string",
+            "example": "SecurePassword@123"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "password",
+          "branchId"
         ]
       },
       "CreatePatientDto": {
@@ -2503,6 +4018,106 @@
           }
         }
       },
+      "CreateHospitalBranchDto": {
+        "type": "object",
+        "properties": {
+          "hospitalName": {
+            "type": "string",
+            "example": "Medbits Hospitals"
+          },
+          "branchName": {
+            "type": "string",
+            "example": "Banjara Hills"
+          },
+          "address": {
+            "type": "string",
+            "example": "Road No. 12, Banjara Hills"
+          },
+          "city": {
+            "type": "string",
+            "example": "Hyderabad"
+          },
+          "state": {
+            "type": "string",
+            "example": "Telangana"
+          },
+          "pincode": {
+            "type": "string",
+            "example": "500034"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "email": {
+            "type": "string",
+            "example": "banjarahills@medbits.com"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "default": "active"
+          }
+        },
+        "required": [
+          "hospitalName",
+          "branchName",
+          "address",
+          "city",
+          "state",
+          "pincode",
+          "phone",
+          "email"
+        ]
+      },
+      "UpdateHospitalBranchDto": {
+        "type": "object",
+        "properties": {
+          "hospitalName": {
+            "type": "string",
+            "example": "Medbits Hospitals"
+          },
+          "branchName": {
+            "type": "string",
+            "example": "Banjara Hills"
+          },
+          "address": {
+            "type": "string",
+            "example": "Road No. 12, Banjara Hills"
+          },
+          "city": {
+            "type": "string",
+            "example": "Hyderabad"
+          },
+          "state": {
+            "type": "string",
+            "example": "Telangana"
+          },
+          "pincode": {
+            "type": "string",
+            "example": "500034"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+919876543210"
+          },
+          "email": {
+            "type": "string",
+            "example": "banjarahills@medbits.com"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "default": "active"
+          }
+        }
+      },
       "CreateOrderDto": {
         "type": "object",
         "properties": {
@@ -2554,80 +4169,6 @@
           "labTestId"
         ]
       },
-      "CreateLabAssignmentDto": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "example": "PAT001"
-          },
-          "patientName": {
-            "type": "string",
-            "example": "John Doe"
-          },
-          "doctorId": {
-            "type": "string",
-            "example": "DOC001"
-          },
-          "doctorName": {
-            "type": "string",
-            "example": "Dr. Jane Smith"
-          },
-          "packageName": {
-            "type": "string",
-            "example": "Basic Health Checkup"
-          },
-          "tests": {
-            "example": [
-              "Complete Blood Count"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "remarks": {
-            "type": "string",
-            "example": "Fasting required"
-          }
-        },
-        "required": [
-          "userId",
-          "patientName",
-          "doctorId",
-          "doctorName"
-        ]
-      },
-      "UpdateLabAssignmentDto": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "example": "PAT001"
-          },
-          "patientName": {
-            "type": "string",
-            "example": "John Doe"
-          },
-          "packageName": {
-            "type": "string",
-            "example": "Basic Health Checkup"
-          },
-          "tests": {
-            "example": [
-              "Complete Blood Count"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "remarks": {
-            "type": "string",
-            "example": "Fasting required"
-          }
-        }
-      },
       "CreateMedicalRecordDto": {
         "type": "object",
         "properties": {
@@ -2638,6 +4179,10 @@
           "patientId": {
             "type": "string",
             "example": "PAT001"
+          },
+          "patientName": {
+            "type": "string",
+            "example": "Ria Sharma"
           },
           "type": {
             "type": "string",
@@ -2684,6 +4229,10 @@
             "type": "string",
             "example": "ECG"
           },
+          "labTestDate": {
+            "type": "string",
+            "example": "2026-05-12"
+          },
           "lifestyle": {
             "type": "string",
             "example": "Avoid spicy food"
@@ -2715,6 +4264,11 @@
             "type": "string",
             "example": "DOC001"
           },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
+          },
           "date": {
             "type": "string",
             "example": "2023-12-01"
@@ -2727,6 +4281,7 @@
         "required": [
           "userId",
           "doctorId",
+          "branchId",
           "date",
           "slot"
         ]
@@ -2762,6 +4317,11 @@
           "specialization": {
             "type": "string",
             "example": "Cardiology"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
           },
           "slots": {
             "example": [
@@ -2810,7 +4370,8 @@
           "name",
           "email",
           "password",
-          "specialization"
+          "specialization",
+          "branchId"
         ]
       },
       "UpdateDoctorDto": {
@@ -2827,6 +4388,11 @@
           "specialization": {
             "type": "string",
             "example": "Cardiology"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
           },
           "slots": {
             "example": [
@@ -2909,6 +4475,97 @@
           "date"
         ]
       },
+      "FileAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "example": "detailed_blood_report.pdf"
+          },
+          "fileType": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "fileSize": {
+            "type": "number",
+            "example": 10240
+          },
+          "fileData": {
+            "type": "string",
+            "example": "data:application/pdf;base64,..."
+          }
+        }
+      },
+      "SaveLabReportDraftDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "example": "Hemoglobin: 13.5 g/dL, Platelets: 250,000 /mcL"
+          },
+          "findings": {
+            "type": "string",
+            "example": "All cell lines within normal limits."
+          },
+          "remarks": {
+            "type": "string",
+            "example": "Routine sample, no hemolysis."
+          },
+          "fileAttachment": {
+            "$ref": "#/components/schemas/FileAttachmentDto"
+          }
+        }
+      },
+      "SubmitLabReportDto": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string",
+            "example": "Hemoglobin: 13.5 g/dL, Platelets: 250,000 /mcL"
+          },
+          "findings": {
+            "type": "string",
+            "example": "All cell lines within normal limits."
+          },
+          "remarks": {
+            "type": "string",
+            "example": "Routine sample, no hemolysis."
+          },
+          "fileAttachment": {
+            "$ref": "#/components/schemas/FileAttachmentDto"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "CreateLabTechnicianDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Anita Rao"
+          },
+          "email": {
+            "type": "string",
+            "example": "anita.rao@apollo.example"
+          },
+          "password": {
+            "type": "string",
+            "example": "secure-password"
+          },
+          "branchId": {
+            "type": "string",
+            "description": "Hospital branch UUID. Ignored for branch admin requests."
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "branchId"
+        ]
+      },
       "CreateQueueDto": {
         "type": "object",
         "properties": {
@@ -2919,6 +4576,11 @@
           "userId": {
             "type": "string",
             "example": "PAT001"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID. Defaults to the selected doctor's branch."
           }
         },
         "required": [
@@ -2961,6 +4623,11 @@
           "comment": {
             "type": "string",
             "example": "Great doctor!"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID. Defaults to the doctor's branch."
           }
         },
         "required": [
@@ -2983,6 +4650,11 @@
           "password": {
             "type": "string",
             "example": "password123"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
           },
           "phone": {
             "type": "string",
@@ -3022,7 +4694,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "branchId"
         ]
       },
       "UpdateFrontdeskDto": {
@@ -3035,6 +4708,11 @@
           "email": {
             "type": "string",
             "example": "alice@medbits.com"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
           },
           "phone": {
             "type": "string",
@@ -3161,6 +4839,46 @@
         "required": [
           "status"
         ]
+      },
+      "CreateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Cardiology"
+          },
+          "description": {
+            "type": "string",
+            "example": "Heart and cardiovascular care"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
+          }
+        },
+        "required": [
+          "name",
+          "branchId"
+        ]
+      },
+      "UpdateDepartmentDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Cardiology"
+          },
+          "description": {
+            "type": "string",
+            "example": "Heart and cardiovascular care"
+          },
+          "branchId": {
+            "type": "string",
+            "example": "00000000-0000-4000-8000-000000000001",
+            "description": "Hospital branch UUID"
+          }
+        }
       }
     }
   }

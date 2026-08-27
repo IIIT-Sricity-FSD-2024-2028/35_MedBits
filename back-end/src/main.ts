@@ -1,31 +1,50 @@
 import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
+import { ApplicationLogger } from './common/application-logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useLogger(app.get(ApplicationLogger));
+  
+  app.use(helmet());
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
+  });
+  app.enableCors({
+    origin: ['http://localhost:3000', 'http://localhost:5500', 'http://localhost:8080', 'http://127.0.0.1:5500'],
+    credentials: true,
+  });
 
   // Enable global validation using class-validator
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
 
   // ── Swagger / OpenAPI setup ────────────────────────────────
   const swaggerConfig = new DocumentBuilder()
     .setTitle('MEDBITS Healthcare API')
     .setDescription(
       'REST API for the MEDBITS Healthcare Management System.\n\n' +
-      '**Authentication**: Pass the user role in the `role` request header.\n\n' +
-      'Valid roles: `patient` | `doctor` | `frontdesk` | `admin`',
+        '**Authentication**: Pass the user role in the `role` request header.\n\n' +
+        'Valid roles: `patient` | `doctor` | `frontdesk` | `admin`',
     )
     .setVersion('1.0')
     .addApiKey(
-      { type: 'apiKey', name: 'role', in: 'header', description: 'User role for RBAC' },
+      {
+        type: 'apiKey',
+        name: 'role',
+        in: 'header',
+        description: 'User role for RBAC',
+      },
       'role',
     )
     .build();
@@ -40,7 +59,11 @@ async function bootstrap() {
   const docsDir = join(process.cwd(), 'docs');
   try {
     mkdirSync(docsDir, { recursive: true });
-    writeFileSync(join(docsDir, 'swagger.json'), JSON.stringify(document, null, 2));
+    mkdirSync(join(process.cwd(), 'uploads', 'lab-reports'), { recursive: true });
+    writeFileSync(
+      join(docsDir, 'swagger.json'),
+      JSON.stringify(document, null, 2),
+    );
   } catch (err) {
     console.error('Error writing swagger.json', err);
   }
