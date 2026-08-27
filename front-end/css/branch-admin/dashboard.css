@@ -1,0 +1,44 @@
+/* ── Branch Admin Dashboard — page-specific styles ── */
+
+/* Quick Actions Grid */
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.quick-action {
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 2px solid transparent;
+}
+.quick-action:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+.qa-teal { background: var(--accent-light); border-color: var(--accent); }
+.qa-teal:hover { background: var(--accent); color: #fff; }
+
+.qa-navy { background: #e0f2fe; border-color: #0ea5e9; }
+.qa-navy:hover { background: #0c4a6e; color: #fff; }
+
+.qa-icon  { font-size: 28px; }
+.qa-label { font-size: 14px; font-weight: 600; }
+
+/* Two-column bottom row */
+.dash-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.mb-16 { margin-bottom: 16px; }
+
+@media (max-width: 860px) {
+  .dash-bottom   { grid-template-columns: 1fr; }
+  .quick-grid    { grid-template-columns: 1fr; }
+}

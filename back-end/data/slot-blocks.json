@@ -11,5 +11,12 @@
     "doctorId": "DOC001",
     "date": "2099-01-01",
     "slot": "10:00"
+  },
+  {
+    "id": "SB1778309518028",
+    "doctorId": "DOC001",
+    "date": "2026-05-10",
+    "slot": "10:30",
+    "reason": "Casual"
   }
 ]

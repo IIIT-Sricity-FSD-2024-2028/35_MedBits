@@ -1,5 +1,14 @@
 {
-  "testBookings": [],
+  "testBookings": [
+    {
+      "id": "TBOOK1778309316934",
+      "userId": "PAT001",
+      "labTestId": "LAB004",
+      "status": "cart",
+      "cartId": "LABCART1778309316934",
+      "orderId": null
+    }
+  ],
   "labAssignments": [
     {
       "id": "LABASSIGN1777869875072",

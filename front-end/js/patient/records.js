@@ -11,8 +11,19 @@ async function initializeMedicalRecordsPage() {
   const session = requireRole('patient');
   if (!session) return;
 
+  const patientId = (session.userId || session.patientId || session.id || '').trim();
+  await refreshAllPatientData(patientId);
+  startMedicalRecordsRefresh();
+}
+
+async function refreshAllPatientData(patientId) {
+  await fetchMedicalRecords(patientId);
+  renderMedicalRecords();
+}
+
+async function fetchMedicalRecords(patientId) {
   const response = await fetch(
-    `${MEDICAL_RECORDS_API_BASE_URL}/medical-records/${encodeURIComponent(session.id)}`,
+    `${MEDICAL_RECORDS_API_BASE_URL}/medical-records/${encodeURIComponent(patientId)}`,
     {
       headers: {
         role: 'patient',
@@ -25,8 +36,6 @@ async function initializeMedicalRecordsPage() {
   }
 
   medicalRecords = await response.json();
-  renderMedicalRecords();
-  startMedicalRecordsRefresh();
 }
 
 function startMedicalRecordsRefresh() {
@@ -35,54 +44,37 @@ function startMedicalRecordsRefresh() {
   medicalRecordsRefreshTimer = window.setInterval(async () => {
     if (document.hidden) return;
     try {
-      await refreshMedicalRecords();
+      const session = requireRole('patient');
+      const patientId = (session?.userId || session?.patientId || session?.id || '').trim();
+      if (patientId) await refreshAllPatientData(patientId);
     } catch (_) {}
   }, 5000);
 
   window.addEventListener('focus', async () => {
     try {
-      await refreshMedicalRecords();
+      const session = requireRole('patient');
+      const patientId = (session?.userId || session?.patientId || session?.id || '').trim();
+      if (patientId) await refreshAllPatientData(patientId);
     } catch (_) {}
   });
-}
-
-async function refreshMedicalRecords() {
-  const session = requireRole('patient');
-  if (!session) return;
-
-  const response = await fetch(
-    `${MEDICAL_RECORDS_API_BASE_URL}/medical-records/${encodeURIComponent(session.id)}`,
-    {
-      headers: {
-        role: 'patient',
-      },
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to load medical records');
-  }
-
-  medicalRecords = await response.json();
-  renderMedicalRecords();
 }
 
 function renderMedicalRecords() {
   const consultations = medicalRecords.filter((record) => record.type === 'consultation');
   const treatments = medicalRecords.filter((record) => record.type === 'treatment');
-  const labs = medicalRecords.filter((record) => record.type === 'lab');
 
-  setText('stat-total', medicalRecords.length);
+  const totalCount = consultations.length + treatments.length;
+
+  setText('stat-total', totalCount);
   setText('stat-consults', consultations.length);
-  setText('stat-labs', labs.length);
+  setText('stat-treatments', treatments.length);
 
   renderRecordGroup('consultationSection', 'consultationList', consultations);
   renderRecordGroup('treatmentSection', 'treatmentList', treatments);
-  renderRecordGroup('labSection', 'labList', labs);
 
   const emptyState = document.getElementById('recordsEmptyState');
   if (emptyState) {
-    emptyState.style.display = medicalRecords.length ? 'none' : 'block';
+    emptyState.style.display = totalCount ? 'none' : 'block';
   }
 }
 
@@ -132,7 +124,7 @@ function buildRecordCard(record) {
       ? details.join(' | ')
       : 'Treatment plan details from the assigned doctor.';
   } else {
-    primaryText.textContent = 'Lab record available from the assigned doctor.';
+    primaryText.textContent = 'Medical record available from the assigned doctor.';
   }
 
   return frag;
@@ -141,3 +133,4 @@ function buildRecordCard(record) {
 function formatRecordType(type) {
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
+
