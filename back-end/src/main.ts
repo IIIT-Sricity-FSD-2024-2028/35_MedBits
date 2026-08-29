@@ -7,31 +7,20 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { ApplicationLogger } from './common/application-logger.service';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.useLogger(app.get(ApplicationLogger));
-  
+  const logger = app.get(ApplicationLogger);
+  app.useLogger(logger);
+  app.useGlobalFilters(new HttpExceptionFilter(logger));
+
   app.use(helmet());
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads',
   });
   app.enableCors({
-    origin(origin, callback) {
-      if (!origin || origin === 'null') {
-        // Allow local file:// and non-browser requests during development.
-        callback(null, true);
-        return;
-      }
-
-      const isLocalOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
-      if (isLocalOrigin) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`CORS blocked origin: ${origin}`), false);
-    },
+    origin: ['http://localhost:3000', 'http://localhost:5500', 'http://localhost:8080', 'http://127.0.0.1:5500'],
     credentials: true,
   });
 
