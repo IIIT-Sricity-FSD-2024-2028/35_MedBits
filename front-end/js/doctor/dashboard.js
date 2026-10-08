@@ -26,6 +26,8 @@ async function loadDashboardData(doctorId) {
   const queueContainer = document.getElementById('doctorQueueList');
   const statToday = document.getElementById('statToday');
   const statCompleted = document.getElementById('statCompleted');
+  const statPendingLabs = document.getElementById('statPendingLabs');
+  const statPendingLabsDelta = document.getElementById('statPendingLabsDelta');
 
   if (!doctorId) {
     if (appointmentsContainer) {
@@ -38,17 +40,22 @@ async function loadDashboardData(doctorId) {
     }
     if (statToday) statToday.textContent = '0';
     if (statCompleted) statCompleted.textContent = '0';
+    if (statPendingLabs) statPendingLabs.textContent = '0';
+    if (statPendingLabsDelta) statPendingLabsDelta.textContent = '0 awaiting results';
     return;
   }
 
   try {
-    const [appointmentsResponse, queueResponse] = await Promise.all([
+    const [appointmentsResponse, queueResponse, labReportsResponse] = await Promise.all([
       fetch(`${DOCTOR_API_BASE}/appointments/doctor/${encodeURIComponent(doctorId)}`, {
         headers: { role: 'doctor' },
       }),
       fetch(`${DOCTOR_API_BASE}/queue/${encodeURIComponent(doctorId)}`, {
         headers: { role: 'doctor' },
       }),
+      fetch(`${DOCTOR_API_BASE}/lab-reports/doctor`, {
+        headers: { role: 'doctor', 'x-user-id': doctorId },
+      }).catch(() => null),
     ]);
 
     if (!appointmentsResponse.ok) throw new Error('Failed to load appointments');
@@ -56,11 +63,18 @@ async function loadDashboardData(doctorId) {
 
     const appointments = await appointmentsResponse.json();
     const queueItems = await queueResponse.json();
+    let submittedLabReports = [];
+    if (labReportsResponse && labReportsResponse.ok) {
+      submittedLabReports = await labReportsResponse.json().catch(() => []);
+    }
+
     const upcoming = appointments.filter((item) => item.status === 'upcoming');
     const completed = appointments.filter((item) => item.status === 'completed');
 
     if (statToday) statToday.textContent = upcoming.length;
     if (statCompleted) statCompleted.textContent = completed.length;
+    if (statPendingLabs) statPendingLabs.textContent = '0';
+    if (statPendingLabsDelta) statPendingLabsDelta.textContent = '0 awaiting results';
 
     const bannerSub = document.querySelector('.banner-sub');
     if (bannerSub) {
@@ -94,12 +108,16 @@ function renderDoctorAppointments(container, appointments) {
   appointments.slice(0, 5).forEach((appointment) => {
     const patientName = appointment.patient?.name || appointment.userId || 'Patient';
     const initials = getInitials(patientName);
-    const statusClass =
-      appointment.status === 'upcoming' ? 'badge-confirm-outline' : 'badge-completed';
-    const statusLabel = appointment.status === 'upcoming' ? 'Upcoming' : 'Completed';
+    const isUpcoming = appointment.status === 'upcoming';
+    const statusClass = isUpcoming ? 'badge-confirm-outline' : 'badge-completed';
+    const statusLabel = isUpcoming ? 'Upcoming' : 'Completed';
 
     const row = document.createElement('div');
     row.className = 'patient-row';
+    if (isUpcoming) {
+      row.style.cursor = 'pointer';
+      row.title = 'Click to start consultation note';
+    }
     row.innerHTML = `
       <div class="patient-left">
         <div class="avatar">${initials}</div>
@@ -110,8 +128,17 @@ function renderDoctorAppointments(container, appointments) {
       </div>
       <div class="patient-right">
         <span class="badge ${statusClass}">${statusLabel}</span>
-        <span class="appt-time">${appointment.slot}</span>
+        ${isUpcoming
+          ? `<span class="appt-time" style="color:var(--accent);font-size:.75rem;font-weight:600;">▶ Consult</span>`
+          : `<span class="appt-time">${appointment.slot}</span>`
+        }
       </div>`;
+
+    if (isUpcoming) {
+      row.addEventListener('click', () => {
+        window.location.href = `consultation-notes.html?appointmentId=${encodeURIComponent(appointment.id)}`;
+      });
+    }
     container.appendChild(row);
   });
 }
