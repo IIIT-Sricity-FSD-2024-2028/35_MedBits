@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Header, Param, Post, Put, Query, UseGuards, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, Header, Headers, NotFoundException, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -65,8 +65,11 @@ export class AppointmentsController {
   @Post()
   @ApiOperation({ summary: 'Create an appointment' })
   @ApiBody({ type: CreateAppointmentDto })
-  @ApiResponse({ status: 201, description: 'Appointment created successfully' })
-  createAppointment(@Body() body: CreateAppointmentDto) {
+  createAppointment(
+    @Body() body: CreateAppointmentDto,
+    @Headers('role') role?: string,
+    @Headers('x-user-id') userId?: string,
+  ) {
     const scopedBranchId = this.getScopedBranchId();
     const requestedBranchId = body.branchId?.trim() ?? '';
     const branchId = scopedBranchId ?? requestedBranchId;
@@ -75,12 +78,20 @@ export class AppointmentsController {
       throw new ForbiddenException('Access denied for this hospital branch');
     }
 
+    const normalizedRole = (role || '').trim().toLowerCase();
+    const isFrontdesk = normalizedRole === 'frontdesk' || body.source === 'frontdesk' || body.bookedBy === 'frontdesk';
+    const staffId = userId?.trim() || body.frontdeskId?.trim();
+
     return this.appointmentsService.createAppointment({
       userId: body.userId.trim(),
       doctorId: body.doctorId.trim(),
       branchId,
       date: body.date.trim(),
       slot: body.slot.trim(),
+      bookedBy: isFrontdesk ? (staffId || body.bookedBy?.trim() || 'frontdesk') : (body.bookedBy || (normalizedRole === 'patient' ? 'patient' : undefined)),
+      bookedByRole: normalizedRole || (isFrontdesk ? 'frontdesk' : 'patient'),
+      source: isFrontdesk ? 'frontdesk' : (body.source || (normalizedRole === 'patient' ? 'patient' : 'frontdesk')),
+      frontdeskId: isFrontdesk ? (staffId || body.bookedBy?.trim() || undefined) : undefined,
     });
   }
 
@@ -139,5 +150,36 @@ export class AppointmentsController {
   cancelAppointment(@Param('id') id: string) {
     this.requireAppointmentInScope(id);
     return this.appointmentsService.cancelAppointment(id);
+  }
+
+  @Roles('doctor', 'frontdesk', 'admin')
+  @Post(':id/complete')
+  @ApiOperation({ summary: 'Mark an appointment as completed' })
+  @ApiResponse({ status: 200, description: 'Appointment marked as completed' })
+  async completeAppointment(@Param('id') id: string) {
+    await this.requireAppointmentInScope(id);
+    return this.appointmentsService.completeAppointment(id);
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Roles('doctor', 'admin')
+  @Get('earnings/doctor/:doctorId')
+  @ApiOperation({ summary: 'Get earnings summary for a doctor (completed appointments)' })
+  @ApiResponse({ status: 200, description: 'Doctor earnings summary with per-appointment breakdown' })
+  getDoctorEarnings(@Param('doctorId') doctorId: string) {
+    return this.appointmentsService.getEarningsForDoctor(doctorId);
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Roles('admin')
+  @Get('earnings/branch')
+  @ApiOperation({ summary: 'Get branch earnings summary (all completed appointments for admin branch)' })
+  @ApiResponse({ status: 200, description: 'Branch earnings summary with revenue, doctor cuts, and profit' })
+  async getBranchEarnings() {
+    const branchId = this.getScopedBranchId();
+    if (!branchId) {
+      throw new BadRequestException('Branch context required');
+    }
+    return this.appointmentsService.getEarningsForBranch(branchId);
   }
 }
