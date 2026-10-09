@@ -1,0 +1,326 @@
+/*
+ * Topbar.css — Styles for the Topbar (Header) Component
+ * =======================================================
+ * Extracted and unified from all per-actor global.css files.
+ * Matches the original design exactly.
+ */
+
+/* ── TOPBAR SHELL ─────────────────────────────────────────────────── */
+.topbar {
+  height: var(--topbar-h);             /* 64px */
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;                    /* stays at the top as you scroll */
+  top: 0;
+  z-index: 50;                         /* below sidebar (z-index 100) */
+  box-shadow: var(--shadow);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── LEFT SIDE ────────────────────────────────────────────────────── */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Hamburger toggle button */
+.sidebar-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  transition: var(--transition);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Page title area */
+.topbar-page-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.page-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  /* Reset h1 default margin (browser adds margin by default) */
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── RIGHT SIDE ───────────────────────────────────────────────────── */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── NOTIFICATION BELL ────────────────────────────────────────────── */
+.notif-wrapper {
+  position: relative;               /* needed for dropdown absolute positioning */
+}
+
+.topbar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  position: relative;               /* for badge positioning */
+}
+
+.notif-btn:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Red badge count on the bell */
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  background: #ef4444;              /* red */
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+/* Notification dropdown panel */
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 300px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  /* Hidden by default — shown by adding .open class */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 200;
+}
+
+.notif-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.notif-clear {
+  font-size: 0.78rem;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.notif-clear:hover { text-decoration: underline; }
+
+.notif-list { padding: 6px; }
+
+/* Individual notification row */
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.notif-item:hover { background: var(--bg); }
+
+/* Blue dot for unread notifications */
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 4px;
+  flex-shrink: 0;
+  opacity: 0;                        /* invisible by default (read) */
+}
+
+/* When the item has the .unread class, show the blue dot */
+.notif-item.unread .notif-dot { opacity: 1; }
+
+.notif-content p {
+  font-size: 0.83rem;
+  color: var(--text);
+  margin: 0 0 2px 0;
+}
+
+.notif-content span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.notif-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ── USER PROFILE CHIP ────────────────────────────────────────────── */
+.profile-wrapper {
+  position: relative;
+}
+
+/* The clickable chip that shows avatar + name */
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;             /* pill shape */
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+  background: none;
+  font-family: inherit;
+}
+
+.user-chip:hover,
+.user-chip.open {
+  background: var(--bg);
+  border-color: var(--border);
+}
+
+/* Avatar circle with initials */
+.user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--white);
+  display: grid;
+  place-items: center;
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.user-chip-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Profile dropdown */
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 190px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 200;
+  padding: 6px;
+}
+
+.profile-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Dropdown items (My Profile, Logout) */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--text);
+  transition: background var(--transition);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Logout is red */
+.dropdown-item.logout-item { color: var(--red, #ef4444); }
+.dropdown-item.logout-item:hover { background: var(--red-light, #fee2e2); }
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Hide name/role text on very small screens — just show the avatar */
+  .user-chip-info { display: none; }
+  .topbar { padding: 0 16px; }
+}

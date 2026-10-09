@@ -1,0 +1,76 @@
+/*
+ * AppShell.css — Layout shell styles
+ * =====================================
+ * Styles for the outer app-shell, main-wrapper, and page-content.
+ * Extracted from the .app-shell, .main-wrapper, .page-content rules
+ * in all per-actor global.css files.
+ */
+
+/* ── OUTER SHELL ──────────────────────────────────────────────────── */
+/*
+ * .app-shell is the outermost container.
+ * display: flex puts sidebar and main-wrapper side by side.
+ */
+.app-shell {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── MAIN WRAPPER ─────────────────────────────────────────────────── */
+/*
+ * The right-side area (topbar + page content).
+ * margin-left: 240px to make room for the fixed sidebar.
+ */
+.main-wrapper {
+  margin-left: var(--sidebar-w);     /* 240px — pushes content right of sidebar */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;                      /* prevents content from overflowing on flex */
+  transition: margin-left var(--transition), max-width var(--transition);
+  overflow-x: hidden;
+}
+
+/*
+ * When sidebar is collapsed (icon-only, 64px wide),
+ * we reduce the margin so the content expands.
+ * Replaces: mainWrapper.classList.toggle('sidebar-collapsed')
+ */
+.main-wrapper.sidebar-collapsed {
+  margin-left: 64px;
+}
+
+/* ── PAGE CONTENT ─────────────────────────────────────────────────── */
+/*
+ * The scrollable area where each page's JSX renders.
+ * Has a subtle fade-in animation matching the old CSS.
+ */
+.page-content {
+  flex: 1;
+  padding: 28px 32px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  /* Fade-in animation — matches keyframes in index.css */
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* On mobile, sidebar is overlaid (fixed, z-index 100), so no margin needed */
+  .main-wrapper {
+    margin-left: 0 !important;
+  }
+
+  .page-content {
+    padding: 20px 16px;
+  }
+}
