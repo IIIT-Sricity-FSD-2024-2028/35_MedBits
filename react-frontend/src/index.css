@@ -1,0 +1,108 @@
+/*
+ * index.css — Global Design Tokens & Reset
+ * ==========================================
+ * This is the single source of truth for design tokens (CSS variables).
+ * All component CSS files import values from here.
+ *
+ * Consolidates the :root blocks from ALL per-actor global.css files.
+ * The colour palette is unified — using the Lab Technician / Doctor theme
+ * (clinical blue on dark navy) which is consistent across most portals.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* ── DESIGN TOKENS (CSS Custom Properties) ──────────────────────── */
+:root {
+  /* Brand colours */
+  --navy:         #0f172a;   /* sidebar background */
+  --navy-light:   #1e293b;   /* sidebar hover/tooltip background */
+  --accent:       #0284c7;   /* primary clinical blue */
+  --accent-dark:  #0369a1;   /* primary blue hover */
+  --accent-light: #e0f2fe;   /* light blue tint (backgrounds, hover states) */
+
+  /* Status colours — used in badges, stat cards, toasts */
+  --green:        #10b981;   --green-light:  #d1fae5;
+  --orange:       #f59e0b;   --orange-light: #fef3c7;
+  --blue:         #3b82f6;   --blue-light:   #eff6ff;
+  --purple:       #8b5cf6;   --purple-light: #f5f3ff;
+  --red:          #ef4444;   --red-light:    #fee2e2;
+  --teal:         #0d9488;   --teal-light:   #ccfbf1;
+
+  /* Neutral colours */
+  --text:         #0f172a;   /* main text (dark navy) */
+  --text-muted:   #64748b;   /* secondary text (slate grey) */
+  --border:       #e2e8f0;   /* card borders, dividers */
+  --bg:           #f8fafc;   /* page background (off-white) */
+  --white:        #ffffff;
+
+  /* Layout dimensions — used by AppShell.css and Sidebar.css */
+  --sidebar-w:    240px;     /* full sidebar width */
+  --topbar-h:     64px;      /* topbar height */
+
+  /* Border radius */
+  --radius:       12px;      /* cards, modals */
+  --radius-sm:    8px;       /* buttons, inputs, nav items */
+
+  /* Shadows */
+  --shadow:       0 2px 14px rgba(15, 23, 42, 0.06);
+  --shadow-lg:    0 8px 30px rgba(15, 23, 42, 0.12);
+
+  /* Animation timing — used everywhere for transitions */
+  --transition:   all 0.22s ease;
+}
+
+/* ── RESET ──────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* ── FADE-IN ANIMATION ──────────────────────────────────────────── */
+/*
+ * Used by AppShell.css for page transitions.
+ * Matches the original keyframes in all per-actor global.css files.
+ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── TOAST ANIMATIONS ───────────────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0);    }
+  to   { opacity: 0; transform: translateY(12px); }
+}
