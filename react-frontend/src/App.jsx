@@ -1,26 +1,6 @@
 /**
  * App.jsx — Root Application Component with Routing
  * ===================================================
- * This is the top-level component. It:
- *   1. Wraps everything in <AuthProvider> so auth state is globally available.
- *   2. Sets up React Router routes.
- *   3. Each protected route is wrapped in <ProtectedRoute allowedRoles={[...]}>
- *
- * STRUCTURE:
- *   <AuthProvider>         ← auth context (user, login, logout)
- *     <BrowserRouter>      ← React Router
- *       <Routes>
- *         /login           → LoginPage (public)
- *         /doctor/*        → Protected (role: doctor)
- *         /patient/*       → Protected (role: patient)
- *         ... etc.
- *       </Routes>
- *     </BrowserRouter>
- *   </AuthProvider>
- *
- * NOTE:
- *   For Phase 1, most routes just render a DemoPage placeholder.
- *   Each team member will replace DemoPage with their actual page components.
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -28,7 +8,7 @@ import { AuthProvider }   from './context/AuthContext';
 import ProtectedRoute     from './components/auth/ProtectedRoute';
 import DemoPage           from './pages/demo/DemoPage';
 
-/* ─── Placeholder Login page (to be built by the team) ─── */
+/* ─── Placeholder Login page ─── */
 function LoginPage() {
   return (
     <div style={{ display:'grid', placeItems:'center', minHeight:'100vh',
@@ -37,50 +17,73 @@ function LoginPage() {
                     boxShadow:'0 4px 24px rgba(0,0,0,.08)', textAlign:'center' }}>
         <h1 style={{ fontFamily:'Sora, sans-serif', marginBottom:'8px' }}>MEDBITS</h1>
         <p style={{ color:'#64748b', marginBottom:'24px' }}>Login page — to be implemented</p>
-        {/*
-         * TEMPORARY: Set a test user so you can see the sidebar working.
-         * In real implementation: login form calls auth.login(userData) from API.
-         */}
+        
+        {/* Demo Login Buttons for all 6 actors */}
         <button
           style={{ background:'#0284c7', color:'#fff', padding:'10px 24px',
-                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px' }}
+                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', margin: '5px' }}
           onClick={() => {
-            /* Simulate a doctor login for demo purposes */
-            localStorage.setItem('user', JSON.stringify({
-              id: 1,
-              name: 'Dr. Sarah Johnson',
-              email: 'sarah@medbits.com',
-              role: 'doctor',
-            }));
+            localStorage.setItem('user', JSON.stringify({ id: 1, name: 'Dr. Sarah Johnson', role: 'doctor' }));
             window.location.href = '/doctor/dashboard';
           }}
         >
-          Demo Login as Doctor
+          Login as Doctor
         </button>
-        &nbsp;
         <button
           style={{ background:'#0f172a', color:'#fff', padding:'10px 24px',
-                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px',
-                   marginTop:'10px' }}
+                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', margin: '5px' }}
           onClick={() => {
-            /* Simulate a lab tech login */
-            localStorage.setItem('user', JSON.stringify({
-              id: 2,
-              name: 'Arun Kumar',
-              email: 'arun@medbits.com',
-              role: 'labtech',
-            }));
+            localStorage.setItem('user', JSON.stringify({ id: 2, name: 'Arun Kumar', role: 'labtech' }));
             window.location.href = '/lab-technician/dashboard';
           }}
         >
-          Demo Login as Lab Tech
+          Login as Lab Tech
+        </button>
+        <button
+          style={{ background:'#10b981', color:'#fff', padding:'10px 24px',
+                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', margin: '5px' }}
+          onClick={() => {
+            localStorage.setItem('user', JSON.stringify({ id: 3, name: 'Neha Sharma', role: 'patient' }));
+            window.location.href = '/patient/dashboard';
+          }}
+        >
+          Login as Patient
+        </button>
+        <button
+          style={{ background:'#f59e0b', color:'#fff', padding:'10px 24px',
+                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', margin: '5px' }}
+          onClick={() => {
+            localStorage.setItem('user', JSON.stringify({ id: 4, name: 'Priya Desk', role: 'frontdesk' }));
+            window.location.href = '/front-desk/dashboard';
+          }}
+        >
+          Login as Front Desk
+        </button>
+        <button
+          style={{ background:'#8b5cf6', color:'#fff', padding:'10px 24px',
+                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', margin: '5px' }}
+          onClick={() => {
+            localStorage.setItem('user', JSON.stringify({ id: 5, name: 'Mr. Admin', role: 'branch_admin' }));
+            window.location.href = '/branch-admin/dashboard';
+          }}
+        >
+          Login as Branch Admin
+        </button>
+        <button
+          style={{ background:'#ef4444', color:'#fff', padding:'10px 24px',
+                   borderRadius:'8px', border:'none', cursor:'pointer', fontSize:'14px', margin: '5px' }}
+          onClick={() => {
+            localStorage.setItem('user', JSON.stringify({ id: 6, name: 'Super Boss', role: 'super_admin' }));
+            window.location.href = '/superuser/dashboard';
+          }}
+        >
+          Login as Super Admin
         </button>
       </div>
     </div>
   );
 }
 
-/* ─── Unauthorized page ─── */
 function UnauthorizedPage() {
   return (
     <div style={{ display:'grid', placeItems:'center', minHeight:'100vh' }}>
@@ -95,10 +98,6 @@ function UnauthorizedPage() {
 
 export default function App() {
   return (
-    /*
-     * AuthProvider wraps everything so AuthContext is available app-wide.
-     * Think of it as the React equivalent of making getSession() globally available.
-     */
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -106,7 +105,6 @@ export default function App() {
           {/* ── PUBLIC ROUTES ──────────────────────────────── */}
           <Route path="/login"        element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          {/* Redirect root to login */}
           <Route path="/"             element={<Navigate to="/login" replace />} />
 
           {/* ── SUPERUSER ROUTES ───────────────────────────── */}
