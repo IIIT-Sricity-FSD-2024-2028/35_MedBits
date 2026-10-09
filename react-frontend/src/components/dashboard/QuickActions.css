@@ -1,0 +1,78 @@
+/* QuickActions.css — Styles for Universal Quick Actions Component */
+
+.quick-actions-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.quick-actions-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+/* ── GRID VARIANT (Card tiles) ── */
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.qa-item.qa-item-grid {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qa-item.qa-item-grid:hover {
+  background: var(--qa-accent-color, #0284c7);
+  color: #ffffff;
+  border-color: var(--qa-accent-color, #0284c7);
+  transform: translateY(-2px);
+}
+
+.qa-item.qa-item-grid .qa-icon {
+  font-size: 1.25rem;
+}
+
+/* ── LIST VARIANT (Outline stacked buttons) ── */
+.quick-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qa-item.qa-item-list {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 1px solid #cbd5e1;
+  background: transparent;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.qa-item.qa-item-list:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}

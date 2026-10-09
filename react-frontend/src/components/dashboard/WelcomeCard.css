@@ -1,0 +1,66 @@
+/* WelcomeCard.css — Styles for Universal Welcome & Hero Banner */
+
+.welcome-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  padding: 28px 32px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+}
+
+.welcome-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 6px;
+}
+
+.welcome-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.625rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  line-height: 1.25;
+}
+
+.welcome-subtitle {
+  color: #94a3b8;
+  font-size: 0.925rem;
+  margin: 0;
+}
+
+.welcome-stats-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.welcome-stat-chip {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px 20px;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 100px;
+}
+
+.welcome-stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.welcome-stat-label {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  margin-top: 2px;
+}

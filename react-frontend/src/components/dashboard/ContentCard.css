@@ -1,0 +1,68 @@
+/* ContentCard.css — Styles for Universal Section Wrapper Component */
+
+.content-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.2s ease;
+}
+
+.content-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.content-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.content-card-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.content-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.content-card-sub {
+  font-size: 0.825rem;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+/* Styling for action items, typically a "View All" link or small button */
+.content-card-action a, 
+.content-card-action button {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0284c7;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.content-card-action a:hover, 
+.content-card-action button:hover {
+  text-decoration: underline;
+  background-color: #f0f9ff;
+}
+
+/* Main body container */
+.content-card-body {
+  /* No specific styles needed by default, allows children to control layout */
+}
