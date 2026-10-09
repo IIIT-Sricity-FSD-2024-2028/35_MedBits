@@ -1,5 +1,15 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
+/**
+ * PlanTier — subscription plan levels for a hospital branch.
+ * Imported by subscription-payment.entity.ts to type the `planTier` column.
+ */
+export enum PlanTier {
+  BASIC    = 'basic',
+  STANDARD = 'standard',
+  PREMIUM  = 'premium',
+}
+
 export enum HospitalBranchStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
