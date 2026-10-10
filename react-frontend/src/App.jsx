@@ -28,6 +28,7 @@ import Unauthorized from './pages/Unauthorized';
 import DoctorDashboard from './pages/dashboards/DoctorDashboard';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
+import PatientFeedback from './pages/patient/feedback';
 import FrontDeskDashboard from './pages/dashboards/FrontDeskDashboard';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import BranchAdminDashboard from './pages/dashboards/BranchAdminDashboard';
@@ -123,7 +124,7 @@ export default function App() {
           } />
           <Route path="/patient/feedback" element={
             <ProtectedRoute allowedRoles={['patient']}>
-              <DemoPage pageTitle="Feedback" />
+              <PatientFeedback />
             </ProtectedRoute>
           } />
 
