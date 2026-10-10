@@ -29,6 +29,7 @@ import DoctorDashboard from './pages/dashboards/DoctorDashboard';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
 import PatientFeedback from './pages/patient/feedback';
+import PatientMedicalRecords from './pages/patient/medicalrecords';
 import FrontDeskDashboard from './pages/dashboards/FrontDeskDashboard';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import BranchAdminDashboard from './pages/dashboards/BranchAdminDashboard';
@@ -114,7 +115,7 @@ export default function App() {
           } />
           <Route path="/patient/records" element={
             <ProtectedRoute allowedRoles={['patient']}>
-              <DemoPage pageTitle="Medical Records" />
+              <PatientMedicalRecords />
             </ProtectedRoute>
           } />
           <Route path="/patient/billing" element={
