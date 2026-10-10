@@ -424,6 +424,16 @@
   line-height: 1.5;
 }
 
+.records-section-empty {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  border: 1.5px dashed var(--border);
+}
+
 .records-alert {
   padding: 13px 18px;
   border-radius: 8px;
