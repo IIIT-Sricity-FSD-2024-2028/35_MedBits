@@ -1,0 +1,431 @@
+/*
+ * feedback.css — Patient Doctor Feedback & Reviews Styles
+ * ====================================================================
+ * Preserves the aesthetic from front-end/css/patient/records-profile-feedback.css
+ * enhanced with modern design tokens, interactive rating buttons, and card states.
+ */
+
+/* ── MAIN CONTAINER ────────────────────────────────────────────────── */
+.feedback-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── HERO BANNER ───────────────────────────────────────────────────── */
+.feedback-banner {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+
+.feedback-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.feedback-banner-icon {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.feedback-banner h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.feedback-banner p {
+  opacity: 0.85;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* ── FORM & LIST CARDS ─────────────────────────────────────────────── */
+.feedback-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 30px;
+  box-shadow: var(--shadow);
+}
+
+.feedback-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.feedback-card-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feedback-card-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── FORM FIELDS ───────────────────────────────────────────────────── */
+.feedback-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.feedback-form-group label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.feedback-form-group select,
+.feedback-form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: #f8fafc;
+  outline: none;
+  transition: var(--transition);
+}
+
+.feedback-form-group select:focus,
+.feedback-form-group textarea:focus {
+  border-color: var(--accent);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.feedback-form-group textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.feedback-char-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ── INTERACTIVE RATING BUTTONS ────────────────────────────────────── */
+.rating-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.rating-btn {
+  padding: 10px 22px;
+  border-radius: 28px;
+  border: 1.5px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.75;
+  font-family: 'DM Sans', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.rating-btn:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.rating-btn.selected {
+  opacity: 1;
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Rating color variants corresponding to original records-profile-feedback.css */
+.rating-bad {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.rating-avg {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+.rating-good {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.rating-better {
+  background: #15803d;
+  color: #ffffff;
+}
+
+.rating-excellent {
+  background: #166534;
+  color: #ffffff;
+}
+
+/* ── SUBMIT BUTTON ─────────────────────────────────────────────────── */
+.btn-submit-feedback {
+  background: var(--navy);
+  color: #ffffff;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Sora', sans-serif;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.btn-submit-feedback:hover:not(:disabled) {
+  background: var(--navy-light);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+}
+
+.btn-submit-feedback:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── PAST FEEDBACK LIST & CARDS ────────────────────────────────────── */
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fb-card {
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  padding: 18px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  border: 1.5px solid var(--border);
+  transition: var(--transition);
+}
+
+.fb-card:hover {
+  border-color: var(--accent);
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.08);
+}
+
+.fb-card-main {
+  flex: 1;
+}
+
+.fb-doctor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.fb-doctor-avatar {
+  width: 38px;
+  height: 38px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.fb-doctor {
+  font-family: 'Sora', sans-serif;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fb-date {
+  font-size: 13px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fb-comment {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent);
+}
+
+.fb-badge-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.badge-green {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-orange {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-blue {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+/* ── EMPTY STATE ───────────────────────────────────────────────────── */
+.feedback-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.feedback-empty-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.feedback-empty-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.feedback-empty-text {
+  font-size: 13.5px;
+  max-width: 380px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ── STATUS ALERTS ─────────────────────────────────────────────────── */
+.feedback-alert {
+  padding: 13px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.feedback-alert.success {
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.feedback-alert.error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.feedback-alert.info {
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  color: #0369a1;
+}
+
+/* ── RESPONSIVE DESIGN ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .feedback-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 22px 24px;
+  }
+
+  .fb-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .fb-badge-group {
+    align-items: flex-start;
+  }
+
+  .rating-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
