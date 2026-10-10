@@ -27,6 +27,7 @@ import Unauthorized from './pages/Unauthorized';
 // Respective Role Dashboards
 import DoctorDashboard from './pages/dashboards/DoctorDashboard';
 import PatientDashboard from './pages/patient/PatientDashboard';
+import PatientProfile from './pages/patient/Profile';
 import FrontDeskDashboard from './pages/dashboards/FrontDeskDashboard';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import BranchAdminDashboard from './pages/dashboards/BranchAdminDashboard';
@@ -97,7 +98,7 @@ export default function App() {
           } />
           <Route path="/patient/profile" element={
             <ProtectedRoute allowedRoles={['patient']}>
-              <DemoPage pageTitle="Profile" />
+              <PatientProfile />
             </ProtectedRoute>
           } />
           <Route path="/patient/appointments" element={
