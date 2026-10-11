@@ -1,0 +1,327 @@
+/*
+ * slots.css — Doctor Slot Management Page Styles
+ * ====================================================================
+ * Preserves clean clinical typography, responsive grid structures,
+ * and component state transitions without inline styles.
+ */
+
+.slots-page-container {
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── CARD SHELL ────────────────────────────────────────────────────── */
+.slot-card {
+  background: var(--white, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius, 12px);
+  padding: 24px 28px;
+  box-shadow: var(--shadow, 0 1px 3px rgba(0, 0, 0, 0.05));
+}
+
+.slot-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.slot-card-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+  margin: 0;
+}
+
+/* ── DATE SELECTION ROW ────────────────────────────────────────────── */
+.slot-date-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.slot-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slot-date-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.slot-date-input {
+  padding: 10px 14px;
+  border: 1.5px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  font-size: 14.5px;
+  color: #1e293b;
+  outline: none;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.slot-date-input:focus {
+  border-color: var(--teal, #0d9488);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.slot-unavail-notice {
+  padding: 24px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 14.5px;
+}
+
+/* ── INTERACTIVE SLOT GRID ─────────────────────────────────────────── */
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.slot-item {
+  border: 1.5px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+/* State 1: Available to book */
+.slot-item.available {
+  border-color: #0d9488;
+  background: #f0fdfa;
+  cursor: pointer;
+}
+
+.slot-item.available:hover {
+  background: #ccfbf1;
+  transform: translateY(-1px);
+}
+
+.slot-item.available .slot-time {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.slot-item.available .slot-status {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0f766e;
+  margin-top: 4px;
+}
+
+/* State 2: Patient already booked (Warning Amber) */
+.slot-item.patient-booked {
+  border-color: #ca8a04;
+  background: #fef9c3;
+  cursor: not-allowed;
+}
+
+.slot-item.patient-booked .slot-time {
+  color: #854d0e;
+  font-weight: 700;
+}
+
+.slot-item.patient-booked .slot-status {
+  color: #a16207;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.slot-patient-label {
+  font-size: 11px;
+  color: #713f12;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+/* State 3: Blocked by Doctor (Red) */
+.slot-item.blocked {
+  border-color: #ef4444;
+  background: #fef2f2;
+  cursor: pointer;
+}
+
+.slot-item.blocked:hover {
+  background: #fee2e2;
+}
+
+.slot-item.blocked .slot-time {
+  color: #991b1b;
+  font-weight: 700;
+}
+
+.slot-item.blocked .slot-status {
+  color: #b91c1c;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ── STATUS LEGEND ─────────────────────────────────────────────────── */
+.slot-legend {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.legend-dot.available { background: #f0fdfa; border: 1.5px solid #0d9488; }
+.legend-dot.booked { background: #fef9c3; border: 1.5px solid #ca8a04; }
+.legend-dot.blocked { background: #fef2f2; border: 1.5px solid #ef4444; }
+
+/* ── UNAVAILABLE DATES (TAGS / BADGES) ──────────────────────────────── */
+.unavail-form-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-mark-unavail {
+  background: var(--teal, #0d9488);
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-mark-unavail:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.unavail-tag-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.unavail-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.unavail-remove-btn {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.unavail-remove-btn:hover {
+  color: #991b1b;
+}
+
+.unavail-empty-note {
+  margin: 14px 0 0 0;
+  color: #64748b;
+  font-size: 13.5px;
+}
+
+/* ── WEEKLY GRID SNAPSHOT ──────────────────────────────────────────── */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.day-card {
+  text-align: center;
+  padding: 14px 8px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border, #cbd5e1);
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.day-card:hover {
+  border-color: var(--teal, #0d9488);
+  background: #f0fdfa;
+}
+
+.day-card.weekend {
+  opacity: 0.6;
+  background: #f8fafc;
+}
+
+.day-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.day-slots {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teal, #0d9488);
+  margin-top: 6px;
+}
+
+.day-card.weekend .day-slots {
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .week-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
