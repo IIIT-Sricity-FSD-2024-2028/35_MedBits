@@ -26,6 +26,7 @@ import Unauthorized from './pages/Unauthorized';
 
 import DoctorDashboard from './pages/dashboards/DoctorDashboard';
 import DoctorProfile from './pages/doctor/DoctorProfile';
+import ConsultationNotes from './pages/doctor/ConsultationNotes';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
 import PatientFeedback from './pages/patient/feedback';
@@ -66,7 +67,7 @@ export default function App() {
           } />
           <Route path="/doctor/consultation-notes" element={
             <ProtectedRoute allowedRoles={['doctor']}>
-              <DemoPage pageTitle="Consultation Notes" />
+              <ConsultationNotes />
             </ProtectedRoute>
           } />
           <Route path="/doctor/internal-referral" element={
