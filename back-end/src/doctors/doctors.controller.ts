@@ -62,7 +62,7 @@ export class DoctorsController {
   @ApiParam({ name: 'userId', description: 'Doctor user ID (e.g. DOC001)' })
   @ApiResponse({ status: 200, description: 'Doctor profile updated' })
   @ApiResponse({ status: 404, description: 'Doctor not found' })
-  @Roles('admin')
+  @Roles('admin', 'doctor')
   @Put(':userId')
   @ApiBody({ type: UpdateDoctorDto })
   async updateDoctor(@Param('userId') userId: string, @Body() body: UpdateDoctorDto) {

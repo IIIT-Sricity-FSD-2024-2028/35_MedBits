@@ -24,8 +24,8 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Unauthorized from './pages/Unauthorized';
 
-// Respective Role Dashboards
 import DoctorDashboard from './pages/dashboards/DoctorDashboard';
+import DoctorProfile from './pages/doctor/DoctorProfile';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
 import PatientFeedback from './pages/patient/feedback';
@@ -61,7 +61,7 @@ export default function App() {
           } />
           <Route path="/doctor/profile" element={
             <ProtectedRoute allowedRoles={['doctor']}>
-              <DemoPage pageTitle="Profile" />
+              <DoctorProfile />
             </ProtectedRoute>
           } />
           <Route path="/doctor/consultation-notes" element={
