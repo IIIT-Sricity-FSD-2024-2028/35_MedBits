@@ -27,6 +27,7 @@ import Unauthorized from './pages/Unauthorized';
 import DoctorDashboard from './pages/dashboards/DoctorDashboard';
 import DoctorProfile from './pages/doctor/DoctorProfile';
 import ConsultationNotes from './pages/doctor/ConsultationNotes';
+import SlotManagement from './pages/doctor/SlotManagement';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
 import PatientFeedback from './pages/patient/feedback';
@@ -82,7 +83,7 @@ export default function App() {
           } />
           <Route path="/doctor/slot-management" element={
             <ProtectedRoute allowedRoles={['doctor']}>
-              <DemoPage pageTitle="Slot Management" />
+              <SlotManagement />
             </ProtectedRoute>
           } />
           <Route path="/doctor/earnings" element={
