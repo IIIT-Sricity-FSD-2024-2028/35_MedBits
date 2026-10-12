@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { PatientsService } from '../patients/patients.service';
 
 export type WalkIn = {
@@ -16,16 +18,28 @@ export type WalkIn = {
 
 export type CreateWalkInInput = Omit<WalkIn, 'id' | 'createdAt'>;
 
+const WALKINS_DATA_FILE = join(
+  __dirname,
+  '..',
+  '..',
+  'data',
+  'walkins.json',
+);
+
+const DEFAULT_WALKINS: WalkIn[] = [
+  { id: 'WALKIN004', firstName: 'Meera', lastName: 'Nair', email: 'meera.nair@example.com', phone: '9876543210', dob: '14-09-1995', gender: 'Female', bloodGroup: 'B+', guardianName: 'Suresh Nair', createdAt: '2026-05-03T09:40:00.000Z' },
+  { id: 'WALKIN003', firstName: 'Arjun', lastName: 'Menon', email: 'arjun.menon@example.com', phone: '9123456780', dob: '28-02-1988', gender: 'Male', bloodGroup: 'O+', guardianName: 'Lakshmi Menon', createdAt: '2026-05-03T08:55:00.000Z' },
+  { id: 'WALKIN002', firstName: 'Farah', lastName: 'Ali', email: 'farah.ali@example.com', phone: '9988776655', dob: '06-11-2001', gender: 'Female', bloodGroup: 'A-', guardianName: 'Imran Ali', createdAt: '2026-05-02T16:30:00.000Z' },
+  { id: 'WALKIN001', firstName: 'Dev', lastName: 'Patel', email: 'dev.patel@example.com', phone: '9012345678', dob: '19-07-1992', gender: 'Male', bloodGroup: 'AB+', guardianName: 'Kiran Patel', createdAt: '2026-05-02T15:10:00.000Z' },
+];
+
 @Injectable()
 export class WalkInsService {
-  constructor(private readonly patientsService: PatientsService) {}
+  private walkins: WalkIn[] = [...DEFAULT_WALKINS];
 
-  private readonly walkins: WalkIn[] = [
-    { id: 'WALKIN004', firstName: 'Meera', lastName: 'Nair', email: 'meera.nair@example.com', phone: '9876543210', dob: '14-09-1995', gender: 'Female', bloodGroup: 'B+', guardianName: 'Suresh Nair', createdAt: '2026-05-03T09:40:00.000Z' },
-    { id: 'WALKIN003', firstName: 'Arjun', lastName: 'Menon', email: 'arjun.menon@example.com', phone: '9123456780', dob: '28-02-1988', gender: 'Male', bloodGroup: 'O+', guardianName: 'Lakshmi Menon', createdAt: '2026-05-03T08:55:00.000Z' },
-    { id: 'WALKIN002', firstName: 'Farah', lastName: 'Ali', email: 'farah.ali@example.com', phone: '9988776655', dob: '06-11-2001', gender: 'Female', bloodGroup: 'A-', guardianName: 'Imran Ali', createdAt: '2026-05-02T16:30:00.000Z' },
-    { id: 'WALKIN001', firstName: 'Dev', lastName: 'Patel', email: 'dev.patel@example.com', phone: '9012345678', dob: '19-07-1992', gender: 'Male', bloodGroup: 'AB+', guardianName: 'Kiran Patel', createdAt: '2026-05-02T15:10:00.000Z' },
-  ];
+  constructor(private readonly patientsService: PatientsService) {
+    this.loadPersistedWalkIns();
+  }
 
   getAllWalkIns(): WalkIn[] {
     return this.walkins.map((walkin) => ({ ...walkin }));
@@ -61,6 +75,7 @@ export class WalkInsService {
     const nextId = this.generateNextId();
     const walkin: WalkIn = { id: nextId, ...normalizedInput, createdAt: new Date().toISOString() };
     this.walkins.unshift(walkin);
+    this.persistWalkIns();
 
     return {
       ...walkin,
@@ -70,6 +85,27 @@ export class WalkInsService {
       registrationId: walkin.id,
       name: `${patient.firstName} ${patient.lastName}`.trim(),
     } as WalkIn;
+  }
+
+  private loadPersistedWalkIns(): void {
+    try {
+      if (!existsSync(WALKINS_DATA_FILE)) {
+        this.persistWalkIns();
+        return;
+      }
+      const raw = readFileSync(WALKINS_DATA_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        this.walkins = parsed;
+      }
+    } catch (_) {}
+  }
+
+  private persistWalkIns(): void {
+    try {
+      mkdirSync(dirname(WALKINS_DATA_FILE), { recursive: true });
+      writeFileSync(WALKINS_DATA_FILE, JSON.stringify(this.walkins, null, 2));
+    } catch (_) {}
   }
 
   private generateNextId(): string {

@@ -15,6 +15,7 @@ back-end/.env
 back-end/.env.*
 back-end/coverage/
 back-end/data/hospital-branches.sqlite
+back-end/data/walkins.json
 
 # -------------------------
 # Frontend (Vanilla / Static)
