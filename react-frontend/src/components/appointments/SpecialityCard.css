@@ -1,0 +1,133 @@
+/*
+ * SpecialityCard.css — Reusable Medical Specialty Card Styling
+ * ==============================================================
+ * Compatible with .cat-card from front-end/css/patient/global.css
+ * and modernized for sleek, responsive appointments section.
+ */
+
+.speciality-card {
+  background: var(--accent-light);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 18px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  user-select: none;
+  min-height: 104px;
+  position: relative;
+  outline: none;
+}
+
+/* Hover state */
+.speciality-card:hover:not(.disabled) {
+  background: var(--navy);
+  color: #ffffff;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.speciality-card:hover:not(.disabled) .speciality-card-icon {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.08);
+}
+
+.speciality-card:hover:not(.disabled) .speciality-card-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Active / Selected state */
+.speciality-card.active,
+.speciality-card.active-cat,
+.speciality-card.selected {
+  background: var(--navy);
+  color: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+}
+
+.speciality-card.active .speciality-card-icon,
+.speciality-card.active-cat .speciality-card-icon,
+.speciality-card.selected .speciality-card-icon {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.speciality-card.active .speciality-card-count,
+.speciality-card.active-cat .speciality-card-count,
+.speciality-card.selected .speciality-card-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Focus visible accessibility */
+.speciality-card:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent);
+  border-color: var(--accent);
+}
+
+/* Icon container */
+.speciality-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(2, 132, 199, 0.1);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+/* Specialty title */
+.speciality-card-name {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: inherit;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+/* Doctor count or subtext badge */
+.speciality-card-count {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(2, 132, 199, 0.12);
+  color: var(--accent-dark);
+  transition: var(--transition);
+  margin-top: 2px;
+}
+
+/* Disabled state */
+.speciality-card.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── SPECIALTY GRID WRAPPER ────────────────────────────────────────── */
+.speciality-grid,
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .speciality-grid,
+  .cat-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
