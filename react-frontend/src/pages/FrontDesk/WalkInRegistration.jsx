@@ -14,6 +14,9 @@ import { useAuth } from '../../context/AuthContext';
 import AppShell from '../../components/layout/AppShell';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
+import AlertBanner from '../../components/dashboard/AlertBanner';
+import WalkInRegistrationForm from './components/WalkInRegistrationForm';
+import RegistrationSuccessCard from './components/RegistrationSuccessCard';
 
 // Backend API URL (defaults to http://localhost:3000 if not specified in .env)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -368,498 +371,37 @@ export default function WalkInRegistration() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
         {/* ── 1. SUCCESS NOTIFICATION BANNER ──────────────────────── */}
-        {successInfo && (
-          <div
-            role="status"
-            style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              borderRadius: '8px',
-              padding: '20px 24px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              boxShadow: '0 2px 8px rgba(16, 185, 129, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '24px' }}>✅</span>
-                <div>
-                  <h3 style={{ margin: 0, color: '#166534', fontSize: '16px', fontWeight: 700 }}>
-                    Walk-in Patient Successfully Registered!
-                  </h3>
-                  <p style={{ margin: '2px 0 0', color: '#15803d', fontSize: '13px' }}>
-                    Patient record created and walk-in token generated in the system.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSuccessInfo(null)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '18px',
-                  color: '#15803d',
-                  cursor: 'pointer',
-                  padding: '4px',
-                }}
-                title="Dismiss message"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                gap: '12px',
-                background: '#ffffff',
-                border: '1px solid #dcfce7',
-                borderRadius: '6px',
-                padding: '12px 16px',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Patient Name
-                </span>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                  {successInfo.name}
-                </div>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Registration ID
-                </span>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0284c7' }}>
-                  {successInfo.registrationId}
-                </div>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Patient User ID
-                </span>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#16a34a' }}>
-                  {successInfo.patientId}
-                </div>
-              </div>
-              <div>
-                <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Phone / Blood Group
-                </span>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>
-                  {successInfo.phone} ({successInfo.bloodGroup})
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-              <button
-                type="button"
-                onClick={() => navigate('/front-desk/dashboard')}
-                style={{
-                  background: '#16a34a',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                ← Return to Dashboard
-              </button>
-              <button
-                type="button"
-                onClick={() => setSuccessInfo(null)}
-                style={{
-                  background: '#ffffff',
-                  color: '#15803d',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                + Register Another Patient
-              </button>
-            </div>
-          </div>
-        )}
+        <RegistrationSuccessCard
+          successInfo={successInfo}
+          onDismiss={() => setSuccessInfo(null)}
+          onRegisterAnother={() => setSuccessInfo(null)}
+          onReturnToDashboard={() => navigate('/front-desk/dashboard')}
+        />
 
         {/* ── 2. SUBMIT ERROR BANNER ──────────────────────────────── */}
         {submitError && (
-          <div
-            role="alert"
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '8px',
-              padding: '14px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
-            <span style={{ fontSize: '20px' }}>⚠️</span>
-            <div style={{ flex: 1 }}>
-              <strong style={{ color: '#991b1b', display: 'block', fontSize: '14px' }}>
-                Registration Request Failed
-              </strong>
-              <span style={{ color: '#b91c1c', fontSize: '13px' }}>
-                {submitError}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSubmitError(null)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#b91c1c',
-                cursor: 'pointer',
-                fontSize: '16px',
-              }}
-            >
-              ✕
-            </button>
-          </div>
+          <AlertBanner
+            type="error"
+            title="Registration Request Failed"
+            message={submitError}
+            onDismiss={() => setSubmitError(null)}
+          />
         )}
 
         {/* ── 3. PATIENT REGISTRATION FORM ─────────────────────────── */}
-        <ContentCard
-          title="New Walk-in Patient Registration"
-          subtitle="Enter arriving patient details. The system will register the patient and assign a walk-in token."
-        >
-          <form onSubmit={handleSubmit} noValidate>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '20px',
-                marginBottom: '24px',
-              }}
-            >
-              {/* First Name */}
-              <div>
-                <label
-                  htmlFor="firstName"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  First Name <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  placeholder="e.g. Rahul"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: `1px solid ${formErrors.firstName ? '#dc2626' : '#cbd5e1'}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-                {formErrors.firstName && (
-                  <span style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {formErrors.firstName}
-                  </span>
-                )}
-              </div>
+        <WalkInRegistrationForm
+          formData={formData}
+          formErrors={formErrors}
+          isSubmitting={isSubmitting}
+          onChange={handleInputChange}
+          onSubmit={handleSubmit}
+          onClear={() => {
+            setFormData(INITIAL_FORM_STATE);
+            setFormErrors({});
+            setSubmitError(null);
+          }}
+        />
 
-              {/* Last Name */}
-              <div>
-                <label
-                  htmlFor="lastName"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  Last Name <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  placeholder="e.g. Sharma"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: `1px solid ${formErrors.lastName ? '#dc2626' : '#cbd5e1'}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-                {formErrors.lastName && (
-                  <span style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {formErrors.lastName}
-                  </span>
-                )}
-              </div>
-
-              {/* Email Address */}
-              <div>
-                <label
-                  htmlFor="email"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  Email Address <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="e.g. rahul.sharma@example.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: `1px solid ${formErrors.email ? '#dc2626' : '#cbd5e1'}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-                {formErrors.email && (
-                  <span style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {formErrors.email}
-                  </span>
-                )}
-              </div>
-
-              {/* Phone Number */}
-              <div>
-                <label
-                  htmlFor="phone"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  Phone Number (10 digits) <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  maxLength={10}
-                  placeholder="e.g. 9876543210"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: `1px solid ${formErrors.phone ? '#dc2626' : '#cbd5e1'}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-                {formErrors.phone && (
-                  <span style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {formErrors.phone}
-                  </span>
-                )}
-              </div>
-
-              {/* Date of Birth */}
-              <div>
-                <label
-                  htmlFor="dob"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  Date of Birth <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <input
-                  id="dob"
-                  name="dob"
-                  type="date"
-                  max={new Date().toISOString().slice(0, 10)}
-                  value={formData.dob}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: `1px solid ${formErrors.dob ? '#dc2626' : '#cbd5e1'}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    background: '#ffffff',
-                  }}
-                />
-                {formErrors.dob && (
-                  <span style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {formErrors.dob}
-                  </span>
-                )}
-              </div>
-
-              {/* Gender */}
-              <div>
-                <label
-                  htmlFor="gender"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  Gender <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: `1px solid ${formErrors.gender ? '#dc2626' : '#cbd5e1'}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    background: '#ffffff',
-                  }}
-                >
-                  <option value="">Select Gender...</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-                {formErrors.gender && (
-                  <span style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {formErrors.gender}
-                  </span>
-                )}
-              </div>
-
-              {/* Blood Group */}
-              <div>
-                <label
-                  htmlFor="bloodGroup"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  Blood Group <span style={{ color: '#dc2626' }}>*</span>
-                </label>
-                <select
-                  id="bloodGroup"
-                  name="bloodGroup"
-                  value={formData.bloodGroup}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: `1px solid ${formErrors.bloodGroup ? '#dc2626' : '#cbd5e1'}`,
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    background: '#ffffff',
-                  }}
-                >
-                  <option value="">Select Blood Group...</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                </select>
-                {formErrors.bloodGroup && (
-                  <span style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    {formErrors.bloodGroup}
-                  </span>
-                )}
-              </div>
-
-              {/* Guardian Name (Optional) */}
-              <div>
-                <label
-                  htmlFor="guardianName"
-                  style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-                >
-                  Guardian Name <span style={{ color: '#94a3b8', fontWeight: 400 }}>(Optional)</span>
-                </label>
-                <input
-                  id="guardianName"
-                  name="guardianName"
-                  type="text"
-                  placeholder="e.g. Suresh Sharma"
-                  value={formData.guardianName}
-                  onChange={handleInputChange}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    fontSize: '14px',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '6px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Form Action Buttons */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                style={{
-                  background: isSubmitting ? '#93c5fd' : '#0284c7',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '10px 24px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                {/* <span>{isSubmitting ? '⏳' : '🚶'}</span> */}
-                <span>{isSubmitting ? 'Registering Patient...' : 'Register Walk-in Patient'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setFormData(INITIAL_FORM_STATE);
-                  setFormErrors({});
-                  setSubmitError(null);
-                }}
-                disabled={isSubmitting}
-                style={{
-                  background: 'transparent',
-                  color: '#64748b',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  padding: '10px 18px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Clear Form
-              </button>
-            </div>
-          </form>
-        </ContentCard>
 
         {/* ── 4. RECENT WALK-IN REGISTRATIONS TABLE ───────────────── */}
         <ContentCard
@@ -891,19 +433,11 @@ export default function WalkInRegistration() {
           }
         >
           {listError && (
-            <div
-              style={{
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '6px',
-                padding: '10px 16px',
-                color: '#b91c1c',
-                fontSize: '13px',
-                marginBottom: '16px',
-              }}
-            >
-              ⚠️ {listError}
-            </div>
+            <AlertBanner
+              type="error"
+              message={listError}
+              style={{ marginBottom: '16px' }}
+            />
           )}
 
           <DataTable

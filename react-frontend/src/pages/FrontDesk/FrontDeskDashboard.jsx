@@ -20,6 +20,7 @@ import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
+import AlertBanner from '../../components/dashboard/AlertBanner';
 
 // Backend API URL (defaults to http://localhost:3000 if not specified in .env)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -301,49 +302,14 @@ export default function FrontDeskDashboard() {
 
         {/* ── 0. ERROR BANNER (Displayed if backend requests fail) ──── */}
         {errorMessage && (
-          <div
-            role="alert"
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '8px',
-              padding: '16px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '20px' }}>⚠️</span>
-              <div>
-                <strong style={{ color: '#991b1b', display: 'block', marginBottom: '2px' }}>
-                  Backend Connection Issue
-                </strong>
-                <span style={{ color: '#b91c1c', fontSize: '14px' }}>
-                  {errorMessage}
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={loadDashboardData}
-              disabled={isLoading}
-              style={{
-                background: '#dc2626',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {isLoading ? 'Connecting...' : 'Retry Connection'}
-            </button>
-          </div>
+          <AlertBanner
+            type="error"
+            title="Backend Connection Issue"
+            message={errorMessage}
+            onRetry={loadDashboardData}
+            isRetrying={isLoading}
+            retryLabel="Retry Connection"
+          />
         )}
 
         {/* ── 1. WELCOME BANNER ────────────────────────────────────── */}
