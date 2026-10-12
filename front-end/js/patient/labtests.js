@@ -313,16 +313,58 @@ function fillLabGrid(grid, tests) {
     card.querySelector('.lab-price').textContent = `Rs ${test.price.toFixed(2)}`;
 
     const btn = card.querySelector('.lab-btn');
-    btn.textContent = existingCartBooking ? 'Remove' : 'Add';
-    btn.className = `${existingCartBooking ? 'btn btn-outline' : 'btn-add'} lab-btn`;
+    const stepper = card.querySelector('.lab-qty-control');
+    const minusBtn = card.querySelector('.lab-qty-minus');
+    const plusBtn = card.querySelector('.lab-qty-plus');
+    const qtyVal = card.querySelector('.lab-qty-val');
+
+    if (existingCartBooking) {
+      btn.textContent = 'Remove';
+      btn.className = 'btn btn-outline btn-sm lab-btn';
+      if (stepper) {
+        stepper.style.display = 'flex';
+        if (qtyVal) qtyVal.textContent = '1';
+      }
+    } else {
+      btn.textContent = 'Add';
+      btn.className = 'btn-add lab-btn';
+      if (stepper) {
+        stepper.style.display = 'none';
+      }
+    }
+
     btn.onclick = async function () {
       if (existingCartBooking) {
         await removeLabTestFromCart(existingCartBooking.id);
         return;
       }
-
       await addLabTestToCart(test.id);
     };
+
+    if (minusBtn) {
+      minusBtn.onclick = async function (e) {
+        e.stopPropagation();
+        const currentQty = parseInt(qtyVal?.textContent || '1', 10);
+        if (currentQty <= 1) {
+          if (existingCartBooking) {
+            await removeLabTestFromCart(existingCartBooking.id);
+          } else if (stepper) {
+            stepper.style.display = 'none';
+            btn.style.display = 'inline-flex';
+          }
+        } else {
+          if (qtyVal) qtyVal.textContent = String(currentQty - 1);
+        }
+      };
+    }
+
+    if (plusBtn) {
+      plusBtn.onclick = function (e) {
+        e.stopPropagation();
+        const currentQty = parseInt(qtyVal?.textContent || '1', 10);
+        if (qtyVal) qtyVal.textContent = String(currentQty + 1);
+      };
+    }
 
     grid.appendChild(frag);
   });
