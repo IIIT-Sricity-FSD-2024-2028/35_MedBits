@@ -32,7 +32,8 @@ import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
 import PatientFeedback from './pages/patient/feedback';
 import PatientMedicalRecords from './pages/patient/medicalrecords';
-import FrontDeskDashboard from './pages/dashboards/FrontDeskDashboard';
+import FrontDeskDashboard from './pages/FrontDesk/FrontDeskDashboard';
+import WalkInRegistration from './pages/FrontDesk/WalkInRegistration';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import BranchAdminDashboard from './pages/dashboards/BranchAdminDashboard';
 import SuperAdminDashboard from './pages/dashboards/SuperAdminDashboard';
@@ -141,7 +142,7 @@ export default function App() {
           } />
           <Route path="/front-desk/walkin" element={
             <ProtectedRoute allowedRoles={['frontdesk']}>
-              <DemoPage pageTitle="Walk-in Registrations" />
+              <WalkInRegistration />
             </ProtectedRoute>
           } />
           <Route path="/front-desk/appointments" element={
