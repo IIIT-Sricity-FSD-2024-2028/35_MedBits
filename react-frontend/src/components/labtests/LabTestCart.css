@@ -1,0 +1,541 @@
+/*
+ * LabTestCart.css — Styling for Diagnostic Lab Test Cart Component
+ * ====================================================================
+ * Location: src/components/labtests/LabTestCart.css
+ */
+
+.labtest-cart-component {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+/* ── VARIANTS ─────────────────────────────────────────────────────── */
+.labtest-cart-variant-sidebar {
+  position: sticky;
+  top: calc(var(--topbar-h) + 16px);
+  max-height: calc(100vh - var(--topbar-h) - 32px);
+}
+
+.labtest-cart-variant-card {
+  width: 100%;
+}
+
+.labtest-cart-variant-drawer {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 420px;
+  z-index: 1000;
+  border-radius: 0;
+  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ── HEADER ──────────────────────────────────────────────────────── */
+.labtest-cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.cart-header-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cart-header-icon {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-header-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.cart-header-count {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.cart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-clear-cart {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.btn-clear-cart:hover {
+  background: #fee2e2;
+}
+
+.btn-close-cart {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-close-cart:hover {
+  color: var(--navy);
+  background: #f1f5f9;
+}
+
+/* ── BRANCH BANNER ───────────────────────────────────────────────── */
+.cart-branch-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 10px 18px;
+  border-bottom: 1px dashed var(--border);
+  font-size: 12px;
+}
+
+.branch-pin {
+  font-size: 14px;
+}
+
+.branch-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.branch-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.branch-name {
+  color: var(--navy);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── BODY: ITEMS LIST OR EMPTY ───────────────────────────────────── */
+.labtest-cart-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  max-height: 380px;
+}
+
+.cart-empty-state {
+  text-align: center;
+  padding: 36px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-cart-illu {
+  font-size: 40px;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
+
+.empty-cart-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.empty-cart-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+  max-width: 260px;
+}
+
+/* ── CART ITEMS ──────────────────────────────────────────────────── */
+.cart-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cart-item-row {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.cart-item-row:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cart-item-info-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cart-item-cat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.cart-item-details {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.cart-item-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 3px 0;
+  line-height: 1.3;
+}
+
+.cart-item-submeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.cart-item-category {
+  color: var(--text-muted);
+}
+
+.cart-item-unit-price {
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.cart-item-remove-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.cart-item-remove-btn:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.cart-item-bottom-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px dashed #f1f5f9;
+}
+
+.stepper-compact {
+  padding: 1px 2px;
+}
+
+.stepper-compact .labtest-qty-btn {
+  width: 24px;
+  height: 24px;
+  font-size: 13px;
+}
+
+.stepper-compact .labtest-qty-value {
+  min-width: 22px;
+  font-size: 12.5px;
+}
+
+.cart-item-line-total {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ── FOOTER: BREAKDOWN & ACTION ──────────────────────────────────── */
+.labtest-cart-footer {
+  padding: 16px 20px 20px 20px;
+  background: #ffffff;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cart-summary-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.badge-free-collection {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+
+.summary-subtotal-line {
+  font-size: 14px;
+  color: var(--navy);
+  font-weight: 600;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  margin-top: 2px;
+}
+
+.summary-subtotal-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: #0284c7;
+}
+
+.btn-confirm-lab-booking {
+  width: 100%;
+  padding: 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--navy);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  transition: var(--transition);
+}
+
+.btn-confirm-lab-booking:hover:not(:disabled) {
+  background: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.28);
+}
+
+.btn-confirm-lab-booking:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner-mini {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spinMini 0.7s linear infinite;
+}
+
+@keyframes spinMini {
+  to { transform: rotate(360deg); }
+}
+
+.cart-compliance-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  text-align: center;
+  justify-content: center;
+}
+
+/* ── FLOATING CART BAR SUBCOMPONENT ──────────────────────────────── */
+.labtest-floating-cart-bar {
+  position: fixed;
+  bottom: 18px;
+  left: 20px;
+  right: 20px;
+  max-width: 680px;
+  margin: 0 auto;
+  background: var(--navy);
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 900;
+  animation: slideUpBar 0.25s ease;
+}
+
+@keyframes slideUpBar {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.floating-cart-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.floating-cart-icon {
+  font-size: 20px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-cart-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.floating-cart-total {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.floating-cart-count {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.floating-cart-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-floating-view {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.btn-floating-view:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-floating-checkout {
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-floating-checkout:hover:not(:disabled) {
+  background: #0369a1;
+  transform: scale(1.02);
+}
+
+.btn-floating-checkout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── RESPONSIVE ADAPTATIONS ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .labtest-floating-cart-bar {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+  }
+
+  .floating-cart-total {
+    font-size: 14px;
+  }
+}
