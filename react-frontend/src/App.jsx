@@ -30,6 +30,7 @@ import ConsultationNotes from './pages/doctor/ConsultationNotes';
 import SlotManagement from './pages/doctor/SlotManagement';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
+import PatientAppointments from './pages/patient/appointments';
 import PatientFeedback from './pages/patient/feedback';
 import PatientMedicalRecords from './pages/patient/medicalrecords';
 import FrontDeskDashboard from './pages/FrontDesk/FrontDeskDashboard';
@@ -110,7 +111,7 @@ export default function App() {
           } />
           <Route path="/patient/appointments" element={
             <ProtectedRoute allowedRoles={['patient']}>
-              <DemoPage pageTitle="Appointments" />
+              <PatientAppointments />
             </ProtectedRoute>
           } />
           <Route path="/patient/labtests" element={
