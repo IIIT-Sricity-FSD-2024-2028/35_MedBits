@@ -1,0 +1,198 @@
+/*
+ * AppointmentFilters.css — Search Filters & Dropdowns Styling
+ * =============================================================
+ * Preserves the signature .find-form design from front-end/css/patient/appointments.css
+ * with clinical navy hero background, glassmorphic inputs, and responsive layout.
+ */
+
+.find-form {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.find-form-header {
+  margin-bottom: 20px;
+}
+
+.find-form h2,
+.find-form-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.find-form-subtitle {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.find-form-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.find-form-group {
+  flex: 1;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.find-form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.find-form-group select,
+.find-form-group input {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: var(--transition);
+  width: 100%;
+}
+
+.find-form-group select:focus,
+.find-form-group input:focus {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+}
+
+.find-form-group select option {
+  background: var(--navy);
+  color: #ffffff;
+}
+
+.find-form-group input[type="date"] {
+  color-scheme: dark;
+}
+
+.find-form-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-filter-search {
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-filter-search:hover {
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.btn-filter-reset {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.btn-filter-reset:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+/* Secondary search row for doctor name */
+.find-form-search-row {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.find-form-search-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.find-form-search-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+.find-form-search-input {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: var(--transition);
+}
+
+.find-form-search-input:focus {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.find-form-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 860px) {
+  .find-form {
+    padding: 22px 20px;
+  }
+  .find-form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .find-form-group {
+    width: 100%;
+    min-width: unset;
+  }
+  .find-form-actions {
+    width: 100%;
+    margin-top: 6px;
+  }
+  .btn-filter-search {
+    flex: 1;
+    justify-content: center;
+  }
+}
