@@ -38,14 +38,15 @@
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  /* Ensure rounded corners clip the table headers properly */
-  overflow: hidden; 
+  background: #ffffff;
 }
 
 .custom-data-table {
   width: 100%;
+  min-width: 860px;
   border-collapse: collapse;
   text-align: left;
 }
