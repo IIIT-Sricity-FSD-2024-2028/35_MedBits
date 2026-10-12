@@ -31,7 +31,7 @@ import SlotManagement from './pages/doctor/SlotManagement';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
 import PatientAppointments from './pages/patient/appointments';
-import PatientLabTests from './pages/patient/LabTests';
+import PatientLabTest from './pages/Patient/labtest';
 import PatientFeedback from './pages/patient/feedback';
 import PatientMedicalRecords from './pages/patient/medicalrecords';
 import FrontDeskDashboard from './pages/FrontDesk/FrontDeskDashboard';
@@ -117,7 +117,7 @@ export default function App() {
           } />
           <Route path="/patient/labtests" element={
             <ProtectedRoute allowedRoles={['patient']}>
-              <PatientLabTests />
+              <PatientLabTest />
             </ProtectedRoute>
           } />
           <Route path="/patient/records" element={

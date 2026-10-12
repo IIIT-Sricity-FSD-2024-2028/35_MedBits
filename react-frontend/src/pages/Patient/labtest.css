@@ -1,0 +1,340 @@
+/*
+ * labtest.css — Patient Lab Tests Page Layout & Styling
+ * ========================================================
+ * Location: src/pages/Patient/labtest.css
+ */
+
+.labtest-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1380px;
+  margin: 0 auto;
+  padding-bottom: 60px;
+}
+
+/* ── HERO BANNER ─────────────────────────────────────────────────── */
+.labtest-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0369a1 100%);
+  border-radius: var(--radius);
+  padding: 30px 36px;
+  color: #ffffff;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.labtest-hero::after {
+  content: '🔬';
+  position: absolute;
+  right: 32px;
+  bottom: -20px;
+  font-size: 110px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.hero-tag {
+  display: inline-block;
+  background: rgba(2, 132, 199, 0.35);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.hero-heading {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.hero-subtext {
+  font-size: 13.5px;
+  color: #94a3b8;
+  margin: 0;
+  max-width: 620px;
+  line-height: 1.5;
+}
+
+/* ── ALERTS ──────────────────────────────────────────────────────── */
+.labtest-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+}
+
+.alert-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.alert-dismiss:hover {
+  opacity: 1;
+}
+
+/* ── SPECIALITIES / CATEGORIES SECTION ───────────────────────────── */
+.labtest-specialties-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.specialties-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 2px 0;
+}
+
+.section-subtitle {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.btn-view-all-categories {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-view-all-categories:hover {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.specialities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.lab-speciality-card {
+  min-height: 100px;
+  padding: 14px 10px;
+}
+
+/* ── MAIN TWO-COLUMN GRID ────────────────────────────────────────── */
+.labtest-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 24px;
+  align-items: start;
+}
+
+.labtest-cards-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.catalog-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.catalog-active-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.catalog-counter {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.labtest-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 18px;
+}
+
+.labtest-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.labtest-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(2, 132, 199, 0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.catalog-no-results {
+  text-align: center;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.no-results-icon {
+  font-size: 40px;
+}
+
+.catalog-no-results h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+
+.catalog-no-results p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── CART COLUMN ─────────────────────────────────────────────────── */
+.labtest-cart-column {
+  position: sticky;
+  top: calc(var(--topbar-h) + 16px);
+}
+
+/* ── DIAGNOSTIC RECORDS / HISTORY CARD ───────────────────────────── */
+.labtest-history-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-counter-badge {
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.history-empty-message {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.history-table-container {
+  overflow-x: auto;
+}
+
+.labtest-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.labtest-history-table th {
+  padding: 12px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--border);
+}
+
+.labtest-history-table td {
+  padding: 14px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.labtest-history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.test-name-bold {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ── RESPONSIVE DESIGN ───────────────────────────────────────────── */
+@media (max-width: 980px) {
+  .labtest-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .labtest-cart-column {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .labtest-hero {
+    padding: 22px 20px;
+  }
+
+  .hero-heading {
+    font-size: 20px;
+  }
+
+  .specialities-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .labtest-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
