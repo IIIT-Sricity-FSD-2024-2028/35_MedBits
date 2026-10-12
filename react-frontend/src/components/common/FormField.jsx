@@ -44,6 +44,7 @@ export default function FormField({
   options = [],
   maxLength,
   max,
+  min,
   disabled = false,
   id = name,
   style = {},
@@ -117,6 +118,7 @@ export default function FormField({
           placeholder={placeholder}
           maxLength={maxLength}
           max={max}
+          min={min}
           disabled={disabled}
           style={controlStyle}
         />

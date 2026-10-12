@@ -21,6 +21,7 @@ import QuickActions from '../../components/dashboard/QuickActions';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import AlertBanner from '../../components/dashboard/AlertBanner';
+import StatusBadge from '../../components/common/StatusBadge';
 
 // Backend API URL (defaults to http://localhost:3000 if not specified in .env)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -116,6 +117,18 @@ export default function FrontDeskDashboard() {
       const queueConsulting = queueList.filter((q) => q.status === 'in-consultation').length;
       const queueActive = queueWaiting + queueConsulting;
 
+      // Group waiting patient IDs per doctor to accurately calculate doctor-specific queue positions
+      const doctorWaitingQueues = new Map();
+      queueList.forEach((q) => {
+        if (q.status === 'waiting') {
+          const docId = q.doctorId || 'default';
+          if (!doctorWaitingQueues.has(docId)) {
+            doctorWaitingQueues.set(docId, []);
+          }
+          doctorWaitingQueues.get(docId).push(q.id);
+        }
+      });
+
       const formattedQueue = queueList.map((item, index) => {
         // Look up doctor in doctorMap to get the real doctor name and department
         const matchedDoctor = doctorMap.get(item.doctorId) || item.doctor || {};
@@ -141,7 +154,9 @@ export default function FrontDeskDashboard() {
           waitTime = 'Current';
         } else if (item.status === 'waiting') {
           statusLabel = 'Waiting';
-          waitTime = `Position #${index + 1}`;
+          const waitingIds = doctorWaitingQueues.get(item.doctorId || 'default') || [];
+          const doctorPos = waitingIds.indexOf(item.id) + 1;
+          waitTime = doctorPos > 0 ? `Position #${doctorPos}` : 'In Queue';
         } else if (item.status === 'done') {
           statusLabel = 'Completed';
           waitTime = 'Done';
@@ -246,26 +261,7 @@ export default function FrontDeskDashboard() {
     {
       key: 'status',
       header: 'Queue Status',
-      render: (val) => {
-        const colors = {
-          'In Consultation': '#0284c7', // Blue
-          Waiting: '#f59e0b',          // Amber
-          Completed: '#10b981',        // Emerald Green
-          'Checked In': '#10b981',
-        };
-        return (
-          <span style={{
-            background: `${colors[val] || '#64748b'}18`,
-            color: colors[val] || '#64748b',
-            padding: '4px 10px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 700,
-          }}>
-            {val}
-          </span>
-        );
-      },
+      render: (val) => <StatusBadge status={val} />,
     },
   ];
 
@@ -386,22 +382,10 @@ export default function FrontDeskDashboard() {
           action={
             <button
               type="button"
+              className="btn-card-refresh"
               onClick={loadDashboardData}
               disabled={isLoading}
               title="Refresh queue and dashboard metrics from backend"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#334155',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
             >
               <span>{isLoading ? '⏳' : '🔄'}</span>
               <span>{isLoading ? 'Refreshing...' : 'Refresh'}</span>

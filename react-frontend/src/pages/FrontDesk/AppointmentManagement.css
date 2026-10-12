@@ -1,0 +1,43 @@
+/*
+ * AppointmentManagement.css — Appointment Management Page Styles
+ * ===============================================================
+ * Scoped styling for status filter controls, action bar, and header controls.
+ */
+
+/* ── STATUS FILTER DROPDOWN ─────────────────────────────────────── */
+.appointment-status-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  font-size: 13px;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.appointment-status-select:focus {
+  border-color: #0284c7;
+}
+
+/* ── BOOK APPOINTMENT HEADER BUTTON ─────────────────────────────── */
+.btn-book-appointment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.15s ease;
+}
+
+.btn-book-appointment:hover {
+  background-color: #0369a1;
+}

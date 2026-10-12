@@ -1,0 +1,71 @@
+/*
+ * AppointmentActionButtons.css — Front Desk Table Row Action Buttons
+ * ====================================================================
+ * Styles the action buttons (Reschedule, Complete, Cancel) in the
+ * Appointment Management data table.
+ */
+
+.appointment-action-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+  min-width: 235px;
+}
+
+.appointment-actions-inactive {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.btn-action-reschedule,
+.btn-action-complete,
+.btn-action-cancel {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+/* Reschedule Button (Blue Theme) */
+.btn-action-reschedule {
+  border: 1px solid #0284c7;
+  background-color: #f0f9ff;
+  color: #0284c7;
+}
+
+.btn-action-reschedule:hover {
+  background-color: #e0f2fe;
+}
+
+/* Complete Button (Green Theme) */
+.btn-action-complete {
+  border: 1px solid #10b981;
+  background-color: #ecfdf5;
+  color: #059669;
+}
+
+.btn-action-complete:hover:not(:disabled) {
+  background-color: #d1fae5;
+}
+
+.btn-action-complete:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Cancel Button (Red Theme) */
+.btn-action-cancel {
+  border: 1px solid #ef4444;
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.btn-action-cancel:hover {
+  background-color: #fee2e2;
+}

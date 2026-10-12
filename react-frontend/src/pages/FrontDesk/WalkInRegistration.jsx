@@ -410,22 +410,10 @@ export default function WalkInRegistration() {
           action={
             <button
               type="button"
+              className="btn-card-refresh"
               onClick={loadWalkIns}
               disabled={isLoadingList}
               title="Refresh registrations from server"
-              style={{
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#334155',
-                cursor: isLoadingList ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
             >
               <span>{isLoadingList ? '⏳' : '🔄'}</span>
               <span>{isLoadingList ? 'Refreshing...' : 'Refresh List'}</span>

@@ -31,9 +31,10 @@
  *  - onSaveSuccess?: (updatedData) => void (callback for e.g. updating AuthContext)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import AppShell from '../layout/AppShell';
+import AlertBanner from '../dashboard/AlertBanner';
 import './UserProfile.css';
 
 export default function UserProfile({
@@ -55,6 +56,11 @@ export default function UserProfile({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const handleRetry = useCallback(() => {
+    setReloadKey((prev) => prev + 1);
+  }, []);
 
   // ── Fetch Profile ────────────────────────────────────────────────
   useEffect(() => {
@@ -106,7 +112,7 @@ export default function UserProfile({
     return () => {
       isMounted = false;
     };
-  }, [fetchUrl, requestRole, user?.role, transformDataOnLoad]);
+  }, [fetchUrl, requestRole, user?.role, transformDataOnLoad, reloadKey]);
 
   // ── Input Changes ────────────────────────────────────────────────
   function handleInputChange(e) {
@@ -197,20 +203,40 @@ export default function UserProfile({
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn-profile-edit"
-            onClick={isEditing ? handleCancelEditing : handleStartEditing}
-          >
-            {isEditing ? '✕ Cancel' : '✎ Edit Profile'}
-          </button>
+          {saveUrl ? (
+            <button
+              type="button"
+              className="btn-profile-edit"
+              onClick={isEditing ? handleCancelEditing : handleStartEditing}
+            >
+              {isEditing ? '✕ Cancel' : '✎ Edit Profile'}
+            </button>
+          ) : (
+            <span
+              style={{
+                fontSize: '13px',
+                color: '#e2e8f0',
+                background: 'rgba(255, 255, 255, 0.12)',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontWeight: 500,
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+              }}
+            >
+              Administrative Record
+            </span>
+          )}
         </div>
 
         {/* Status notification alert */}
         {statusMessage && (
-          <div className={`profile-alert ${statusMessage.type}`}>
-            {statusMessage.type === 'success' ? '✓' : '⚠️'} {statusMessage.text}
-          </div>
+          <AlertBanner
+            type={statusMessage.type}
+            message={statusMessage.text}
+            onRetry={statusMessage.type === 'error' ? handleRetry : undefined}
+            onDismiss={() => setStatusMessage(null)}
+            style={{ marginBottom: '20px' }}
+          />
         )}
 
         {/* ── 2. EDITABLE PROFILE CARD ─────────────────────────────── */}
@@ -218,7 +244,7 @@ export default function UserProfile({
           <div className="profile-card-header">
             <h3 className="profile-card-title">Personal & Professional Information</h3>
             <span className="profile-card-badge">
-              {isEditing ? 'Editing Mode' : 'Read-Only View'}
+              {saveUrl ? (isEditing ? 'Editing Mode' : 'Read-Only View') : 'Administrative Record'}
             </span>
           </div>
 
