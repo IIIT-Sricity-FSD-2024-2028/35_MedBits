@@ -250,7 +250,7 @@ export default function LabTestCard({
             </span>
             {currentQuantity > 1 && showTotal && (
               <span className="labtest-subtotal-tag">
-                Total: ₹{(price * currentQuantity).toLocaleString('en-IN')}
+                Total: ₹{totalPrice.toLocaleString('en-IN')}
               </span>
             )}
           </div>

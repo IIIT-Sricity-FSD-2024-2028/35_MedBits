@@ -12,6 +12,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import AppShell from '../../components/layout/AppShell';
 import LabTestCard from '../../components/labtests/LabTestCard';
+import LabTestCart, { LabTestCartBar } from '../../components/labtests/LabTestCart';
 import StatusBadge from '../../components/common/StatusBadge';
 import './LabTests.css';
 
@@ -473,103 +474,18 @@ export default function PatientLabTests() {
             )}
           </section>
 
-          {/* Right Column: Desktop Cart Summary */}
-          <aside className="labtests-cart-sidebar card">
-            <div className="cart-sidebar-header">
-              <div className="cart-header-title">
-                <span className="cart-icon">🛒</span>
-                <h3>Lab Test Cart</h3>
-              </div>
-              {totalCartCount > 0 && (
-                <button
-                  type="button"
-                  className="btn-clear-cart"
-                  onClick={handleClearCart}
-                  title="Clear all selected tests"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {cartItems.length === 0 ? (
-              <div className="cart-sidebar-empty">
-                <div className="empty-cart-illu">🧺</div>
-                <p className="empty-cart-text">No tests added yet.</p>
-                <span className="empty-cart-sub">
-                  Adjust test quantity using the <strong>+</strong> button on any test card.
-                </span>
-              </div>
-            ) : (
-              <div className="cart-sidebar-content">
-                <div className="cart-items-list">
-                  {cartItems.map(({ test, quantity, totalPrice }) => (
-                    <div key={test.id} className="cart-summary-item">
-                      <div className="cart-item-header">
-                        <strong className="cart-item-name">{test.name}</strong>
-                        <button
-                          type="button"
-                          className="cart-remove-icon"
-                          onClick={() => handleQuantityChange(test.id, 0)}
-                          aria-label={`Remove ${test.name}`}
-                          title="Remove test"
-                        >
-                          &times;
-                        </button>
-                      </div>
-                      <div className="cart-item-footer">
-                        <div className="cart-stepper-mini">
-                          <button
-                            type="button"
-                            className="mini-step-btn"
-                            onClick={() => handleQuantityChange(test.id, quantity - 1)}
-                            aria-label="Decrease quantity"
-                          >
-                            &minus;
-                          </button>
-                          <span className="mini-qty">{quantity}</span>
-                          <button
-                            type="button"
-                            className="mini-step-btn"
-                            onClick={() => handleQuantityChange(test.id, quantity + 1)}
-                            aria-label="Increase quantity"
-                          >
-                            &#43;
-                          </button>
-                        </div>
-                        <span className="cart-item-pricing">
-                          ₹{totalPrice.toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="cart-sidebar-breakdown">
-                  <div className="breakdown-row">
-                    <span>Total Tests</span>
-                    <strong>{totalCartCount} item(s)</strong>
-                  </div>
-                  <div className="breakdown-row subtotal-row">
-                    <span>Subtotal</span>
-                    <strong className="subtotal-amount">
-                      ₹{cartSubtotal.toLocaleString('en-IN')}
-                    </strong>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-book-tests"
-                    onClick={handleConfirmBooking}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Confirming Booking...' : `Book ${totalCartCount} Test(s)`}
-                  </button>
-                  <p className="booking-guarantee">
-                    🔒 Safe & hygienic home sample collection or walk-in.
-                  </p>
-                </div>
-              </div>
-            )}
+          {/* Right Column: Lab Test Cart Component */}
+          <aside className="labtests-cart-column">
+            <LabTestCart
+              items={cartItems}
+              branchName={branches.find((b) => b.id === selectedBranchId)?.branchName || 'Apollo Main Diagnostic Branch'}
+              branchCity={branches.find((b) => b.id === selectedBranchId)?.city || ''}
+              onQuantityChange={handleQuantityChange}
+              onClearCart={handleClearCart}
+              onConfirmBooking={handleConfirmBooking}
+              isSubmitting={isSubmitting}
+              variant="sidebar"
+            />
           </aside>
         </div>
 
@@ -618,25 +534,12 @@ export default function PatientLabTests() {
         </section>
 
         {/* ── MOBILE CART FLOATING BAR ─────────────────────────────── */}
-        {totalCartCount > 0 && (
-          <div className="mobile-cart-bar">
-            <div className="mobile-cart-info">
-              <span className="mobile-cart-icon">🛒</span>
-              <div>
-                <strong className="mobile-cart-total">₹{cartSubtotal.toLocaleString('en-IN')}</strong>
-                <span className="mobile-cart-count">({totalCartCount} tests)</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="btn btn-accent btn-mobile-checkout"
-              onClick={handleConfirmBooking}
-              disabled={isSubmitting}
-            >
-              Confirm Booking
-            </button>
-          </div>
-        )}
+        <LabTestCartBar
+          count={totalCartCount}
+          total={cartSubtotal}
+          onCheckout={handleConfirmBooking}
+          isSubmitting={isSubmitting}
+        />
 
       </div>
     </AppShell>
