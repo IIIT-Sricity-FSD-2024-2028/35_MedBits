@@ -140,7 +140,14 @@
     <div class="product-card-sub lab-desc"></div>
     <div class="product-card-footer">
       <div class="product-card-price lab-price"></div>
-      <button class="btn-add lab-btn">Add</button>
+      <div class="lab-actions-wrap" style="display:flex;align-items:center;gap:8px;">
+        <button class="btn-add lab-btn">Add</button>
+        <div class="lab-qty-control" style="display:none;align-items:center;background:#fff;border:1.5px solid #cbd5e1;border-radius:999px;padding:2px 4px;gap:6px;">
+          <button type="button" class="lab-qty-minus" style="width:24px;height:24px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">&minus;</button>
+          <span class="lab-qty-val" style="min-width:20px;text-align:center;font-weight:700;font-size:13px;">1</span>
+          <button type="button" class="lab-qty-plus" style="width:24px;height:24px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;">&#43;</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

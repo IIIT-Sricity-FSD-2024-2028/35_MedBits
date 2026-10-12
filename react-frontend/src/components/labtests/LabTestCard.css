@@ -1,0 +1,364 @@
+/*
+ * LabTestCard.css — Styling for Diagnostic Lab Test Card Component
+ * ====================================================================
+ * Location: src/components/labtests/LabTestCard.css
+ *
+ * Designed to seamlessly blend with MedBits global design tokens
+ * and modern clinical aesthetic.
+ */
+
+.labtest-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.labtest-card:hover:not(.disabled) {
+  border-color: var(--accent);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.labtest-card.in-cart {
+  border-color: rgba(2, 132, 199, 0.45);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.labtest-card.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ── CARD TOP (Badges & Icon) ────────────────────────────────────── */
+.labtest-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.labtest-badge-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.labtest-category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+}
+
+.category-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.labtest-pill-badge {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.labtest-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f0f7ff;
+  border: 1px solid rgba(2, 132, 199, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.labtest-card:hover .labtest-icon-wrapper {
+  transform: scale(1.08) rotate(3deg);
+  background: #e0f2fe;
+}
+
+/* ── BODY & DESCRIPTION ─────────────────────────────────────────── */
+.labtest-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.labtest-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.labtest-description-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.labtest-description {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.labtest-description.expanded {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.labtest-expand-btn {
+  align-self: flex-start;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.18s ease;
+}
+
+.labtest-expand-btn:hover {
+  color: var(--accent-dark);
+}
+
+/* Clinical meta chips */
+.labtest-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.meta-chip-icon {
+  font-size: 11px;
+}
+
+/* ── FOOTER: PRICING & QUANTITY CONTROLLER ──────────────────────── */
+.labtest-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.labtest-price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.labtest-price-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.labtest-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.labtest-price-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.3px;
+}
+
+.labtest-subtotal-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0284c7;
+  background: #e0f2fe;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+/* ── ACTION BLOCK & STEPPER ─────────────────────────────────────── */
+.labtest-action-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-add-labtest {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--navy);
+  color: #ffffff;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.btn-add-labtest:hover:not(:disabled) {
+  background: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+.btn-add-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* Quantity stepper wrapper */
+.labtest-stepper-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.labtest-stepper-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.labtest-qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.labtest-qty-stepper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.labtest-qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: var(--navy);
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  line-height: 1;
+  padding: 0;
+  user-select: none;
+}
+
+.labtest-qty-btn:hover:not(:disabled) {
+  background: var(--navy);
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+.labtest-qty-btn-minus:hover:not(:disabled) {
+  background: #e11d48;
+  color: #ffffff;
+}
+
+.labtest-qty-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.labtest-qty-value {
+  min-width: 28px;
+  padding: 0 4px;
+  text-align: center;
+  font-family: 'Sora', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ── RESPONSIVE ADAPTATIONS ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .labtest-card {
+    padding: 16px;
+  }
+
+  .labtest-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .labtest-action-block {
+    justify-content: flex-end;
+  }
+
+  .btn-add-labtest {
+    width: 100%;
+    justify-content: center;
+  }
+}
