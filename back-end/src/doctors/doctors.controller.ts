@@ -4,7 +4,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { AppointmentsService } from '../appointments/appointments.service';
 import { DoctorsService } from './doctors.service';
-import { CreateDoctorDto, UpdateDoctorDto, CreateSlotBlockDto, MarkUnavailableDateDto } from './dto/doctors.dto';
+import { CreateDoctorDto, UpdateDoctorDto, CreateSlotBlockDto, MarkUnavailableDateDto, CreateReferralDto } from './dto/doctors.dto';
 
 @ApiTags('Doctors')
 @ApiHeader({
@@ -281,6 +281,56 @@ export class DoctorsController {
     @Query('weekStart') weekStart?: string,
   ) {
     return this.doctorsService.getWeeklyAvailability(doctorId, weekStart);
+  }
+
+  @ApiOperation({ summary: 'Get all referrals sent or received by a doctor' })
+  @ApiParam({ name: 'doctorId', description: 'Doctor ID' })
+  @ApiQuery({ name: 'direction', required: false, enum: ['sent', 'received'], description: 'Filter referrals by direction' })
+  @ApiResponse({ status: 200, description: 'Array of referral objects' })
+  @Roles('doctor')
+  @Get(':doctorId/referrals')
+  getReferrals(
+    @Param('doctorId') doctorId: string,
+    @Query('direction') direction?: string,
+  ) {
+    if (direction === 'sent') return this.doctorsService.getSentReferrals(doctorId);
+    if (direction === 'received') return this.doctorsService.getReceivedReferrals(doctorId);
+    return this.doctorsService.getReferralsByDoctor(doctorId);
+  }
+
+  @ApiOperation({ summary: 'Create an internal referral from one doctor to another' })
+  @ApiParam({ name: 'doctorId', description: 'From Doctor ID' })
+  @ApiBody({ type: CreateReferralDto })
+  @ApiResponse({ status: 201, description: 'Referral created' })
+  @Roles('doctor')
+  @Post(':doctorId/referrals')
+  async createReferral(
+    @Param('doctorId') doctorId: string,
+    @Body() body: CreateReferralDto,
+  ) {
+    return this.doctorsService.createReferral({
+      fromDoctorId: doctorId,
+      patientId: body.patientId?.trim(),
+      patientName: body.patientName?.trim(),
+      toDoctorId: body.toDoctorId?.trim(),
+      reason: body.reason?.trim(),
+      urgency: body.urgency?.trim(),
+      preferredDate: body.preferredDate?.trim(),
+      appointmentId: body.appointmentId?.trim(),
+    });
+  }
+
+  @ApiOperation({ summary: 'Update referral status (pending | accepted | completed)' })
+  @ApiParam({ name: 'doctorId', description: 'Doctor ID' })
+  @ApiParam({ name: 'referralId', description: 'Referral ID' })
+  @ApiResponse({ status: 200, description: 'Updated referral' })
+  @Roles('doctor')
+  @Put(':doctorId/referrals/:referralId/status')
+  updateReferralStatus(
+    @Param('referralId') referralId: string,
+    @Body() body: { status: 'pending' | 'accepted' | 'completed' },
+  ) {
+    return this.doctorsService.updateReferralStatus(referralId, body.status);
   }
 }
 

@@ -1692,6 +1692,136 @@
         ]
       }
     },
+    "/doctors/{doctorId}/referrals": {
+      "get": {
+        "operationId": "DoctorsController_getReferrals",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (patient | doctor | frontdesk)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "doctorId",
+            "required": true,
+            "in": "path",
+            "description": "Doctor ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "direction",
+            "required": false,
+            "in": "query",
+            "description": "Filter referrals by direction",
+            "schema": {
+              "enum": [
+                "sent",
+                "received"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of referral objects"
+          }
+        },
+        "summary": "Get all referrals sent or received by a doctor",
+        "tags": [
+          "Doctors"
+        ]
+      },
+      "post": {
+        "operationId": "DoctorsController_createReferral",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (patient | doctor | frontdesk)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "doctorId",
+            "required": true,
+            "in": "path",
+            "description": "From Doctor ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReferralDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Referral created"
+          }
+        },
+        "summary": "Create an internal referral from one doctor to another",
+        "tags": [
+          "Doctors"
+        ]
+      }
+    },
+    "/doctors/{doctorId}/referrals/{referralId}/status": {
+      "put": {
+        "operationId": "DoctorsController_updateReferralStatus",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (patient | doctor | frontdesk)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "referralId",
+            "required": true,
+            "in": "path",
+            "description": "Referral ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "doctorId",
+            "required": true,
+            "in": "path",
+            "description": "Doctor ID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated referral"
+          }
+        },
+        "summary": "Update referral status (pending | accepted | completed)",
+        "tags": [
+          "Doctors"
+        ]
+      }
+    },
     "/lab-requests": {
       "get": {
         "operationId": "LabRequestsController_findForTechnician",
@@ -4596,6 +4726,54 @@
         },
         "required": [
           "date"
+        ]
+      },
+      "CreateReferralDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "example": "PAT001",
+            "description": "Patient user ID"
+          },
+          "patientName": {
+            "type": "string",
+            "example": "John Doe",
+            "description": "Patient name"
+          },
+          "toDoctorId": {
+            "type": "string",
+            "example": "DOC002",
+            "description": "Target doctor ID to refer to"
+          },
+          "specialization": {
+            "type": "string",
+            "example": "Cardiologist",
+            "description": "Target specialization"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Follow up for chest pain evaluation"
+          },
+          "urgency": {
+            "type": "string",
+            "example": "Urgent",
+            "description": "Urgency: Routine | Urgent | Emergency"
+          },
+          "preferredDate": {
+            "type": "string",
+            "example": "2026-10-20",
+            "description": "Preferred referral date YYYY-MM-DD"
+          },
+          "appointmentId": {
+            "type": "string",
+            "example": "APT001",
+            "description": "Associated appointment ID"
+          }
+        },
+        "required": [
+          "patientId",
+          "toDoctorId"
         ]
       },
       "FileAttachmentDto": {

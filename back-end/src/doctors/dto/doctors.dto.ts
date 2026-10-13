@@ -185,3 +185,45 @@ export class MarkUnavailableDateDto {
   @IsNotEmpty()
   date!: string;
 }
+
+export class CreateReferralDto {
+  @ApiProperty({ example: 'PAT001', description: 'Patient user ID' })
+  @IsString()
+  @IsNotEmpty()
+  patientId!: string;
+
+  @ApiPropertyOptional({ example: 'John Doe', description: 'Patient name' })
+  @IsString()
+  @IsOptional()
+  patientName?: string;
+
+  @ApiProperty({ example: 'DOC002', description: 'Target doctor ID to refer to' })
+  @IsString()
+  @IsNotEmpty()
+  toDoctorId!: string;
+
+  @ApiPropertyOptional({ example: 'Cardiologist', description: 'Target specialization' })
+  @IsString()
+  @IsOptional()
+  specialization?: string;
+
+  @ApiPropertyOptional({ example: 'Follow up for chest pain evaluation' })
+  @IsString()
+  @IsOptional()
+  reason?: string;
+
+  @ApiPropertyOptional({ example: 'Urgent', description: 'Urgency: Routine | Urgent | Emergency' })
+  @IsString()
+  @IsOptional()
+  urgency?: string;
+
+  @ApiPropertyOptional({ example: '2026-10-20', description: 'Preferred referral date YYYY-MM-DD' })
+  @IsString()
+  @IsOptional()
+  preferredDate?: string;
+
+  @ApiPropertyOptional({ example: 'APT001', description: 'Associated appointment ID' })
+  @IsString()
+  @IsOptional()
+  appointmentId?: string;
+}
