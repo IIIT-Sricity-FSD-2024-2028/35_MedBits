@@ -42,12 +42,14 @@ export default function DoctorProfile() {
     }
   }
 
+  const doctorId = user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
+
   return (
     <UserProfile
       pageTitle="Doctor Profile"
       roleLabel="Doctor"
-      fetchUrl={user?.id ? `${API_BASE_URL}/doctors/${encodeURIComponent(user.id)}` : null}
-      saveUrl={user?.id ? `${API_BASE_URL}/doctors/${encodeURIComponent(user.id)}` : null}
+      fetchUrl={`${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}`}
+      saveUrl={`${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}`}
       requestRole="doctor"
       fields={doctorFields}
       onSaveSuccess={handleSaveSuccess}

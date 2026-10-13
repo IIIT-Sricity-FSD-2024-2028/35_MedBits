@@ -1,0 +1,35 @@
+[
+  {
+    "id": "REF1791903192028",
+    "fromDoctorId": "DOC001",
+    "fromDoctorName": "Dr. S Madhuri",
+    "fromSpecialization": "Dermatologist",
+    "toDoctorId": "DOC003",
+    "toDoctorName": "Dr. Sarah Johnson",
+    "toSpecialization": "Cardiologist",
+    "patientId": "PAT001",
+    "patientName": "Ria Sharma",
+    "reason": "Refer for cardiac evaluation following dermato-cardiac findings",
+    "urgency": "Urgent",
+    "preferredDate": "2026-10-20",
+    "appointmentId": "APT1791795101537",
+    "status": "pending",
+    "createdAt": "2026-10-13T14:53:12.028Z"
+  },
+  {
+    "id": "REF1791899893716",
+    "fromDoctorId": "DOC001",
+    "fromDoctorName": "Dr. S Madhuri",
+    "fromSpecialization": "Dermatologist",
+    "toDoctorId": "DOC002",
+    "toDoctorName": "Dr. Ashwini Ray",
+    "toSpecialization": "Dermatologist",
+    "patientId": "PAT001",
+    "patientName": "Ria Sharma",
+    "reason": "Second opinion on rash",
+    "urgency": "Routine",
+    "preferredDate": "",
+    "status": "pending",
+    "createdAt": "2026-10-13T13:58:13.716Z"
+  }
+]
