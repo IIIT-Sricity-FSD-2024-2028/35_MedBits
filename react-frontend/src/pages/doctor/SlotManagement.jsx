@@ -41,37 +41,42 @@ export default function SlotManagement() {
   const [bookedAppointments, setBookedAppointments] = useState([]);
   const [alertMessage, setAlertMessage] = useState(null);
 
+  const doctorId = user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
+
   // 1. Fetch Doctor profile to load base slot template
   const loadDoctorProfile = useCallback(async () => {
-    if (!user?.id) return;
     try {
-      const res = await fetch(`${API_BASE}/doctors/${encodeURIComponent(user.id)}`, {
+      const res = await fetch(`${API_BASE}/doctors/${encodeURIComponent(doctorId)}`, {
         headers: { role: 'doctor' },
       });
       if (res.ok) {
         const data = await res.json();
-        setAllSlots(Array.isArray(data.slots) ? data.slots : []);
+        if (Array.isArray(data.slots) && data.slots.length > 0) {
+          setAllSlots(data.slots);
+          return;
+        }
       }
     } catch {
       // Graceful error fallback
     }
-  }, [user?.id]);
+    setAllSlots(['10:00', '10:30', '11:00', '11:30', '12:00']);
+  }, [doctorId]);
 
   // 2. Fetch slot blocks & appointments for selected date
   const loadDateSpecificData = useCallback(async (date) => {
-    if (!user?.id || !date) return;
+    if (!date) return;
     try {
       const [blocksRes, apptsRes, unavailRes] = await Promise.all([
         fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(user.id)}/slot-blocks?date=${encodeURIComponent(date)}`,
+          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/slot-blocks?date=${encodeURIComponent(date)}`,
           { headers: { role: 'doctor' } }
         ),
         fetch(
-          `${API_BASE}/appointments/doctor/${encodeURIComponent(user.id)}`,
+          `${API_BASE}/appointments/doctor/${encodeURIComponent(doctorId)}`,
           { headers: { role: 'doctor' } }
         ),
         fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(user.id)}/unavailable-dates`,
+          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates`,
           { headers: { role: 'doctor' } }
         ),
       ]);
@@ -116,7 +121,7 @@ export default function SlotManagement() {
         // UNBLOCK: Call DELETE
         const targetId = blockId || slot;
         const res = await fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(user.id)}/slot-blocks/${encodeURIComponent(targetId)}`,
+          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/slot-blocks/${encodeURIComponent(targetId)}`,
           {
             method: 'DELETE',
             headers: { role: 'doctor' },
@@ -139,7 +144,7 @@ export default function SlotManagement() {
         if (reason === null) return; // Doctor clicked Cancel on prompt
 
         const res = await fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(user.id)}/slot-blocks`,
+          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/slot-blocks`,
           {
             method: 'POST',
             headers: {
@@ -172,7 +177,7 @@ export default function SlotManagement() {
     setAlertMessage(null);
     try {
       const res = await fetch(
-        `${API_BASE}/doctors/${encodeURIComponent(user.id)}/unavailable-dates`,
+        `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates`,
         {
           method: 'POST',
           headers: {
@@ -201,7 +206,7 @@ export default function SlotManagement() {
     try {
       const targetParam = id || date;
       const res = await fetch(
-        `${API_BASE}/doctors/${encodeURIComponent(user.id)}/unavailable-dates/${encodeURIComponent(targetParam)}`,
+        `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates/${encodeURIComponent(targetParam)}`,
         {
           method: 'DELETE',
           headers: { role: 'doctor' },

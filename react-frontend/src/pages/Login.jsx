@@ -23,12 +23,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Preset credentials for all 6 actors for quick testing and demonstration
 const DEMO_ACCOUNTS = [
-  { role: 'doctor',       label: 'Doctor',       email: 'madhuri@medbits.com',    password: 'doctor123',      name: 'Dr. S Madhuri' },
-  { role: 'patient',      label: 'Patient',      email: 'ria@medbits.com',        password: 'patient123',     name: 'Ria Sharma' },
-  { role: 'frontdesk',    label: 'Front Desk',   email: 'frontdesk@medbits.com',  password: 'desk123',        name: 'Priya Nair' },
-  { role: 'labtech',      label: 'Lab Tech',     email: 'labtech@medbits.com',    password: 'lab123',         name: 'Suresh Kumar' },
-  { role: 'branch_admin', label: 'Branch Admin', email: 'admin@medbits.com',      password: 'admin123',       name: 'Admin User' },
-  { role: 'super_admin',  label: 'Super Admin',  email: 'superadmin@medbits.com', password: 'SuperAdmin@123', name: 'Super Admin' },
+  { role: 'doctor',       id: 'DOC001',          doctorId: 'DOC001',    label: 'Doctor',       email: 'madhuri@medbits.com',    password: 'doctor123',      name: 'Dr. S Madhuri' },
+  { role: 'patient',      id: 'PAT001',          patientId: 'PAT001',   label: 'Patient',      email: 'ria@medbits.com',        password: 'patient123',     name: 'Ria Sharma' },
+  { role: 'frontdesk',    id: 'FRONTDESK_001',                          label: 'Front Desk',   email: 'frontdesk@medbits.com',  password: 'desk123',        name: 'Priya Nair' },
+  { role: 'labtech',      id: 'LABTECH_001',                            label: 'Lab Tech',     email: 'labtech@medbits.com',    password: 'lab123',         name: 'Suresh Kumar' },
+  { role: 'branch_admin', id: 'ADMIN_001',                              label: 'Branch Admin', email: 'admin@medbits.com',      password: 'admin123',       name: 'Admin User' },
+  { role: 'super_admin',  id: 'SUPERADMIN_001',                         label: 'Super Admin',  email: 'superadmin@medbits.com', password: 'SuperAdmin@123', name: 'Super Admin' },
 ];
 
 export default function Login() {
@@ -79,7 +79,8 @@ export default function Login() {
     ) || DEMO_ACCOUNTS[0];
 
     const mockUser = {
-      id: matchingDemo.role.toUpperCase() + '_001',
+      id: matchingDemo.id || (matchingDemo.role === 'doctor' ? 'DOC001' : matchingDemo.role.toUpperCase() + '_001'),
+      doctorId: matchingDemo.doctorId || (matchingDemo.role === 'doctor' ? 'DOC001' : undefined),
       name: matchingDemo.name,
       email: matchingDemo.email,
       role: matchingDemo.role,

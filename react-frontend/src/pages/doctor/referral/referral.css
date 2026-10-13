@@ -482,3 +482,50 @@
 .referral-empty-icon {
   font-size: 40px;
 }
+
+/* ── Select Dropdown ───────────────────────────────────────────────── */
+.referral-select-wrapper {
+  position: relative;
+}
+.referral-select-wrapper::after {
+  content: '▾';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  font-size: 12px;
+}
+
+.referral-select {
+  width: 100%;
+  padding: 10px 36px 10px 13px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.referral-select:focus {
+  border-color: #6366f1;
+  background: #fff;
+}
+.referral-select option {
+  font-size: 13.5px;
+  color: #1e293b;
+}
+
+.referral-field-hint {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 500;
+  margin: 0;
+}
