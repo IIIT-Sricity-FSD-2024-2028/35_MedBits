@@ -28,6 +28,9 @@ import DoctorDashboard from './pages/dashboards/DoctorDashboard';
 import DoctorProfile from './pages/doctor/DoctorProfile';
 import ConsultationNotes from './pages/doctor/ConsultationNotes';
 import SlotManagement from './pages/doctor/SlotManagement';
+import InternalReferral from './pages/doctor/InternalReferral';
+import TreatmentPlan from './pages/doctor/TreatmentPlan';
+import DoctorEarnings from './pages/doctor/DoctorEarnings';
 import PatientDashboard from './pages/patient/PatientDashboard';
 import PatientProfile from './pages/patient/Profile';
 import PatientAppointments from './pages/patient/appointments';
@@ -78,12 +81,12 @@ export default function App() {
           } />
           <Route path="/doctor/internal-referral" element={
             <ProtectedRoute allowedRoles={['doctor']}>
-              <DemoPage pageTitle="Internal Referral" />
+              <InternalReferral />
             </ProtectedRoute>
           } />
           <Route path="/doctor/treatment-plan" element={
             <ProtectedRoute allowedRoles={['doctor']}>
-              <DemoPage pageTitle="Treatment Plan" />
+              <TreatmentPlan />
             </ProtectedRoute>
           } />
           <Route path="/doctor/slot-management" element={
@@ -93,7 +96,7 @@ export default function App() {
           } />
           <Route path="/doctor/earnings" element={
             <ProtectedRoute allowedRoles={['doctor']}>
-              <DemoPage pageTitle="Earnings" />
+              <DoctorEarnings />
             </ProtectedRoute>
           } />
 

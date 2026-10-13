@@ -52,6 +52,24 @@ export type UnavailableDate = {
   date: string; // YYYY-MM-DD
 };
 
+export type Referral = {
+  id: string;
+  fromDoctorId: string;
+  fromDoctorName: string;
+  fromSpecialization: string;
+  toDoctorId: string;
+  toDoctorName: string;
+  toSpecialization: string;
+  patientId: string;
+  patientName: string;
+  reason: string;
+  urgency: string;
+  preferredDate: string;
+  appointmentId?: string;
+  status: 'pending' | 'accepted' | 'completed';
+  createdAt: string;
+};
+
 export type CreateSlotBlockInput = {
   date: string;
   slot: string;
@@ -81,6 +99,7 @@ export type UpdateDoctorInput = Partial<Omit<CreateDoctorInput, 'password'>>;
 
 const SLOT_BLOCKS_FILE = join(__dirname, '..', '..', 'data', 'slot-blocks.json');
 const UNAVAILABLE_DATES_FILE = join(__dirname, '..', '..', 'data', 'unavailable-dates.json');
+const REFERRALS_FILE = join(__dirname, '..', '..', 'data', 'referrals.json');
 const DEFAULT_BRANCH_ID = '00000000-0000-4000-8000-000000000001';
 
 /** Map a DoctorEntity row to the plain Doctor DTO */
@@ -111,6 +130,7 @@ export class DoctorsService implements OnModuleInit {
   // ─── In-memory slot management stores (still JSON-file backed) ──────────────
   private slotBlocks: SlotBlock[] = [];
   private unavailableDates: UnavailableDate[] = [];
+  private referrals: Referral[] = [];
 
   constructor(
     @InjectRepository(DoctorEntity)
@@ -123,6 +143,7 @@ export class DoctorsService implements OnModuleInit {
   onModuleInit(): void {
     this.loadSlotBlocks();
     this.loadUnavailableDates();
+    this.loadReferrals();
   }
 
   private getScopedBranchId(): string | undefined {
@@ -396,6 +417,66 @@ export class DoctorsService implements OnModuleInit {
     });
   }
 
+  // ─── Referrals ────────────────────────────────────────────────────────────────
+
+  getReferralsByDoctor(doctorId: string): Referral[] {
+    return this.referrals.filter(
+      (r) => r.fromDoctorId === doctorId || r.toDoctorId === doctorId,
+    );
+  }
+
+  getSentReferrals(doctorId: string): Referral[] {
+    return this.referrals.filter((r) => r.fromDoctorId === doctorId);
+  }
+
+  getReceivedReferrals(doctorId: string): Referral[] {
+    return this.referrals.filter((r) => r.toDoctorId === doctorId);
+  }
+
+  async createReferral(input: {
+    fromDoctorId: string;
+    patientId: string;
+    patientName?: string;
+    toDoctorId: string;
+    reason?: string;
+    urgency?: string;
+    preferredDate?: string;
+    appointmentId?: string;
+  }): Promise<Referral> {
+    const fromDoctor = await this.getDoctorById(input.fromDoctorId);
+    const toDoctor = await this.getDoctorById(input.toDoctorId);
+
+    const referral: Referral = {
+      id: `REF${Date.now()}`,
+      fromDoctorId: fromDoctor.id,
+      fromDoctorName: fromDoctor.name,
+      fromSpecialization: fromDoctor.specialization,
+      toDoctorId: toDoctor.id,
+      toDoctorName: toDoctor.name,
+      toSpecialization: toDoctor.specialization,
+      patientId: input.patientId?.trim() || '',
+      patientName: input.patientName?.trim() || input.patientId,
+      reason: input.reason?.trim() || '',
+      urgency: input.urgency?.trim() || 'Routine',
+      preferredDate: input.preferredDate?.trim() || '',
+      appointmentId: input.appointmentId?.trim(),
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+
+    this.referrals.unshift(referral);
+    this.persistReferrals();
+    return referral;
+  }
+
+  updateReferralStatus(referralId: string, status: 'pending' | 'accepted' | 'completed'): Referral {
+    const idx = this.referrals.findIndex((r) => r.id === referralId);
+    if (idx === -1) throw new Error('Referral not found');
+    this.referrals[idx].status = status;
+    this.persistReferrals();
+    return this.referrals[idx];
+  }
+
   // ─── Persistence helpers ─────────────────────────────────────────────────────
 
   private loadSlotBlocks() {
@@ -431,6 +512,19 @@ export class DoctorsService implements OnModuleInit {
     d.setDate(d.getDate() + diff);
     d.setHours(0, 0, 0, 0);
     return d;
+  }
+
+  private loadReferrals() {
+    try {
+      if (!existsSync(REFERRALS_FILE)) return;
+      const data = JSON.parse(readFileSync(REFERRALS_FILE, 'utf8'));
+      if (Array.isArray(data)) this.referrals = data;
+    } catch (_) {}
+  }
+
+  private persistReferrals() {
+    mkdirSync(dirname(REFERRALS_FILE), { recursive: true });
+    writeFileSync(REFERRALS_FILE, JSON.stringify(this.referrals, null, 2));
   }
 
   private normalizeSlots(slots?: string[]): string[] {
