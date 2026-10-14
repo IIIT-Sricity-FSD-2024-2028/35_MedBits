@@ -94,29 +94,35 @@ export class QueueService {
     return this.toQueueDetails(queueItem);
   }
 
-  getAllQueueItems() {
-    return this.queue
-      .slice()
-      .sort(this.compareQueueItems)
-      .map((item) => this.toQueueDetails(item));
+  async getAllQueueItems() {
+    return Promise.all(
+      this.queue
+        .slice()
+        .sort(this.compareQueueItems)
+        .map((item) => this.toQueueDetails(item)),
+    );
   }
 
-  getQueueByDoctorId(doctorId: string) {
-    this.doctorsService.getDoctorById(doctorId);
-    return this.queue
-      .filter((item) => item.doctorId === doctorId)
-      .sort(this.compareQueueItems)
-      .map((item) => this.toQueueDetails(item));
+  async getQueueByDoctorId(doctorId: string) {
+    await this.doctorsService.getDoctorById(doctorId);
+    return Promise.all(
+      this.queue
+        .filter((item) => item.doctorId === doctorId)
+        .sort(this.compareQueueItems)
+        .map((item) => this.toQueueDetails(item)),
+    );
   }
 
-  getQueueByUserId(userId: string) {
-    return this.queue
-      .filter((item) => item.userId === userId && item.status !== 'done')
-      .sort(this.compareQueueItems)
-      .map((item) => this.toQueueDetails(item));
+  async getQueueByUserId(userId: string) {
+    return Promise.all(
+      this.queue
+        .filter((item) => item.userId === userId && item.status !== 'done')
+        .sort(this.compareQueueItems)
+        .map((item) => this.toQueueDetails(item)),
+    );
   }
 
-  updateQueueStatus(id: string, input: UpdateQueueInput) {
+  async updateQueueStatus(id: string, input: UpdateQueueInput) {
     const queueItem = this.queue.find((item) => item.id === id);
     if (!queueItem) {
       throw new BadRequestException('Queue item not found');
@@ -150,8 +156,12 @@ export class QueueService {
     return a.tokenNumber - b.tokenNumber;
   }
 
-  private toQueueDetails(queueItem: QueueItem) {
-    const doctor = this.doctorsService.getDoctorById(queueItem.doctorId);
+  private async toQueueDetails(queueItem: QueueItem) {
+    let doctor: any = { id: queueItem.doctorId, userId: queueItem.doctorId };
+    try {
+      doctor = await this.doctorsService.getDoctorById(queueItem.doctorId);
+    } catch (_) {}
+
     let patient: Record<string, string | number> = {
       userId: queueItem.userId,
       name: queueItem.userId,

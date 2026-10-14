@@ -95,6 +95,14 @@ export class DoctorsController {
     return { success: true };
   }
 
+  @ApiOperation({ summary: 'Get all referrals across all doctors for frontdesk coordination' })
+  @ApiResponse({ status: 200, description: 'Array of all referral objects' })
+  @Roles('frontdesk', 'admin', 'doctor')
+  @Get('referrals/all')
+  getAllReferrals() {
+    return this.doctorsService.getAllReferrals();
+  }
+
   @ApiOperation({ summary: 'Get a single doctor profile by ID' })
   @ApiParam({ name: 'doctorId', description: 'Doctor ID (e.g. DOC001)' })
   @ApiResponse({ status: 200, description: 'Doctor profile object' })
@@ -287,7 +295,7 @@ export class DoctorsController {
   @ApiParam({ name: 'doctorId', description: 'Doctor ID' })
   @ApiQuery({ name: 'direction', required: false, enum: ['sent', 'received'], description: 'Filter referrals by direction' })
   @ApiResponse({ status: 200, description: 'Array of referral objects' })
-  @Roles('doctor')
+  @Roles('doctor', 'frontdesk', 'admin')
   @Get(':doctorId/referrals')
   getReferrals(
     @Param('doctorId') doctorId: string,
@@ -324,7 +332,7 @@ export class DoctorsController {
   @ApiParam({ name: 'doctorId', description: 'Doctor ID' })
   @ApiParam({ name: 'referralId', description: 'Referral ID' })
   @ApiResponse({ status: 200, description: 'Updated referral' })
-  @Roles('doctor')
+  @Roles('doctor', 'frontdesk', 'admin')
   @Put(':doctorId/referrals/:referralId/status')
   updateReferralStatus(
     @Param('referralId') referralId: string,

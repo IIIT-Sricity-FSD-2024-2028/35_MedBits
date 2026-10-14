@@ -40,6 +40,8 @@ import PatientMedicalRecords from './pages/patient/medicalrecords';
 import FrontDeskDashboard from './pages/FrontDesk/FrontDeskDashboard';
 import WalkInRegistration from './pages/FrontDesk/WalkInRegistration';
 import AppointmentManagement from './pages/FrontDesk/AppointmentManagement';
+import FollowUpReferral from './pages/FrontDesk/FollowUpReferral';
+import QueueManagement from './pages/FrontDesk/QueueManagement';
 import FrontDeskProfile from './pages/FrontDesk/FrontDeskProfile';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import BranchAdminDashboard from './pages/dashboards/BranchAdminDashboard';
@@ -159,12 +161,12 @@ export default function App() {
           } />
           <Route path="/front-desk/followup" element={
             <ProtectedRoute allowedRoles={['frontdesk']}>
-              <DemoPage pageTitle="Follow-Up & Referral" />
+              <FollowUpReferral />
             </ProtectedRoute>
           } />
           <Route path="/front-desk/queue" element={
             <ProtectedRoute allowedRoles={['frontdesk']}>
-              <DemoPage pageTitle="Queue Management" />
+              <QueueManagement />
             </ProtectedRoute>
           } />
           <Route path="/front-desk/profile" element={
