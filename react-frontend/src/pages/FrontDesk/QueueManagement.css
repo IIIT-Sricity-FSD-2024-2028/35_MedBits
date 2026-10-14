@@ -1,0 +1,494 @@
+/**
+ * QueueManagement.css — Styles for Front Desk Queue Management
+ * ==============================================================================
+ * Comprehensive styling matching the MedBits design system:
+ *  - Queue metric statistics counters
+ *  - Patient check-in and token generation controls
+ *  - Doctor and status filtering
+ *  - Queue entries with left accent borders & interactive status actions
+ *  - Token generation dialog with printable token display
+ */
+
+.queue-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Top Metric Stat Strip ──────────────────────────────────────────────── */
+.queue-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.queue-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.queue-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.queue-stat-icon--waiting { background: #fdf4ff; color: #a855f7; }
+.queue-stat-icon--consulting { background: #eff6ff; color: #2563eb; }
+.queue-stat-icon--done { background: #f0fdf4; color: #16a34a; }
+.queue-stat-icon--total { background: #f8fafc; color: #475569; }
+
+.queue-stat-content h4 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.queue-stat-number {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ── Check-in & Generate Token Card ─────────────────────────────────────── */
+.queue-checkin-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.queue-checkin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 12px;
+}
+
+.queue-checkin-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.queue-checkin-form-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1.5fr auto;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+@media (max-width: 860px) {
+  .queue-checkin-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.queue-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.queue-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.queue-select,
+.queue-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.queue-select:focus,
+.queue-input:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.queue-token-btn {
+  padding: 10px 22px;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.18s ease;
+  white-space: nowrap;
+}
+
+.queue-token-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.queue-token-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* ── Queue Filter & Controls Bar ────────────────────────────────────────── */
+.queue-filter-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.queue-filter-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+  min-width: 260px;
+}
+
+.queue-filter-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── Queue Entries List ─────────────────────────────────────────────────── */
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.queue-entry {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.queue-entry:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+}
+
+/* Status Left Border Indicator */
+.queue-entry::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+
+.queue-entry--waiting::before { background: #a855f7; }
+.queue-entry--in-consultation::before { background: #2563eb; }
+.queue-entry--done::before { background: #16a34a; }
+
+.queue-entry-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.queue-entry-token-pill {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #1e293b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+}
+
+.queue-entry--waiting .queue-entry-token-pill {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  color: #7e22ce;
+}
+
+.queue-entry--in-consultation .queue-entry-token-pill {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.queue-entry--done .queue-entry-token-pill {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.queue-token-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.queue-token-num {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.queue-entry-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.queue-entry-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.queue-entry-meta {
+  font-size: 13px;
+  color: #64748b;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.queue-entry-meta span::after {
+  content: '•';
+  margin-left: 8px;
+  color: #cbd5e1;
+}
+
+.queue-entry-meta span:last-child::after {
+  display: none;
+}
+
+.queue-entry-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+/* Status Badges */
+.queue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.queue-badge--waiting {
+  background: #faf5ff;
+  color: #7e22ce;
+  border-color: #f3e8ff;
+}
+
+.queue-badge--in-consultation {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.queue-badge--done {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+/* Status Action Buttons */
+.queue-action-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.queue-action-btn--start {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.queue-action-btn--start:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+.queue-action-btn--done {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.queue-action-btn--done:hover {
+  background: #16a34a;
+  color: #ffffff;
+  border-color: #16a34a;
+}
+
+/* ── Token Generated Modal Styles ───────────────────────────────────────── */
+.token-modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.token-modal-badge-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  margin-bottom: 16px;
+}
+
+.token-display-box {
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 20px 32px;
+  margin: 16px 0;
+  width: 85%;
+}
+
+.token-display-number {
+  font-size: 48px;
+  font-weight: 900;
+  color: #2563eb;
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.token-modal-details {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.token-modal-details strong {
+  color: #0f172a;
+}
+
+/* ── Empty State ────────────────────────────────────────────────────────── */
+.queue-empty-box {
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.queue-empty-icon {
+  font-size: 40px;
+}
+
+.queue-empty-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.queue-empty-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  max-width: 440px;
+}
+
+@media (max-width: 680px) {
+  .queue-entry {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .queue-entry-right {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+  }
+}

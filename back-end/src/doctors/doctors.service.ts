@@ -424,6 +424,10 @@ export class DoctorsService implements OnModuleInit {
 
   // ─── Referrals ────────────────────────────────────────────────────────────────
 
+  getAllReferrals(): Referral[] {
+    return this.referrals;
+  }
+
   getReferralsByDoctor(doctorId: string): Referral[] {
     return this.referrals.filter(
       (r) => r.fromDoctorId === doctorId || r.toDoctorId === doctorId,

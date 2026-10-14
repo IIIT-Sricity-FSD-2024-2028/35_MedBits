@@ -41,14 +41,14 @@ const DEFAULT_PATIENTS = [
 
 // ── Default Doctors Fallback Catalog ──────────────────────────────────────────
 const DEFAULT_DOCTORS = [
-  { id: 'DOC002', userId: 'DOC002', name: 'Dr. Ashwini Ray', specialization: 'Cardiologist', department: 'Cardiology', consultationFee: 700 },
-  { id: 'DOC003', userId: 'DOC003', name: 'Dr. Sarah Johnson', specialization: 'Neurologist', department: 'Neurology', consultationFee: 850 },
-  { id: 'DOC004', userId: 'DOC004', name: 'Dr. Ramesh Iyer', specialization: 'Orthopedics', department: 'Orthopedics', consultationFee: 600 },
-  { id: 'DOC005', userId: 'DOC005', name: 'Dr. Paul Johnson', specialization: 'General Physician', department: 'General Medicine', consultationFee: 500 },
-  { id: 'DOC006', userId: 'DOC006', name: 'Dr. Robert Wilson', specialization: 'Pediatrician', department: 'Pediatrics', consultationFee: 550 },
-  { id: 'DOC007', userId: 'DOC007', name: 'Dr. Anita Gupta', specialization: 'Gynecologist', department: 'Gynecology', consultationFee: 650 },
-  { id: 'DOC008', userId: 'DOC008', name: 'Dr. Kavita Sharma', specialization: 'ENT Specialist', department: 'ENT', consultationFee: 600 },
-  { id: 'DOC009', userId: 'DOC009', name: 'Dr. Vikram Nair', specialization: 'Oncologist', department: 'Oncology', consultationFee: 900 },
+  { id: 'DOC002', userId: 'DOC002', name: 'Dr. Ashwini Ray', specialization: 'Dermatologist', department: 'Dermatology', consultationFee: 700 },
+  { id: 'DOC003', userId: 'DOC003', name: 'Dr. Sarah Johnson', specialization: 'Cardiologist', department: 'Cardiology', consultationFee: 850 },
+  { id: 'DOC005', userId: 'DOC005', name: 'Dr. Paul Johnson', specialization: 'Pediatrician', department: 'Paediatrics', consultationFee: 1100 },
+  { id: 'DOC006', userId: 'DOC006', name: 'Dr. Robert Wilson', specialization: 'Orthopedic', department: 'Orthopaedics', consultationFee: 550 },
+  { id: 'DOC008', userId: 'DOC008', name: 'Dr. Kavita Sharma', specialization: 'General', department: 'General Medicine', consultationFee: 600 },
+  { id: 'DOC009', userId: 'DOC009', name: 'Dr. Vikram Nair', specialization: 'General', department: 'General Medicine', consultationFee: 900 },
+  { id: 'DOC014', userId: 'DOC014', name: 'Dr. Jani', specialization: 'Dermatologist', department: 'Dermatology', consultationFee: 500 },
+  { id: 'DOC015', userId: 'DOC015', name: 'Dr. Jane Smith', specialization: 'Cardiologist', department: 'Cardiology Dept', consultationFee: 900 },
 ];
 
 // ── Default Appointments Fallback Catalog ─────────────────────────────────────
@@ -247,8 +247,12 @@ export default function InternalReferral() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.patientId.trim() || !form.toDoctorId) {
-      setAlert({ type: 'error', text: 'Please select a patient and a target doctor.' });
+    if (!form.toDoctorId) {
+      setAlert({ type: 'error', text: 'Please select a target doctor/specialist to refer your patient to.' });
+      return;
+    }
+    if (!form.patientId.trim()) {
+      setAlert({ type: 'error', text: 'Please select a patient for this referral.' });
       return;
     }
     if (!form.reason.trim()) {
@@ -264,8 +268,8 @@ export default function InternalReferral() {
       patientName:   form.patientName.trim() || form.patientId.trim(),
       toDoctorId:    form.toDoctorId,
       reason:        form.reason.trim(),
-      urgency:       form.urgency,
-      preferredDate: form.preferredDate,
+      urgency:       form.urgency || 'Routine',
+      preferredDate: form.preferredDate ? form.preferredDate : undefined,
       appointmentId: form.appointmentId.trim() || undefined,
     };
 
@@ -281,16 +285,20 @@ export default function InternalReferral() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to create referral');
+        throw new Error(err.message || 'Failed to create referral on server');
       }
 
       const saved = await res.json();
       setReferrals((prev) => [saved, ...prev]);
+      try {
+        const cached = JSON.parse(localStorage.getItem('referralHistory') || '[]');
+        localStorage.setItem('referralHistory', JSON.stringify([saved, ...cached.filter((c) => c.id !== saved.id)]));
+      } catch (_) {}
       setAlert({ type: 'success', text: 'Referral sent successfully!' });
       setForm(EMPTY_FORM);
       setActiveTab('sent');
-    } catch {
-      // Local fallback for offline mode
+    } catch (err) {
+      // Local fallback for offline mode or network issues
       const selectedDoc = doctors.find((d) => (d.id || d.userId) === form.toDoctorId);
       const localSaved = {
         id: `REF${Date.now()}`,
@@ -305,6 +313,10 @@ export default function InternalReferral() {
         ...payload,
       };
       setReferrals((prev) => [localSaved, ...prev]);
+      try {
+        const cached = JSON.parse(localStorage.getItem('referralHistory') || '[]');
+        localStorage.setItem('referralHistory', JSON.stringify([localSaved, ...cached.filter((c) => c.id !== localSaved.id)]));
+      } catch (_) {}
       setAlert({ type: 'success', text: 'Referral created and saved successfully!' });
       setForm(EMPTY_FORM);
       setActiveTab('sent');
@@ -340,8 +352,15 @@ export default function InternalReferral() {
   };
 
   // ── Derived Lists ─────────────────────────────────────────────────────────
-  const sentReferrals     = referrals.filter((r) => r.fromDoctorId === myId);
-  const receivedReferrals = referrals.filter((r) => r.toDoctorId === myId);
+  const isMyId = (id) => {
+    if (!id) return false;
+    if (id === myId) return true;
+    if ((myId === 'DOC001' || myId === 'DOCTOR_001') && (id === 'DOC001' || id === 'DOCTOR_001')) return true;
+    return false;
+  };
+
+  const sentReferrals     = referrals.filter((r) => isMyId(r.fromDoctorId));
+  const receivedReferrals = referrals.filter((r) => isMyId(r.toDoctorId));
 
   const filteredDoctors = doctors.filter((d) => {
     const q = doctorSearch.toLowerCase();
@@ -460,6 +479,39 @@ export default function InternalReferral() {
 
               <form className="referral-form" onSubmit={handleSubmit}>
 
+                {/* ── Target Doctor Dropdown ─────────────────────────────── */}
+                <div className="referral-field referral-field--full">
+                  <label className="referral-label">Target Doctor / Specialist *</label>
+                  <div className="referral-select-wrapper">
+                    <select
+                      id="targetDoctorSelect"
+                      className="referral-select"
+                      value={form.toDoctorId}
+                      onChange={(e) => handleFormChange('toDoctorId', e.target.value)}
+                      required
+                    >
+                      <option value="">— Select Target Doctor / Specialist —</option>
+                      {doctors.map((doc) => {
+                        const docId = doc.id || doc.userId;
+                        return (
+                          <option key={docId} value={docId}>
+                            {doc.name} — {doc.specialization} ({doc.department || 'General'}{doc.consultationFee ? ` · ₹${doc.consultationFee}` : ''})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                  {selectedDoctor ? (
+                    <p className="referral-field-hint" style={{ color: '#4338ca', fontWeight: 600 }}>
+                      ✓ Selected Specialist: {selectedDoctor.name} ({selectedDoctor.specialization}{selectedDoctor.department ? ` - ${selectedDoctor.department}` : ''})
+                    </p>
+                  ) : (
+                    <p className="referral-field-hint" style={{ color: '#64748b' }}>
+                      Choose from this dropdown or click any specialist card on the left panel.
+                    </p>
+                  )}
+                </div>
+
                 {/* ── Patient Dropdown ───────────────────────────────────── */}
                 <div className="referral-field referral-field--full">
                   <label className="referral-label">Patient *</label>
@@ -575,7 +627,7 @@ export default function InternalReferral() {
                   <button
                     type="submit"
                     className="referral-btn referral-btn--primary"
-                    disabled={submitting || !form.toDoctorId || !form.patientId}
+                    disabled={submitting}
                   >
                     {submitting ? 'Sending…' : '📤 Send Referral'}
                   </button>

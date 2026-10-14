@@ -72,7 +72,7 @@ export class AppointmentsController {
   ) {
     const scopedBranchId = this.getScopedBranchId();
     const requestedBranchId = body.branchId?.trim() ?? '';
-    const branchId = scopedBranchId ?? requestedBranchId;
+    const branchId = scopedBranchId ?? (requestedBranchId || '00000000-0000-4000-8000-000000000001');
 
     if (scopedBranchId && requestedBranchId && requestedBranchId !== scopedBranchId) {
       throw new ForbiddenException('Access denied for this hospital branch');

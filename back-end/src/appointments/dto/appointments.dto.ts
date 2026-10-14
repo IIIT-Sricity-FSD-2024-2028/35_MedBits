@@ -12,10 +12,10 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   doctorId!: string;
 
-  @ApiProperty({ example: '00000000-0000-4000-8000-000000000001', description: 'Hospital branch UUID' })
+  @ApiPropertyOptional({ example: '00000000-0000-4000-8000-000000000001', description: 'Hospital branch UUID' })
   @IsUUID()
-  @IsNotEmpty()
-  branchId!: string;
+  @IsOptional()
+  branchId?: string;
 
   @ApiProperty({ example: '2023-12-01' })
   @IsString()
