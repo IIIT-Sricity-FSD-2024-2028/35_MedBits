@@ -27,6 +27,11 @@ const STATUS_MAP = {
   waiting: { variant: 'waiting', defaultLabel: 'Waiting' },
   done: { variant: 'completed', defaultLabel: 'Completed' },
   'checked-in': { variant: 'checked-in', defaultLabel: 'Checked In' },
+
+  // Leave Requests
+  pending: { variant: 'pending', defaultLabel: 'Pending' },
+  approved: { variant: 'approved', defaultLabel: 'Approved' },
+  rejected: { variant: 'rejected', defaultLabel: 'Rejected' },
 };
 
 export default function StatusBadge({

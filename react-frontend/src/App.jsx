@@ -48,6 +48,7 @@ import BranchAdminDashboard from './pages/BranchAdmin/BranchAdminDashboard';
 import ManageDoctors from './pages/BranchAdmin/ManageDoctors';
 import ManageFrontDesk from './pages/BranchAdmin/ManageFrontDesk';
 import ManageLabTechnicians from './pages/BranchAdmin/ManageLabTechnicians';
+import LeaveManagement from './pages/BranchAdmin/LeaveManagement';
 import Earnings from './pages/BranchAdmin/Earnings';
 import SuperAdminDashboard from './pages/dashboards/SuperAdminDashboard';
 import SuperAdminEarnings from './pages/SuperAdmin/earnings';
@@ -235,7 +236,7 @@ export default function App() {
           } />
           <Route path="/branch-admin/leave-management" element={
             <ProtectedRoute allowedRoles={['branch_admin', 'admin']}>
-              <DemoPage pageTitle="Leave Management" />
+              <LeaveManagement />
             </ProtectedRoute>
           } />
           <Route path="/branch-admin/earnings" element={

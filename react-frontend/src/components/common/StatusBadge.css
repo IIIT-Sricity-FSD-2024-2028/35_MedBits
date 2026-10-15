@@ -38,23 +38,27 @@
   background-color: #3b82f6;
 }
 
-/* Completed / Done (Emerald Green) */
-.status-badge-completed {
+/* Completed / Done / Approved (Emerald Green) */
+.status-badge-completed,
+.status-badge-approved {
   background-color: #ecfdf5;
   color: #059669;
   border-color: #a7f3d0;
 }
-.status-badge-completed .status-badge-dot {
+.status-badge-completed .status-badge-dot,
+.status-badge-approved .status-badge-dot {
   background-color: #10b981;
 }
 
-/* Cancelled (Crimson Red) */
-.status-badge-cancelled {
+/* Cancelled / Rejected (Crimson Red) */
+.status-badge-cancelled,
+.status-badge-rejected {
   background-color: #fef2f2;
   color: #dc2626;
   border-color: #fecaca;
 }
-.status-badge-cancelled .status-badge-dot {
+.status-badge-cancelled .status-badge-dot,
+.status-badge-rejected .status-badge-dot {
   background-color: #ef4444;
 }
 
@@ -70,13 +74,15 @@
   background-color: #0284c7;
 }
 
-/* Waiting (Amber) */
-.status-badge-waiting {
+/* Waiting / Pending (Amber) */
+.status-badge-waiting,
+.status-badge-pending {
   background-color: #fffbeb;
   color: #b45309;
   border-color: #fde68a;
 }
-.status-badge-waiting .status-badge-dot {
+.status-badge-waiting .status-badge-dot,
+.status-badge-pending .status-badge-dot {
   background-color: #f59e0b;
 }
 
