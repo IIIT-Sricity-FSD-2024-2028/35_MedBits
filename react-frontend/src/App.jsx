@@ -48,6 +48,7 @@ import BranchAdminDashboard from './pages/BranchAdmin/BranchAdminDashboard';
 import ManageDoctors from './pages/BranchAdmin/ManageDoctors';
 import Earnings from './pages/BranchAdmin/Earnings';
 import SuperAdminDashboard from './pages/dashboards/SuperAdminDashboard';
+import BranchStatistics from './pages/SuperAdmin/branch-statistics';
 
 // Subpage Placeholder Shell
 import DemoPage from './pages/demo/DemoPage';
@@ -255,7 +256,7 @@ export default function App() {
           } />
           <Route path="/superuser/branch-statistics" element={
             <ProtectedRoute allowedRoles={['super_admin']}>
-              <DemoPage pageTitle="Branch Statistics" />
+              <BranchStatistics />
             </ProtectedRoute>
           } />
 
