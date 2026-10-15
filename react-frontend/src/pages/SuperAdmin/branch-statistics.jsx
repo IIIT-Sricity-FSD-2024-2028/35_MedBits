@@ -1,13 +1,13 @@
 /**
  * branch-statistics.jsx — Super Admin Branch Statistics Page
  * =========================================================================
- * Displays complete team rosters and operational metrics for hospital branches:
+ * Clean, readable React component for inspecting hospital branch personnel & operations:
  *  - High-level KPI counters (Doctors, Appointments, Front Desk, Lab Techs)
- *  - Hospital branch profile and contact information
+ *  - Branch profile credentials, network status, and contact directory
  *  - Filterable Doctors registry with specialty and qualifications
- *  - Filterable Front Desk staff table with counters and shift schedules
- *  - Filterable Lab Technician account roster
- *  - Dynamic branch switching via URL search params (?branchId=...) or dropdown
+ *  - Filterable Front Desk staff table with counters and shifts
+ *  - Filterable Lab Technician diagnostic team roster
+ *  - Branch switcher synchronized via URL search params (?branchId=...)
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -16,411 +16,196 @@ import AppShell from '../../components/layout/AppShell';
 import { useAuth } from '../../context/AuthContext';
 import './branch-statistics.css';
 
-// Base backend API URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// Fallback branch list when backend is offline
-const MOCK_BRANCHES = [
-  {
-    id: 'br-blr-01',
-    hospitalName: 'MedBits Central (Apollo Wing)',
-    branchName: 'Central Bangalore',
-    address: '100 Feet Road, Indiranagar',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    pincode: '560038',
-    phone: '+91 80 4123 4567',
-    email: 'indiranagar@medbits.com',
-    status: 'Active',
-  },
-  {
-    id: 'br-blr-02',
-    hospitalName: 'MedBits Electronic City',
-    branchName: 'Tech Hub Clinic',
-    address: 'Phase 1, Hosur Main Road',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    pincode: '560100',
-    phone: '+91 80 9876 5432',
-    email: 'electroniccity@medbits.com',
-    status: 'Active',
-  },
-  {
-    id: 'br-hyd-01',
-    hospitalName: 'MedBits Hitec City',
-    branchName: 'Cyber Towers Wing',
-    address: 'Madhapur Main Road',
-    city: 'Hyderabad',
-    state: 'Telangana',
-    pincode: '500081',
-    phone: '+91 40 2345 6789',
-    email: 'hiteccity@medbits.com',
-    status: 'Active',
-  },
+// Fallback demo branches for offline preview
+const DEFAULT_BRANCHES = [
+  { id: 'br-blr-01', branchName: 'Central Bangalore', hospitalName: 'MedBits Central (Apollo Wing)', city: 'Bangalore', state: 'Karnataka', email: 'indiranagar@medbits.com', phone: '+91 80 4123 4567', address: '100 Feet Road, Indiranagar', pincode: '560038', status: 'Active' },
+  { id: 'br-blr-02', branchName: 'Tech Hub Clinic', hospitalName: 'MedBits Electronic City', city: 'Bangalore', state: 'Karnataka', email: 'electroniccity@medbits.com', phone: '+91 80 9876 5432', address: 'Phase 1, Hosur Main Road', pincode: '560100', status: 'Active' },
+  { id: 'br-hyd-01', branchName: 'Cyber Towers Wing', hospitalName: 'MedBits Hitec City', city: 'Hyderabad', state: 'Telangana', email: 'hiteccity@medbits.com', phone: '+91 40 2345 6789', address: 'Madhapur Main Road', pincode: '500081', status: 'Active' },
 ];
-
-// Fallback statistics payload for demo/offline preview
-const MOCK_STATISTICS = {
-  branch: MOCK_BRANCHES[0],
-  summary: {
-    totalDoctors: 8,
-    totalAppointments: 142,
-    totalFrontdesks: 4,
-    totalLabTechnicians: 3,
-  },
-  doctors: [
-    {
-      id: 'doc-1',
-      name: 'Dr. Ria Sharma',
-      email: 'ria.sharma@medbits.com',
-      specialization: 'Cardiology',
-      department: 'Cardiology',
-      experience: 12,
-      phone: '+91 98765 43210',
-      gender: 'Female',
-      qualification: 'MBBS, MD (Cardiology)',
-    },
-    {
-      id: 'doc-2',
-      name: 'Dr. Arvind Swaminathan',
-      email: 'arvind.s@medbits.com',
-      specialization: 'Neurology',
-      department: 'Neurology',
-      experience: 15,
-      phone: '+91 98450 11223',
-      gender: 'Male',
-      qualification: 'MBBS, DM (Neurology)',
-    },
-    {
-      id: 'doc-3',
-      name: 'Dr. Ananya Roy',
-      email: 'ananya.roy@medbits.com',
-      specialization: 'Pediatrics',
-      department: 'Pediatrics',
-      experience: 8,
-      phone: '+91 97123 45678',
-      gender: 'Female',
-      qualification: 'MBBS, DCH',
-    },
-    {
-      id: 'doc-4',
-      name: 'Dr. Vikram Patel',
-      email: 'vikram.patel@medbits.com',
-      specialization: 'Orthopedics',
-      department: 'Orthopedics',
-      experience: 14,
-      phone: '+91 99001 22334',
-      gender: 'Male',
-      qualification: 'MS (Ortho), MCh',
-    },
-  ],
-  frontdesk: [
-    {
-      userId: 'fd-1',
-      name: 'Pooja Verma',
-      email: 'pooja.v@medbits.com',
-      counter: 'Desk 1 - Reception',
-      shiftStart: '08:00 AM',
-      shiftEnd: '04:00 PM',
-      languages: ['English', 'Hindi', 'Kannada'],
-      phone: '+91 91234 56780',
-      gender: 'Female',
-      reportingManagerId: 'admin@medbits.com',
-    },
-    {
-      userId: 'fd-2',
-      name: 'Karthik Raja',
-      email: 'karthik.r@medbits.com',
-      counter: 'Desk 2 - Registrations',
-      shiftStart: '02:00 PM',
-      shiftEnd: '10:00 PM',
-      languages: ['English', 'Tamil', 'Telugu'],
-      phone: '+91 92345 67891',
-      gender: 'Male',
-      reportingManagerId: 'admin@medbits.com',
-    },
-  ],
-  labTechnicians: [
-    {
-      id: 'lt-1',
-      name: 'Suresh Kumar',
-      email: 'suresh.k@medbits.com',
-      branchId: 'br-blr-01',
-      createdAt: '2025-01-15T09:30:00.000Z',
-    },
-    {
-      id: 'lt-2',
-      name: 'Deepa Nair',
-      email: 'deepa.nair@medbits.com',
-      branchId: 'br-blr-01',
-      createdAt: '2025-02-10T11:00:00.000Z',
-    },
-  ],
-};
 
 export default function BranchStatistics() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Selected branch identifier from query params or state
+  // Active branch ID from URL search parameters (?branchId=...)
   const selectedBranchId = searchParams.get('branchId') || '';
 
   // Data states
   const [branches, setBranches] = useState([]);
-  const [branchDetails, setBranchDetails] = useState(null);
-  const [summary, setSummary] = useState({
-    totalDoctors: 0,
-    totalAppointments: 0,
-    totalFrontdesks: 0,
-    totalLabTechnicians: 0,
+  const [stats, setStats] = useState({
+    branch: null,
+    summary: { totalDoctors: 0, totalAppointments: 0, totalFrontdesks: 0, totalLabTechnicians: 0 },
+    doctors: [],
+    frontdesk: [],
+    labTechnicians: [],
   });
-  const [doctors, setDoctors] = useState([]);
-  const [frontdesk, setFrontdesk] = useState([]);
-  const [labTechnicians, setLabTechnicians] = useState([]);
 
-  // Search filter query states for each section
-  const [doctorSearch, setDoctorSearch] = useState('');
-  const [frontdeskSearch, setFrontdeskSearch] = useState('');
-  const [labtechSearch, setLabtechSearch] = useState('');
-
-  // Loading and notification states
+  // Search filter query states
+  const [docSearch, setDocSearch] = useState('');
+  const [fdSearch, setFdSearch] = useState('');
+  const [ltSearch, setLtSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState(null);
 
-  // Helper to show temporary toast messages
-  const notify = React.useCallback((msg, isError = false) => {
-    setToastMessage({ text: msg, isError });
-    setTimeout(() => setToastMessage(null), 3200);
-  }, []);
+  // Common authentication headers
+  const authHeaders = useMemo(() => ({
+    'Content-Type': 'application/json',
+    role: user?.role || 'super_admin',
+    'x-user-id': user?.id || user?.userId || '',
+  }), [user]);
 
-  // Auth header constructor helper
-  const getHeaders = React.useCallback(() => {
-    return {
-      'Content-Type': 'application/json',
-      role: user?.role || 'super_admin',
-      'x-user-id': user?.id || user?.userId || '',
-    };
-  }, [user]);
-
-  /* ── 1. Fetch available branches list on mount ──────────────────────── */
+  // 1. Fetch branches list on mount
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadBranchList() {
+    async function loadBranches() {
       try {
         const res = await fetch(`${API_BASE_URL}/super-admin/hospital-branches`, {
-          headers: getHeaders(),
+          headers: authHeaders,
         }).catch(() => null);
 
-        if (res && res.ok) {
-          const data = await res.json();
-          if (isMounted && Array.isArray(data) && data.length > 0) {
-            setBranches(data);
-            // Default to first branch if none selected in URL
-            if (!selectedBranchId) {
-              setSearchParams({ branchId: data[0].id });
-            }
+        if (res?.ok) {
+          const list = await res.json();
+          if (Array.isArray(list) && list.length > 0) {
+            setBranches(list);
+            if (!selectedBranchId) setSearchParams({ branchId: list[0].id });
             return;
           }
         }
-
-        // Try public branch endpoint as secondary fallback
-        const pubRes = await fetch(`${API_BASE_URL}/hospital-branches`, {
-          headers: getHeaders(),
-        }).catch(() => null);
-
-        if (pubRes && pubRes.ok) {
-          const pubData = await pubRes.json();
-          if (isMounted && Array.isArray(pubData) && pubData.length > 0) {
-            setBranches(pubData);
-            if (!selectedBranchId) {
-              setSearchParams({ branchId: pubData[0].id });
-            }
-            return;
-          }
-        }
-
-        // Fallback to mock branches if backend is unreachable
-        if (isMounted) {
-          setBranches(MOCK_BRANCHES);
-          if (!selectedBranchId) {
-            setSearchParams({ branchId: MOCK_BRANCHES[0].id });
-          }
-        }
+        // Fallback demo branches
+        setBranches(DEFAULT_BRANCHES);
+        if (!selectedBranchId) setSearchParams({ branchId: DEFAULT_BRANCHES[0].id });
       } catch (err) {
-        console.warn('Could not fetch branches list, using fallback:', err);
-        if (isMounted) {
-          setBranches(MOCK_BRANCHES);
-          if (!selectedBranchId) {
-            setSearchParams({ branchId: MOCK_BRANCHES[0].id });
-          }
-        }
+        console.warn('Error loading branches list:', err);
+        setBranches(DEFAULT_BRANCHES);
+        if (!selectedBranchId) setSearchParams({ branchId: DEFAULT_BRANCHES[0].id });
       }
     }
 
-    loadBranchList();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    loadBranches();
+  }, [authHeaders, selectedBranchId, setSearchParams]);
 
-  /* ── 2. Fetch statistics for selected branch ────────────────────────── */
+  // 2. Fetch statistics for the selected branch
   useEffect(() => {
-    let isMounted = true;
+    if (!selectedBranchId) return;
 
-    async function fetchStatistics() {
-      if (!selectedBranchId) return;
-
+    async function loadStatistics() {
       setIsLoading(true);
       try {
         const res = await fetch(
           `${API_BASE_URL}/super-admin/hospital-branches/${encodeURIComponent(selectedBranchId)}/statistics`,
-          { headers: getHeaders() }
+          { headers: authHeaders }
         ).catch(() => null);
 
-        if (res && res.ok) {
-          const payload = await res.json();
-          if (isMounted) {
-            setBranchDetails(payload.branch || null);
-            setSummary(
-              payload.summary || {
-                totalDoctors: payload.doctors?.length || 0,
-                totalAppointments: 0,
-                totalFrontdesks: payload.frontdesk?.length || 0,
-                totalLabTechnicians: payload.labTechnicians?.length || 0,
-              }
-            );
-            setDoctors(Array.isArray(payload.doctors) ? payload.doctors : []);
-            setFrontdesk(Array.isArray(payload.frontdesk) ? payload.frontdesk : []);
-            setLabTechnicians(
-              Array.isArray(payload.labTechnicians) ? payload.labTechnicians : []
-            );
-            setIsLoading(false);
-            return;
-          }
+        if (res?.ok) {
+          const data = await res.json();
+          setStats({
+            branch: data.branch || branches.find((b) => b.id === selectedBranchId) || null,
+            summary: data.summary || {
+              totalDoctors: data.doctors?.length || 0,
+              totalAppointments: 0,
+              totalFrontdesks: data.frontdesk?.length || 0,
+              totalLabTechnicians: data.labTechnicians?.length || 0,
+            },
+            doctors: Array.isArray(data.doctors) ? data.doctors : [],
+            frontdesk: Array.isArray(data.frontdesk) ? data.frontdesk : [],
+            labTechnicians: Array.isArray(data.labTechnicians) ? data.labTechnicians : [],
+          });
+          setIsLoading(false);
+          return;
         }
 
-        // Graceful fallback to mock data if backend not active
-        if (isMounted) {
-          const matchedMock =
-            MOCK_BRANCHES.find((b) => b.id === selectedBranchId) || MOCK_BRANCHES[0];
-          setBranchDetails(matchedMock);
-          setSummary(MOCK_STATISTICS.summary);
-          setDoctors(MOCK_STATISTICS.doctors);
-          setFrontdesk(MOCK_STATISTICS.frontdesk);
-          setLabTechnicians(MOCK_STATISTICS.labTechnicians);
-          setIsLoading(false);
-        }
+        // Fallback default statistics when backend offline
+        const matched = branches.find((b) => b.id === selectedBranchId) || DEFAULT_BRANCHES[0];
+        setStats({
+          branch: matched,
+          summary: { totalDoctors: 4, totalAppointments: 86, totalFrontdesks: 2, totalLabTechnicians: 2 },
+          doctors: [
+            { id: 'd-1', name: 'Dr. Ria Sharma', email: 'ria.sharma@medbits.com', specialization: 'Cardiology', department: 'Cardiology', experience: 12, phone: '+91 98765 43210', gender: 'Female', qualification: 'MBBS, MD' },
+            { id: 'd-2', name: 'Dr. Arvind Swaminathan', email: 'arvind.s@medbits.com', specialization: 'Neurology', department: 'Neurology', experience: 15, phone: '+91 98450 11223', gender: 'Male', qualification: 'MBBS, DM' },
+          ],
+          frontdesk: [
+            { userId: 'fd-1', name: 'Pooja Verma', email: 'pooja.v@medbits.com', counter: 'Desk 1 - Reception', shiftStart: '08:00 AM', shiftEnd: '04:00 PM', languages: ['English', 'Hindi'], phone: '+91 91234 56780', gender: 'Female', reportingManagerId: 'admin@medbits.com' },
+          ],
+          labTechnicians: [
+            { id: 'lt-1', name: 'Suresh Kumar', email: 'suresh.k@medbits.com', branchId: selectedBranchId, createdAt: '2025-01-15T09:30:00.000Z' },
+          ],
+        });
       } catch (err) {
-        console.warn('Error loading branch statistics, falling back:', err);
-        notify('Loaded offline preview data for branch statistics.');
-        if (isMounted) {
-          setBranchDetails(MOCK_BRANCHES[0]);
-          setSummary(MOCK_STATISTICS.summary);
-          setDoctors(MOCK_STATISTICS.doctors);
-          setFrontdesk(MOCK_STATISTICS.frontdesk);
-          setLabTechnicians(MOCK_STATISTICS.labTechnicians);
-          setIsLoading(false);
-        }
+        console.warn('Error loading branch stats:', err);
+      } finally {
+        setIsLoading(false);
       }
     }
 
-    fetchStatistics();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedBranchId, getHeaders, notify]);
+    loadStatistics();
+  }, [selectedBranchId, authHeaders, branches]);
 
-  /* ── 3. Branch selector change handler ──────────────────────────────── */
-  function handleBranchChange(e) {
-    const newBranchId = e.target.value;
-    if (newBranchId) {
-      setSearchParams({ branchId: newBranchId });
-    }
-  }
+  // Handle switching branch from dropdown
+  const handleBranchChange = (e) => {
+    setSearchParams({ branchId: e.target.value });
+  };
 
-  /* ── 4. Filtered lists based on search inputs ───────────────────────── */
-  // Doctor search filtering
+  // Filtered lists based on search queries
   const filteredDoctors = useMemo(() => {
-    const q = doctorSearch.trim().toLowerCase();
-    if (!q) return doctors;
-    return doctors.filter((doc) =>
-      [
-        doc.name,
-        doc.email,
-        doc.specialization,
-        doc.department,
-        doc.qualification,
-        doc.phone,
-        doc.gender,
-      ]
-        .filter(Boolean)
-        .some((val) => String(val).toLowerCase().includes(q))
+    const q = docSearch.trim().toLowerCase();
+    if (!q) return stats.doctors;
+    return stats.doctors.filter((d) =>
+      [d.name, d.email, d.specialization, d.department, d.qualification].some(
+        (v) => v && String(v).toLowerCase().includes(q)
+      )
     );
-  }, [doctors, doctorSearch]);
+  }, [stats.doctors, docSearch]);
 
-  // Front desk search filtering
   const filteredFrontdesk = useMemo(() => {
-    const q = frontdeskSearch.trim().toLowerCase();
-    if (!q) return frontdesk;
-    return frontdesk.filter((staff) =>
-      [
-        staff.name,
-        staff.email,
-        staff.phone,
-        staff.gender,
-        staff.counter,
-        staff.reportingManagerId,
-        Array.isArray(staff.languages) ? staff.languages.join(' ') : '',
-        staff.shiftStart,
-        staff.shiftEnd,
-      ]
-        .filter(Boolean)
-        .some((val) => String(val).toLowerCase().includes(q))
+    const q = fdSearch.trim().toLowerCase();
+    if (!q) return stats.frontdesk;
+    return stats.frontdesk.filter((f) =>
+      [f.name, f.email, f.counter, f.phone].some(
+        (v) => v && String(v).toLowerCase().includes(q)
+      )
     );
-  }, [frontdesk, frontdeskSearch]);
+  }, [stats.frontdesk, fdSearch]);
 
-  // Lab technician search filtering
   const filteredLabTechs = useMemo(() => {
-    const q = labtechSearch.trim().toLowerCase();
-    if (!q) return labTechnicians;
-    return labTechnicians.filter((tech) =>
-      [tech.name, tech.email, tech.branchId]
-        .filter(Boolean)
-        .some((val) => String(val).toLowerCase().includes(q))
+    const q = ltSearch.trim().toLowerCase();
+    if (!q) return stats.labTechnicians;
+    return stats.labTechnicians.filter((l) =>
+      [l.name, l.email, l.branchId].some(
+        (v) => v && String(v).toLowerCase().includes(q)
+      )
     );
-  }, [labTechnicians, labtechSearch]);
+  }, [stats.labTechnicians, ltSearch]);
 
   // Helper date formatter
-  function formatDate(isoStr) {
+  const formatDate = (isoStr) => {
     if (!isoStr) return '—';
     const d = new Date(isoStr);
     return isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
-  }
+  };
+
+  const branch = stats.branch || {};
+  const summary = stats.summary;
 
   return (
     <AppShell pageTitle="Branch Statistics">
       <div className="bs-wrapper">
 
-        {/* ── HERO BANNER & BRANCH SELECTOR ──────────────────────────── */}
+        {/* ── 1. HERO BANNER & BRANCH SELECTOR ── */}
         <section className="bs-hero">
           <div className="bs-hero-copy">
             <span className="bs-eyebrow">⚡ Super Admin Analytics</span>
             <h1 className="bs-hero-title">
-              {branchDetails
-                ? `${branchDetails.branchName || 'Branch'} — ${branchDetails.hospitalName || ''}`
-                : 'Hospital Branch Statistics'}
+              {branch.branchName ? `${branch.branchName} — ${branch.hospitalName || ''}` : 'Hospital Branch Statistics'}
             </h1>
             <p className="bs-hero-subtitle">
-              <span>📍 {branchDetails?.city || '—'}, {branchDetails?.state || '—'}</span>
+              <span>📍 {branch.city || '—'}, {branch.state || '—'}</span>
               <span>•</span>
-              <span>✉️ {branchDetails?.email || 'No email on file'}</span>
+              <span>✉️ {branch.email || 'No email on file'}</span>
             </p>
           </div>
 
           <div className="bs-hero-actions">
-            {/* Branch Switcher Dropdown */}
             <div className="bs-branch-selector-wrap">
               <span className="bs-branch-selector-label">Branch:</span>
               <select
@@ -437,7 +222,6 @@ export default function BranchStatistics() {
               </select>
             </div>
 
-            {/* Back to Dashboard Button */}
             <button
               type="button"
               className="bs-btn bs-btn-secondary"
@@ -448,22 +232,16 @@ export default function BranchStatistics() {
           </div>
         </section>
 
-        {/* ── BRANCH PROFILE SUMMARY PANEL ───────────────────────────── */}
+        {/* ── 2. BRANCH PROFILE SUMMARY ── */}
         <section className="bs-card">
           <div className="bs-card-header">
             <div className="bs-card-heading">
               <h2>Branch Profile</h2>
               <p>Basic facility credentials, network status, and contact directory.</p>
             </div>
-            {branchDetails?.status && (
-              <span
-                className={`bs-badge ${
-                  String(branchDetails.status).toLowerCase() === 'active'
-                    ? 'bs-badge-active'
-                    : 'bs-badge-inactive'
-                }`}
-              >
-                {branchDetails.status}
+            {branch.status && (
+              <span className={`bs-badge ${String(branch.status).toLowerCase() === 'active' ? 'bs-badge-active' : 'bs-badge-inactive'}`}>
+                {branch.status}
               </span>
             )}
           </div>
@@ -471,44 +249,41 @@ export default function BranchStatistics() {
           <div className="bs-profile-grid">
             <div className="bs-detail-item">
               <span className="bs-detail-label">Hospital Name</span>
-              <span className="bs-detail-val">{branchDetails?.hospitalName || '—'}</span>
+              <span className="bs-detail-val">{branch.hospitalName || '—'}</span>
             </div>
             <div className="bs-detail-item">
               <span className="bs-detail-label">Branch Name</span>
-              <span className="bs-detail-val">{branchDetails?.branchName || '—'}</span>
+              <span className="bs-detail-val">{branch.branchName || '—'}</span>
             </div>
             <div className="bs-detail-item">
               <span className="bs-detail-label">Street Address</span>
-              <span className="bs-detail-val">{branchDetails?.address || '—'}</span>
+              <span className="bs-detail-val">{branch.address || '—'}</span>
             </div>
             <div className="bs-detail-item">
               <span className="bs-detail-label">City & State</span>
-              <span className="bs-detail-val">
-                {branchDetails?.city || '—'}, {branchDetails?.state || '—'}
-              </span>
+              <span className="bs-detail-val">{branch.city || '—'}, {branch.state || '—'}</span>
             </div>
             <div className="bs-detail-item">
               <span className="bs-detail-label">Postal Pincode</span>
-              <span className="bs-detail-val">{branchDetails?.pincode || '—'}</span>
+              <span className="bs-detail-val">{branch.pincode || '—'}</span>
             </div>
             <div className="bs-detail-item">
               <span className="bs-detail-label">Official Phone</span>
-              <span className="bs-detail-val">{branchDetails?.phone || '—'}</span>
+              <span className="bs-detail-val">{branch.phone || '—'}</span>
             </div>
             <div className="bs-detail-item">
               <span className="bs-detail-label">Official Email</span>
-              <span className="bs-detail-val">{branchDetails?.email || '—'}</span>
+              <span className="bs-detail-val">{branch.email || '—'}</span>
             </div>
             <div className="bs-detail-item">
               <span className="bs-detail-label">Network Status</span>
-              <span className="bs-detail-val">{branchDetails?.status || 'Active'}</span>
+              <span className="bs-detail-val">{branch.status || 'Active'}</span>
             </div>
           </div>
         </section>
 
-        {/* ── 4 KPI STAT CARDS ───────────────────────────────────────── */}
+        {/* ── 3. 4 KPI STAT CARDS ── */}
         <section className="bs-stats-grid">
-          {/* Doctors Count */}
           <div className="bs-stat-card">
             <div className="bs-stat-content">
               <span className="bs-stat-label">Doctors</span>
@@ -518,7 +293,6 @@ export default function BranchStatistics() {
             <div className="bs-stat-icon">🩺</div>
           </div>
 
-          {/* Appointments Count */}
           <div className="bs-stat-card">
             <div className="bs-stat-content">
               <span className="bs-stat-label">Appointments</span>
@@ -528,7 +302,6 @@ export default function BranchStatistics() {
             <div className="bs-stat-icon">📅</div>
           </div>
 
-          {/* Front Desk Count */}
           <div className="bs-stat-card">
             <div className="bs-stat-content">
               <span className="bs-stat-label">Front Desks</span>
@@ -538,7 +311,6 @@ export default function BranchStatistics() {
             <div className="bs-stat-icon">🖥️</div>
           </div>
 
-          {/* Lab Technicians Count */}
           <div className="bs-stat-card">
             <div className="bs-stat-content">
               <span className="bs-stat-label">Lab Techs</span>
@@ -549,7 +321,7 @@ export default function BranchStatistics() {
           </div>
         </section>
 
-        {/* ── DOCTORS TABLE PANEL ────────────────────────────────────── */}
+        {/* ── 4. DOCTORS ROSTER TABLE ── */}
         <section className="bs-card">
           <div className="bs-card-header">
             <div className="bs-card-heading">
@@ -562,8 +334,8 @@ export default function BranchStatistics() {
                 type="search"
                 className="bs-search-input"
                 placeholder="Search doctors..."
-                value={doctorSearch}
-                onChange={(e) => setDoctorSearch(e.target.value)}
+                value={docSearch}
+                onChange={(e) => setDocSearch(e.target.value)}
                 aria-label="Search doctors"
               />
             </div>
@@ -583,21 +355,12 @@ export default function BranchStatistics() {
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan="6" className="bs-empty-state">
-                      <div className="bs-spinner" style={{ margin: '0 auto 8px' }} />
-                      Loading doctors...
-                    </td>
-                  </tr>
+                  <tr><td colSpan="6" className="bs-empty-state">Loading doctors...</td></tr>
                 ) : filteredDoctors.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="bs-empty-state">
-                      No doctors found matching your query.
-                    </td>
-                  </tr>
+                  <tr><td colSpan="6" className="bs-empty-state">No doctors found matching query.</td></tr>
                 ) : (
                   filteredDoctors.map((doc, idx) => (
-                    <tr key={doc.id || doc.userId || idx}>
+                    <tr key={doc.id || idx}>
                       <td>
                         <div className="bs-name-cell">
                           <span className="bs-name-title">{doc.name}</span>
@@ -624,7 +387,7 @@ export default function BranchStatistics() {
           </div>
         </section>
 
-        {/* ── FRONT DESK TABLE PANEL ─────────────────────────────────── */}
+        {/* ── 5. FRONT DESK ROSTER TABLE ── */}
         <section className="bs-card">
           <div className="bs-card-header">
             <div className="bs-card-heading">
@@ -636,9 +399,9 @@ export default function BranchStatistics() {
               <input
                 type="search"
                 className="bs-search-input"
-                placeholder="Search front desk staff..."
-                value={frontdeskSearch}
-                onChange={(e) => setFrontdeskSearch(e.target.value)}
+                placeholder="Search front desk..."
+                value={fdSearch}
+                onChange={(e) => setFdSearch(e.target.value)}
                 aria-label="Search front desk staff"
               />
             </div>
@@ -658,58 +421,35 @@ export default function BranchStatistics() {
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan="6" className="bs-empty-state">
-                      Loading front desk roster...
-                    </td>
-                  </tr>
+                  <tr><td colSpan="6" className="bs-empty-state">Loading staff...</td></tr>
                 ) : filteredFrontdesk.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="bs-empty-state">
-                      No front desk staff found matching your query.
-                    </td>
-                  </tr>
+                  <tr><td colSpan="6" className="bs-empty-state">No front desk staff found matching query.</td></tr>
                 ) : (
-                  filteredFrontdesk.map((staff, idx) => {
-                    const shift =
-                      staff.shiftStart && staff.shiftEnd
-                        ? `${staff.shiftStart} - ${staff.shiftEnd}`
-                        : '—';
-                    const langs =
-                      Array.isArray(staff.languages) && staff.languages.length > 0
-                        ? staff.languages.join(', ')
-                        : '—';
-
-                    return (
-                      <tr key={staff.userId || idx}>
-                        <td>
-                          <div className="bs-name-cell">
-                            <span className="bs-name-title">{staff.name}</span>
-                            <span className="bs-name-subtitle">{staff.email}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <span className="bs-badge bs-badge-tag">
-                            {staff.counter || 'Unassigned'}
-                          </span>
-                        </td>
-                        <td>{shift}</td>
-                        <td>{langs}</td>
-                        <td>
-                          <div>{staff.phone || '—'}</div>
-                          <div className="bs-name-subtitle">{staff.gender || ''}</div>
-                        </td>
-                        <td>{staff.reportingManagerId || '—'}</td>
-                      </tr>
-                    );
-                  })
+                  filteredFrontdesk.map((staff, idx) => (
+                    <tr key={staff.userId || idx}>
+                      <td>
+                        <div className="bs-name-cell">
+                          <span className="bs-name-title">{staff.name}</span>
+                          <span className="bs-name-subtitle">{staff.email}</span>
+                        </div>
+                      </td>
+                      <td><span className="bs-badge bs-badge-tag">{staff.counter || 'Unassigned'}</span></td>
+                      <td>{staff.shiftStart && staff.shiftEnd ? `${staff.shiftStart} - ${staff.shiftEnd}` : '—'}</td>
+                      <td>{Array.isArray(staff.languages) ? staff.languages.join(', ') : '—'}</td>
+                      <td>
+                        <div>{staff.phone || '—'}</div>
+                        <div className="bs-name-subtitle">{staff.gender || ''}</div>
+                      </td>
+                      <td>{staff.reportingManagerId || '—'}</td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
           </div>
         </section>
 
-        {/* ── LAB TECHNICIANS TABLE PANEL ────────────────────────────── */}
+        {/* ── 6. LAB TECHNICIANS ROSTER TABLE ── */}
         <section className="bs-card">
           <div className="bs-card-header">
             <div className="bs-card-heading">
@@ -722,8 +462,8 @@ export default function BranchStatistics() {
                 type="search"
                 className="bs-search-input"
                 placeholder="Search lab technicians..."
-                value={labtechSearch}
-                onChange={(e) => setLabtechSearch(e.target.value)}
+                value={ltSearch}
+                onChange={(e) => setLtSearch(e.target.value)}
                 aria-label="Search lab technicians"
               />
             </div>
@@ -741,17 +481,9 @@ export default function BranchStatistics() {
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan="4" className="bs-empty-state">
-                      Loading diagnostics technicians...
-                    </td>
-                  </tr>
+                  <tr><td colSpan="4" className="bs-empty-state">Loading technicians...</td></tr>
                 ) : filteredLabTechs.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="bs-empty-state">
-                      No lab technicians found matching your query.
-                    </td>
-                  </tr>
+                  <tr><td colSpan="4" className="bs-empty-state">No lab technicians found matching query.</td></tr>
                 ) : (
                   filteredLabTechs.map((tech, idx) => (
                     <tr key={tech.id || idx}>
@@ -762,11 +494,7 @@ export default function BranchStatistics() {
                         </div>
                       </td>
                       <td>{tech.email}</td>
-                      <td>
-                        <span className="bs-badge bs-badge-tag">
-                          {tech.branchId || branchDetails?.branchName || '—'}
-                        </span>
-                      </td>
+                      <td><span className="bs-badge bs-badge-tag">{tech.branchId || branch.branchName || '—'}</span></td>
                       <td>{formatDate(tech.createdAt)}</td>
                     </tr>
                   ))
@@ -775,16 +503,6 @@ export default function BranchStatistics() {
             </table>
           </div>
         </section>
-
-        {/* ── NOTIFICATION TOAST ─────────────────────────────────────── */}
-        {toastMessage && (
-          <div
-            className={`bs-toast ${toastMessage.isError ? 'bs-toast-error' : ''}`}
-            role="status"
-          >
-            {toastMessage.text}
-          </div>
-        )}
 
       </div>
     </AppShell>
