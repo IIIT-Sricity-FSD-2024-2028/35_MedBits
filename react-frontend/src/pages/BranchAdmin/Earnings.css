@@ -1,0 +1,495 @@
+/*
+ * Earnings.css — Branch Admin Earnings Page Styling
+ * =========================================================================
+ * Uses shared MedBits design tokens from index.css.
+ */
+
+.earnings-page-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── HERO BANNER & MONTH PICKER ─────────────────────────────────────────── */
+.earnings-hero {
+  background: linear-gradient(135deg, var(--navy) 0%, #1e293b 100%);
+  border-radius: var(--radius);
+  padding: 26px 30px;
+  color: var(--white);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+.earnings-hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal-light);
+  margin-bottom: 6px;
+}
+
+.earnings-hero-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+
+.earnings-hero-sub {
+  font-size: 13.5px;
+  color: #94a3b8;
+  max-width: 580px;
+  line-height: 1.5;
+}
+
+.earnings-hero-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.earnings-month-select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.earnings-month-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.earnings-month-select {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  outline: none;
+}
+
+.earnings-badge-card {
+  background: linear-gradient(135deg, var(--accent), var(--teal));
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  min-width: 150px;
+  color: var(--white);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+}
+
+.earnings-badge-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+}
+
+.earnings-badge-val {
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.earnings-badge-note {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* ── 5 KPI METRICS ROW ──────────────────────────────────────────────────── */
+.earnings-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .earnings-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .earnings-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.earnings-kpi-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.earnings-kpi-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.earnings-kpi-amount {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-top: 2px;
+}
+
+.earnings-kpi-amount.accent { color: var(--accent); }
+.earnings-kpi-amount.orange { color: #d97706; }
+.earnings-kpi-amount.green  { color: #16a34a; }
+.earnings-kpi-amount.blue   { color: #2563eb; }
+
+.earnings-kpi-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* ── MAIN 2-COLUMN ANALYTICS LAYOUT ─────────────────────────────────────── */
+.earnings-main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .earnings-main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.earnings-panel {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.earnings-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.earnings-panel-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.earnings-panel-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* ── COMPARISON BARS ────────────────────────────────────────────────────── */
+.earnings-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.earnings-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.earnings-bar-label {
+  width: 105px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.earnings-bar-track {
+  flex: 1;
+  height: 12px;
+  background-color: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.earnings-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.earnings-bar-fill.rev { background: linear-gradient(90deg, var(--accent), var(--teal)); }
+.earnings-bar-fill.cut { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.earnings-bar-fill.pro { background: linear-gradient(90deg, #10b981, #059669); }
+
+.earnings-bar-val {
+  width: 95px;
+  font-family: 'Sora', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--navy);
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* ── HEALTH TILES ───────────────────────────────────────────────────────── */
+.earnings-health-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .earnings-health-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.earnings-health-tile {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+
+.earnings-health-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.earnings-health-val {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-top: 4px;
+}
+
+/* ── SIDE PANEL STACKED CARDS ───────────────────────────────────────────── */
+.earnings-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.earnings-side-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.earnings-side-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.earnings-side-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.earnings-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.earnings-mini-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.earnings-mini-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.earnings-mini-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.earnings-mini-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.earnings-mini-amt {
+  font-family: 'Sora', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ── REVENUE LEDGER TABLE ───────────────────────────────────────────────── */
+.earnings-ledger-panel {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.earnings-ledger-table-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+.earnings-ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.earnings-ledger-table th {
+  background: var(--navy);
+  color: var(--white);
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.earnings-ledger-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.earnings-ledger-table tr:hover {
+  background-color: #f8fafc;
+}
+
+.earnings-apt-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  color: #475569;
+}
+
+.earnings-search-input {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  outline: none;
+  min-width: 240px;
+  background: var(--white);
+  color: var(--navy);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.earnings-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.earnings-badge-pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.earnings-badge-pill.rev {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.earnings-badge-pill.cut {
+  background-color: #fffbeb;
+  color: #b45309;
+}
+
+.earnings-badge-pill.profit {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.earnings-empty-box {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--text-muted);
+}
+
+.earnings-empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.earnings-empty-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.earnings-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.earnings-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
