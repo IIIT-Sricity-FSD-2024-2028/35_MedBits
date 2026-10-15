@@ -1,0 +1,157 @@
+/*
+ * ManageFrontDesk.css — Styling for Branch Admin Manage Front Desk Page
+ * =========================================================================
+ * Uses shared MedBits design tokens and variables from index.css.
+ */
+
+.manage-frontdesk-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── 1. PAGE HEADER ──────────────────────────────────────────────────────── */
+.fd-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.fd-page-h1 {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--navy, #0f172a);
+  margin-bottom: 4px;
+}
+
+.fd-page-sub {
+  font-size: 14px;
+  color: var(--text-muted, #64748b);
+}
+
+.fd-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--accent, #0284c7);
+  color: #ffffff;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  transition: all 0.15s ease;
+}
+
+.fd-add-btn:hover {
+  background-color: var(--accent-dark, #0369a1);
+  transform: translateY(-1px);
+}
+
+/* ── 2. FILTER SELECT (In ContentCard Action Slot) ────────────────────────── */
+.fd-filter-select {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text, #1e293b);
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-sm, 6px);
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+  transition: border-color 0.15s ease;
+}
+
+.fd-filter-select:focus {
+  border-color: var(--accent, #0284c7);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+/* ── 3. ROSTER TABLE CELL ELEMENTS ───────────────────────────────────────── */
+.fd-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.fd-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.fd-name-title {
+  font-weight: 600;
+  color: var(--navy, #0f172a);
+  transition: color 0.15s ease;
+}
+
+.fd-name-cell:hover .fd-name-title {
+  color: var(--accent, #0284c7);
+}
+
+.fd-name-email {
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+  margin-top: 2px;
+}
+
+.fd-badge-counter {
+  display: inline-block;
+  padding: 3px 10px;
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fd-badge-counter.unassigned {
+  background-color: #f8fafc;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
+.fd-badge-shift {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.fd-lang-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  background-color: #f1f5f9;
+  color: #334155;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  margin: 2px;
+  border: 1px solid #e2e8f0;
+}

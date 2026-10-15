@@ -1,0 +1,110 @@
+/*
+ * FrontDeskDetailsModal.css — Styling for Front Desk Staff Profile Inspection Modal
+ * =========================================================================
+ */
+
+.fd-view-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 16px;
+}
+
+.fd-view-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.fd-view-name {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy, #0f172a);
+}
+
+.fd-view-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted, #64748b);
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.fd-id-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.fd-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .fd-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fd-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.fd-detail-item.full {
+  grid-column: 1 / -1;
+}
+
+.fd-detail-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+}
+
+.fd-detail-val {
+  font-size: 13.5px;
+  color: var(--navy, #0f172a);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.fd-lang-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background-color: #ffffff;
+  color: #334155;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+}
