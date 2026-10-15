@@ -12,6 +12,8 @@ export type LabTechnicianRecord = {
   password: string;
   role: 'labtech';
   branchId: string;
+  phone?: string;
+  gender?: string;
   createdAt: Date;
 };
 
@@ -66,6 +68,8 @@ export class LabTechniciansService implements OnModuleInit {
                 email: defaultTech.email.toLowerCase(),
                 password: defaultTech.password,
                 branchId: defaultTech.branchId,
+                phone: defaultTech.phone,
+                gender: defaultTech.gender,
               }),
             );
           } catch (_) {}
@@ -85,6 +89,8 @@ export class LabTechniciansService implements OnModuleInit {
           password: t.password,
           role: 'labtech',
           branchId: t.branchId,
+          phone: t.phone,
+          gender: t.gender,
           createdAt: t.createdAt || new Date(),
         };
         if (idx >= 0) {
@@ -104,6 +110,8 @@ export class LabTechniciansService implements OnModuleInit {
     email: string;
     role: 'labtech';
     branchId: string;
+    phone?: string;
+    gender?: string;
   }> {
     const branchId = input.branchId?.trim();
     if (!branchId) {
@@ -130,6 +138,8 @@ export class LabTechniciansService implements OnModuleInit {
           email,
           password: input.password,
           branchId,
+          phone: input.phone?.trim() || undefined,
+          gender: input.gender?.trim() || undefined,
         }),
       );
       savedId = technician.id;
@@ -142,6 +152,8 @@ export class LabTechniciansService implements OnModuleInit {
       password: input.password,
       role: 'labtech',
       branchId,
+      phone: input.phone?.trim() || undefined,
+      gender: input.gender?.trim() || undefined,
       createdAt: new Date(),
     };
     this.inMemoryLabTechnicians.unshift(record);
@@ -152,6 +164,8 @@ export class LabTechniciansService implements OnModuleInit {
       email: record.email,
       role: 'labtech',
       branchId: record.branchId,
+      phone: record.phone,
+      gender: record.gender,
     };
   }
 
@@ -161,6 +175,8 @@ export class LabTechniciansService implements OnModuleInit {
     email: string;
     role: 'labtech';
     branchId: string;
+    phone?: string;
+    gender?: string;
     createdAt: Date;
   }>> {
     let list = [...this.inMemoryLabTechnicians];
@@ -173,6 +189,8 @@ export class LabTechniciansService implements OnModuleInit {
       email: t.email,
       role: 'labtech',
       branchId: t.branchId,
+      phone: t.phone,
+      gender: t.gender,
       createdAt: t.createdAt,
     }));
   }
@@ -198,7 +216,7 @@ export class LabTechniciansService implements OnModuleInit {
     throw new NotFoundException('Lab technician not found');
   }
 
-  async update(id: string, input: any): Promise<{ id: string; name: string; email: string; role: 'labtech'; branchId: string }> {
+  async update(id: string, input: any): Promise<{ id: string; name: string; email: string; role: 'labtech'; branchId: string; phone?: string; gender?: string }> {
     const existingIndex = this.inMemoryLabTechnicians.findIndex((t) => t.id === id);
     if (existingIndex === -1) {
       throw new NotFoundException('Lab technician not found');
@@ -221,6 +239,8 @@ export class LabTechniciansService implements OnModuleInit {
       ...existing,
       name: input.name ? input.name.trim() : existing.name,
       email: newEmail,
+      phone: input.phone !== undefined ? (input.phone ? input.phone.trim() : undefined) : existing.phone,
+      gender: input.gender !== undefined ? (input.gender ? input.gender.trim() : undefined) : existing.gender,
     };
     if (input.password) {
       updatedRecord.password = input.password;
@@ -236,6 +256,8 @@ export class LabTechniciansService implements OnModuleInit {
         if (input.email) dbTech.email = newEmail;
         if (input.password) dbTech.password = input.password;
         if (input.branchId) dbTech.branchId = input.branchId;
+        if (input.phone !== undefined) dbTech.phone = input.phone ? input.phone.trim() : undefined;
+        if (input.gender !== undefined) dbTech.gender = input.gender ? input.gender.trim() : undefined;
         await this.labTechnicianRepository.save(dbTech);
       }
     } catch (_) {}
@@ -248,6 +270,8 @@ export class LabTechniciansService implements OnModuleInit {
       email: updatedRecord.email,
       role: 'labtech',
       branchId: updatedRecord.branchId,
+      phone: updatedRecord.phone,
+      gender: updatedRecord.gender,
     };
   }
 

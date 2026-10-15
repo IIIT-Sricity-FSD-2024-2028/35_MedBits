@@ -50,6 +50,8 @@ export class LabTechniciansController {
       email: body.email,
       password: body.password,
       branchId: scopedBranchId ?? body.branchId,
+      phone: body.phone,
+      gender: body.gender,
     });
   }
 

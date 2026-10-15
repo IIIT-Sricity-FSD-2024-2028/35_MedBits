@@ -1,0 +1,123 @@
+/*
+ * LabTechDetailsModal.css — Styling for Lab Technician Details Modal
+ * =========================================================================
+ */
+
+.lt-view-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 16px;
+}
+
+.lt-view-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d9488, #059669);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.lt-view-name {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy, #0f172a);
+}
+
+.lt-view-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted, #64748b);
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.lt-id-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.lt-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .lt-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lt-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.lt-detail-item.full {
+  grid-column: 1 / -1;
+}
+
+.lt-detail-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+}
+
+.lt-detail-val {
+  font-size: 13.5px;
+  color: var(--navy, #0f172a);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.lt-responsibility-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+  .lt-responsibility-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lt-resp-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 500;
+}

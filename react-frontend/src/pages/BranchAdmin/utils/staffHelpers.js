@@ -74,3 +74,16 @@ export function formatShift(shiftStart, shiftEnd) {
   }
   return shiftStart || shiftEnd || '—';
 }
+
+/** Formats an ISO date string to a localized readable format (e.g. 1 Jan 2026) */
+export function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime())
+      ? dateStr
+      : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}

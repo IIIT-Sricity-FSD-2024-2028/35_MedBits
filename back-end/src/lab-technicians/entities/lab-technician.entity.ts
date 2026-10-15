@@ -24,6 +24,12 @@ export class LabTechnician {
   @JoinColumn({ name: 'branchId' })
   branch!: HospitalBranch;
 
+  @Column({ length: 20, nullable: true })
+  phone?: string;
+
+  @Column({ length: 20, nullable: true })
+  gender?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 
