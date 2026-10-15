@@ -1228,6 +1228,31 @@
         ]
       }
     },
+    "/doctors/referrals/all": {
+      "get": {
+        "operationId": "DoctorsController_getAllReferrals",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role for RBAC (patient | doctor | frontdesk)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of all referral objects"
+          }
+        },
+        "summary": "Get all referrals across all doctors for frontdesk coordination",
+        "tags": [
+          "Doctors"
+        ]
+      }
+    },
     "/doctors/{doctorId}": {
       "get": {
         "operationId": "DoctorsController_getDoctorProfile",
@@ -4514,7 +4539,6 @@
         "required": [
           "userId",
           "doctorId",
-          "branchId",
           "date",
           "slot"
         ]

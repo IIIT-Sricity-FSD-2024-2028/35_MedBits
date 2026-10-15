@@ -45,6 +45,7 @@ import QueueManagement from './pages/FrontDesk/QueueManagement';
 import FrontDeskProfile from './pages/FrontDesk/FrontDeskProfile';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import BranchAdminDashboard from './pages/dashboards/BranchAdminDashboard';
+import ManageDoctors from './pages/BranchAdmin/ManageDoctors';
 import SuperAdminDashboard from './pages/dashboards/SuperAdminDashboard';
 
 // Subpage Placeholder Shell
@@ -214,7 +215,7 @@ export default function App() {
           } />
           <Route path="/branch-admin/doctors" element={
             <ProtectedRoute allowedRoles={['branch_admin', 'admin']}>
-              <DemoPage pageTitle="Manage Doctors" />
+              <ManageDoctors />
             </ProtectedRoute>
           } />
           <Route path="/branch-admin/frontdesk" element={

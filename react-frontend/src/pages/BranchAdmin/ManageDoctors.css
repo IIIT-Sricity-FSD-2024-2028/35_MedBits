@@ -1,0 +1,394 @@
+/*
+ * ManageDoctors.css — Styling for Branch Admin Manage Doctors Page
+ * =========================================================================
+ * Uses shared MedBits design tokens from index.css.
+ */
+
+.manage-doctors-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── PAGE HEADER ────────────────────────────────────────────────────────── */
+.doc-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.doc-page-h1 {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.doc-page-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.doc-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--accent);
+  color: var(--white);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  transition: var(--transition);
+}
+
+.doc-add-btn:hover {
+  background-color: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+/* ── SEARCH & FILTER BAR ────────────────────────────────────────────────── */
+.doc-filter-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.doc-search-wrap {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.doc-search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.doc-search-input {
+  width: 100%;
+  padding: 10px 14px 10px 36px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: var(--transition);
+}
+
+.doc-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.doc-dept-select {
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  min-width: 180px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.doc-dept-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+/* ── STATS ROW ──────────────────────────────────────────────────────────── */
+.doc-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .doc-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.doc-stat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--shadow);
+}
+
+.doc-stat-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.doc-stat-val {
+  font-family: 'Sora', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.doc-stat-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── DOCTORS TABLE & CELLS ──────────────────────────────────────────────── */
+.doc-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.doc-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.doc-name-title {
+  font-weight: 600;
+  color: var(--navy);
+  transition: color 0.15s ease;
+}
+
+.doc-name-cell:hover .doc-name-title {
+  color: var(--accent);
+}
+
+.doc-name-email {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.doc-spec-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: var(--teal-light);
+  color: var(--teal);
+}
+
+/* ── ACTION BUTTONS ─────────────────────────────────────────────────────── */
+.doc-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-btn-view {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--accent-light);
+  color: var(--accent-dark);
+  border: 1px solid rgba(2, 132, 199, 0.2);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.doc-btn-view:hover {
+  background-color: var(--accent);
+  color: var(--white);
+}
+
+.doc-btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.doc-btn-icon:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.doc-btn-icon.delete:hover {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: var(--red);
+}
+
+/* ── VIEW DOCTOR MODAL DETAILS ──────────────────────────────────────────── */
+.doc-view-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.doc-view-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.doc-view-name {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.doc-view-meta {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.doc-divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: 18px 0;
+}
+
+.doc-section-h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 12px;
+}
+
+.doc-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 20px;
+}
+
+.doc-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.doc-detail-item.full {
+  grid-column: 1 / -1;
+}
+
+.doc-detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.doc-detail-val {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.doc-appt-summary-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.doc-pills-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.doc-pill {
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.doc-pill.teal   { background: #ccfbf1; color: #0f766e; }
+.doc-pill.green  { background: #d1fae5; color: #047857; }
+.doc-pill.orange { background: #fef3c7; color: #b45309; }
+.doc-pill.blue   { background: #eff6ff; color: #1d4ed8; }
+.doc-pill.red    { background: #fee2e2; color: #b91c1c; }
+
+.doc-appts-table-wrap {
+  max-height: 230px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.doc-appts-table {
+  width: 100%;
+  font-size: 12.5px;
+  border-collapse: collapse;
+}
+
+.doc-appts-table th {
+  background: var(--bg);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-appts-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.doc-appts-table tr:last-child td {
+  border-bottom: none;
+}
