@@ -1,0 +1,63 @@
+/*
+ * StaffActionButtons.css — Action Buttons for Branch Admin Staff Rosters
+ * =========================================================================
+ * Standardized View, Edit, and Delete action buttons across Branch Admin
+ * staff management tables (Front Desk, Lab Technicians, Doctors).
+ */
+
+.staff-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.staff-btn-view {
+  padding: 5px 10px;
+  background-color: #f0f9ff;
+  color: var(--accent, #0284c7);
+  border: 1px solid #bae6fd;
+  border-radius: var(--radius-sm, 4px);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.staff-btn-view:hover:not(:disabled) {
+  background-color: var(--accent, #0284c7);
+  color: #ffffff;
+  border-color: var(--accent, #0284c7);
+}
+
+.staff-btn-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border, #e2e8f0);
+  background-color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.staff-btn-icon:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.staff-btn-icon.delete:hover:not(:disabled) {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: var(--red, #ef4444);
+}
+
+.staff-btn-view:disabled,
+.staff-btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

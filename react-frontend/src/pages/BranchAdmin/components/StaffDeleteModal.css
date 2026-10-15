@@ -1,0 +1,41 @@
+/*
+ * StaffDeleteModal.css — Styling for Reusable Staff Deletion Confirmation Modal
+ * =========================================================================
+ */
+
+.staff-delete-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 6px 0;
+}
+
+.staff-delete-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.staff-delete-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--navy, #0f172a);
+  margin-bottom: 6px;
+}
+
+.staff-delete-desc {
+  font-size: 13.5px;
+  color: var(--text-muted, #64748b);
+  line-height: 1.5;
+}
+
+.staff-delete-confirm-btn {
+  background-color: var(--red, #ef4444) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--red, #ef4444) !important;
+}
+
+.staff-delete-confirm-btn:hover:not(:disabled) {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
