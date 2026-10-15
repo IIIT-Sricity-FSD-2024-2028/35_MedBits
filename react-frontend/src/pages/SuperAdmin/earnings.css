@@ -1,0 +1,835 @@
+/**
+ * earnings.css — Super Admin Financial Earnings Portal Stylesheet
+ * =========================================================================
+ * Designed for the MEDBITS Super Admin Portal.
+ * Inherits CSS variables from ../../index.css (Sora & DM Sans typography,
+ * healthcare teal/navy color palette, subtle elevations, and smooth transitions).
+ */
+
+/* ── PAGE CONTAINER WRAPPER ────────────────────────────────────────────── */
+.sa-earnings-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3rem;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* ── OFFLINE / FALLBACK BANNER ─────────────────────────────────────────── */
+.sa-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--radius-sm, 8px);
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.sa-alert-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── 1. PLATFORM OVERVIEW (4-METRIC TOP CARDS) ─────────────────────────── */
+.sa-platform-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: var(--radius, 12px);
+  padding: 1.75rem 2rem;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.15);
+}
+
+.sa-platform-hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 650px;
+}
+
+.sa-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #14b8a6;
+  background: rgba(20, 184, 166, 0.12);
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  width: fit-content;
+  border: 1px solid rgba(20, 184, 166, 0.25);
+}
+
+.sa-platform-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.sa-platform-sub {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sa-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.sa-overview-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius, 12px);
+  padding: 1.35rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sa-overview-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.sa-overview-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.sa-card-accent-teal::before { background: linear-gradient(90deg, #0d9488, #14b8a6); }
+.sa-card-accent-blue::before { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.sa-card-accent-emerald::before { background: linear-gradient(90deg, #16a34a, #22c55e); }
+.sa-card-accent-purple::before { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+
+.sa-overview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sa-overview-label {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sa-overview-icon {
+  font-size: 1.15rem;
+  opacity: 0.85;
+}
+
+.sa-overview-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 0.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.sa-overview-note {
+  margin-top: 0.4rem;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+/* ── 2. BRANCH SELECTOR PANEL ──────────────────────────────────────────── */
+.sa-branch-select-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius, 12px);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.sa-branch-select-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.sa-branch-select-info {
+  flex: 1;
+  min-width: 250px;
+}
+
+.sa-branch-select-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.sa-branch-select-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.2rem 0 0 0;
+}
+
+.sa-branch-select-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sa-select-dropdown {
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.88rem;
+  font-weight: 600;
+  min-width: 300px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sa-select-dropdown:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.sa-branch-select-status {
+  font-size: 0.84rem;
+  color: #0d9488;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── 3. BRANCH REVENUE DRILL-DOWN SECTION ──────────────────────────────── */
+.sa-branch-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Hero card for selected branch */
+.sa-branch-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+  border: 1px solid #ccfbf1;
+  border-radius: var(--radius, 12px);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  box-shadow: 0 2px 12px rgba(13, 148, 136, 0.06);
+}
+
+.sa-branch-hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 620px;
+}
+
+.sa-branch-hero-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.sa-branch-hero-meta {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.sa-branch-hero-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sa-month-filter-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.sa-month-filter-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.sa-month-select {
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.sa-month-select:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+.sa-branch-badge {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 0.9rem 1.25rem;
+  min-width: 190px;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sa-branch-badge-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  font-weight: 600;
+}
+
+.sa-branch-badge-value {
+  margin-top: 0.25rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.sa-branch-badge-note {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+/* ── 4. BRANCH 5-KPI STATS GRID ────────────────────────────────────────── */
+.sa-branch-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.sa-branch-kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius, 12px);
+  padding: 1.1rem 1.15rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sa-branch-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.sa-branch-kpi-label {
+  font-size: 0.74rem;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sa-branch-kpi-value {
+  margin-top: 0.4rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.sa-branch-kpi-note {
+  margin-top: 0.3rem;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+/* ── 5. TWO-COLUMN BRANCH LAYOUT ───────────────────────────────────────── */
+.sa-branch-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* ── Left Column: Analytics Panel ──────────────────────────────────────── */
+.sa-analytics-panel,
+.sa-side-panel,
+.sa-table-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 1.35rem 1.5rem;
+}
+
+.sa-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.sa-panel-eyebrow {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f766e;
+  margin-bottom: 0.25rem;
+}
+
+.sa-panel-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.sa-panel-copy {
+  font-size: 0.86rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  line-height: 1.5;
+}
+
+/* Summary Bars */
+.sa-summary-bars {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.sa-summary-bar-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 120px;
+  gap: 1rem;
+  align-items: center;
+}
+
+.sa-summary-bar-label {
+  color: #475569;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.sa-summary-bar-track {
+  height: 12px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  overflow: hidden;
+  position: relative;
+}
+
+.sa-summary-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+.sa-fill-revenue { background: linear-gradient(90deg, #0f766e, #14b8a6); }
+.sa-fill-cuts { background: linear-gradient(90deg, #f59e0b, #fb923c); }
+.sa-fill-profit { background: linear-gradient(90deg, #16a34a, #22c55e); }
+
+.sa-summary-bar-value {
+  text-align: right;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 0.88rem;
+  font-family: 'Sora', sans-serif;
+}
+
+/* Branch Health 3-box Grid */
+.sa-branch-health {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+}
+
+.sa-health-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.95rem;
+  text-align: center;
+}
+
+.sa-health-label {
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sa-health-value {
+  margin-top: 0.35rem;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* ── Right Column: Side Panel (Stacked Cards) ──────────────────────────── */
+.sa-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.sa-stacked-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius, 12px);
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.sa-stacked-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.sa-stacked-card-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 0.1rem;
+}
+
+.sa-mini-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.sa-mini-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.sa-mini-label {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.85rem;
+}
+
+.sa-mini-meta {
+  color: #64748b;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.sa-mini-value {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.sa-mini-value.sa-cut-value {
+  color: #0f766e;
+}
+
+.sa-insight-highlight {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 100%);
+  border: 1px solid #99f6e4;
+  margin-bottom: 0.5rem;
+}
+
+.sa-insight-highlight-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0f766e;
+}
+
+.sa-insight-highlight-value {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* ── 6. TRANSACTIONS LEDGER TABLE (OPTIONAL EXPANDABLE TAB) ────────────── */
+.sa-table-panel {
+  margin-top: 0.5rem;
+}
+
+.sa-ledger-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sa-ledger-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.sa-ledger-tab-btn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.sa-ledger-tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sa-table-search {
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid #cbd5e1;
+  font-size: 0.84rem;
+  min-width: 240px;
+  outline: none;
+}
+
+.sa-table-search:focus {
+  border-color: #0d9488;
+}
+
+.sa-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.sa-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+  background: #ffffff;
+}
+
+.sa-table thead tr {
+  background: #f8fafc;
+}
+
+.sa-table thead th {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.sa-table tbody td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.84rem;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.sa-table tbody tr:nth-child(even) {
+  background: #fbfcfe;
+}
+
+.sa-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+.sa-td-doc-earn {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.sa-td-branch-profit {
+  color: #16a34a;
+  font-weight: 800;
+}
+
+.sa-table-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* ── 7. PILLS & BADGES ─────────────────────────────────────────────────── */
+.sa-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sa-pill-green { background: #dcfce7; color: #166534; }
+.sa-pill-blue { background: #dbeafe; color: #1d4ed8; }
+.sa-pill-amber { background: #fef3c7; color: #b45309; }
+.sa-pill-teal { background: #ccfbf1; color: #0f766e; }
+
+/* ── 8. TOAST NOTIFICATIONS ────────────────────────────────────────────── */
+.sa-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.sa-toast {
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-sm, 8px);
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: toastIn 0.2s ease-out;
+  pointer-events: auto;
+}
+
+.sa-toast-error {
+  background: #ef4444;
+}
+
+/* ── 9. RESPONSIVE MEDIA QUERIES ───────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .sa-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sa-branch-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sa-branch-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 850px) {
+  .sa-branch-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sa-branch-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sa-summary-bar-row {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+  }
+
+  .sa-summary-bar-value {
+    text-align: left;
+  }
+}
+
+@media (max-width: 600px) {
+  .sa-overview-grid,
+  .sa-branch-kpis,
+  .sa-branch-health {
+    grid-template-columns: 1fr;
+  }
+
+  .sa-select-dropdown {
+    min-width: 100%;
+  }
+}
