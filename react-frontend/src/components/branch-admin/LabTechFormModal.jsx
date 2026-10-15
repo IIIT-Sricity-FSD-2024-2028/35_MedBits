@@ -78,10 +78,14 @@ function LabTechDialog({ isOpen, onClose, initialData = null, branchId: propBran
         name: formData.name.trim(),
         email: formData.email.trim(),
         ...(effectiveBranchId ? { branchId: effectiveBranchId } : {}),
-        ...(formData.phone ? { phone: formData.phone.trim() } : {}),
-        ...(formData.gender ? { gender: formData.gender } : {}),
+        phone: formData.phone?.trim() || '',
+        gender: formData.gender || '',
       };
-      if (!isEdit) payload.password = formData.password;
+      if (!isEdit) {
+        payload.password = formData.password;
+      } else if (formData.password?.trim()) {
+        payload.password = formData.password;
+      }
 
       const res = await fetch(endpoint, {
         method: isEdit ? 'PUT' : 'POST',
@@ -232,6 +236,7 @@ function LabTechDialog({ isOpen, onClose, initialData = null, branchId: propBran
 
 export default function LabTechFormModal(props) {
   if (!props.isOpen) return null;
-  const key = props.initialData?.userId || props.initialData?.id || (props.isOpen ? 'open' : 'closed');
+  const techId = props.initialData?.id || props.initialData?.userId;
+  const key = props.initialData ? `edit-${techId || 'current'}` : 'create-new';
   return <LabTechDialog key={key} {...props} />;
 }

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class CreateLabTechnicianDto {
@@ -16,8 +16,18 @@ export class CreateLabTechnicianDto {
   @MinLength(6)
   password!: string;
 
-  @ApiProperty({ description: 'Hospital branch UUID. Ignored for branch admin requests.' })
+  @ApiPropertyOptional({ description: 'Hospital branch UUID. Ignored for branch admin requests.' })
   @IsUUID()
   @IsOptional()
   branchId?: string;
+
+  @ApiPropertyOptional({ example: '9876543210' })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiPropertyOptional({ example: 'Female' })
+  @IsString()
+  @IsOptional()
+  gender?: string;
 }

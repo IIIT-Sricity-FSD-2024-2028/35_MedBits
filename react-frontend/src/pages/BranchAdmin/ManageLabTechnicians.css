@@ -1,0 +1,145 @@
+/*
+ * ManageLabTechnicians.css — Styling for Branch Admin Manage Lab Technicians Page
+ * =========================================================================
+ * Uses shared MedBits design tokens and variables from index.css.
+ */
+
+.manage-labtech-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ── 1. PAGE HEADER ──────────────────────────────────────────────────────── */
+.lt-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.lt-page-h1 {
+  font-family: 'Sora', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--navy, #0f172a);
+  margin-bottom: 4px;
+}
+
+.lt-page-sub {
+  font-size: 14px;
+  color: var(--text-muted, #64748b);
+}
+
+.lt-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--accent, #0284c7);
+  color: #ffffff;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  transition: all 0.15s ease;
+}
+
+.lt-add-btn:hover {
+  background-color: var(--accent-dark, #0369a1);
+  transform: translateY(-1px);
+}
+
+/* ── 2. FILTER SELECT (In ContentCard Action Slot) ────────────────────────── */
+.lt-filter-select {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text, #1e293b);
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-sm, 6px);
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+  transition: border-color 0.15s ease;
+}
+
+.lt-filter-select:focus {
+  border-color: var(--accent, #0284c7);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+/* ── 3. ROSTER TABLE CELL ELEMENTS ───────────────────────────────────────── */
+.lt-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.lt-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d9488, #059669);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.lt-name-title {
+  font-weight: 600;
+  color: var(--navy, #0f172a);
+  transition: color 0.15s ease;
+}
+
+.lt-name-cell:hover .lt-name-title {
+  color: var(--accent, #0284c7);
+}
+
+.lt-name-email {
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+  margin-top: 2px;
+}
+
+.lt-id-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.lt-badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lt-badge-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #16a34a;
+}
