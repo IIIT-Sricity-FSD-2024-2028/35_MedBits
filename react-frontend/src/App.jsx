@@ -53,7 +53,7 @@ import ManageFrontDesk from './pages/BranchAdmin/ManageFrontDesk';
 import ManageLabTechnicians from './pages/BranchAdmin/ManageLabTechnicians';
 import LeaveManagement from './pages/BranchAdmin/LeaveManagement';
 import Earnings from './pages/BranchAdmin/Earnings';
-import SuperAdminDashboard from './pages/dashboards/SuperAdminDashboard';
+import SuperAdminDashboard from './pages/SuperAdmin/dashboard';
 import SuperAdminEarnings from './pages/SuperAdmin/earnings';
 import BranchStatistics from './pages/SuperAdmin/branch-statistics';
 
