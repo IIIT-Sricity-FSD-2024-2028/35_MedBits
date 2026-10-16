@@ -60,31 +60,59 @@ export class LabTestsService {
     },
     {
       id: 'LAB003',
-      name: 'HbA1c Test',
+      name: 'HbA1c Test (Glycated Hemoglobin)',
       price: 649,
       category: 'Diabetes',
       description: 'Measures average blood sugar levels over the last 2 to 3 months.',
     },
     {
       id: 'LAB004',
-      name: 'Fasting Blood Sugar Test',
+      name: 'Fasting Blood Sugar Test (FBS)',
       price: 100,
       category: 'Diabetes',
       description: 'Checks your fasting glucose level for diabetes screening.',
     },
     {
       id: 'LAB005',
-      name: 'CBC Test',
+      name: 'Complete Blood Count (CBC)',
       price: 419,
       category: 'Blood Studies',
       description: 'Complete blood count to assess overall blood health.',
     },
     {
       id: 'LAB006',
-      name: 'Lipid Profile Test',
+      name: 'Comprehensive Lipid Profile',
       price: 829,
       category: 'Heart',
       description: 'Measures cholesterol and triglycerides for cardiac risk review.',
+    },
+    {
+      id: 'LAB007',
+      name: 'Thyroid Profile Total (T3, T4, TSH)',
+      price: 550,
+      category: 'Thyroid',
+      description: 'Evaluates thyroid gland activity and metabolic hormone regulation to detect hyperthyroidism or hypothyroidism.',
+    },
+    {
+      id: 'LAB008',
+      name: 'Vitamin D (25-OH) & Vitamin B12 Duo',
+      price: 1299,
+      category: 'Vitamin',
+      description: 'Crucial screening for bone density, calcium absorption, neurological health, energy metabolism, and immunity strength.',
+    },
+    {
+      id: 'LAB009',
+      name: 'Renal / Kidney Function Test (KFT)',
+      price: 699,
+      category: 'Kidney',
+      description: 'Assesses serum creatinine, blood urea nitrogen (BUN), uric acid, and electrolytes to evaluate kidney filtration health.',
+    },
+    {
+      id: 'LAB010',
+      name: 'Liver Function Test (LFT)',
+      price: 749,
+      category: 'Liver',
+      description: 'Evaluates liver enzymes (SGOT, SGPT, ALP), bilirubin levels, and total proteins to detect hepatic infection or inflammation.',
     },
   ];
 
@@ -124,11 +152,13 @@ export class LabTestsService {
       return this.toBookingDetails(existingBooking);
     }
 
+    const timestamp = Date.now();
+    const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     const booking: TestBooking = {
-      id: `TBOOK${Date.now()}`,
+      id: `TBOOK${timestamp}${randomSuffix}`,
       userId: input.userId,
       labTestId: input.labTestId,
-      branchId: '00000000-0000-4000-8000-000000000001', // Force main branch
+      branchId: input.branchId || '00000000-0000-4000-8000-000000000001',
       status: 'cart',
       cartId: this.getOrCreateActiveCartId(input.userId),
       orderId: null,
@@ -166,8 +196,8 @@ export class LabTestsService {
           sourceBookingId: booking.id,
           orderId,
           patientId: booking.userId,
-          patientName: context?.patientName?.trim() || booking.userId,
-          branchId: booking.branchId,
+          patientName: context?.patientName?.trim() || booking.userId || 'Patient',
+          branchId: booking.branchId || '00000000-0000-4000-8000-000000000001',
           testName: labTest.name,
           requestDate: new Date().toISOString().split('T')[0],
         });
@@ -207,8 +237,23 @@ export class LabTestsService {
   }
 
   private findTestById(id: string): LabTest | undefined {
-    const test = this.labTests.find((item) => item.id === id);
-    return test ? { ...test } : undefined;
+    if (!id) return undefined;
+    const clean = id.trim().toLowerCase();
+    const test = this.labTests.find((item) =>
+      item.id.toLowerCase() === clean ||
+      item.name.toLowerCase() === clean ||
+      item.name.toLowerCase().includes(clean) ||
+      clean.includes(item.id.toLowerCase())
+    );
+    if (test) return { ...test };
+
+    return {
+      id: id.trim(),
+      name: id.trim(),
+      price: 500,
+      category: 'General',
+      description: 'Diagnostic laboratory screening.',
+    };
   }
 
   private toBookingDetails(booking: TestBooking) {
