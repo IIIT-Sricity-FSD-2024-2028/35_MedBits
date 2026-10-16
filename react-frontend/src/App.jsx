@@ -46,6 +46,7 @@ import FrontDeskProfile from './pages/FrontDesk/FrontDeskProfile';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import TestRequests from './pages/LabTechnician/TestRequests';
 import LabReports from './pages/LabTechnician/LabReports';
+import LeaveRequest from './pages/LabTechnician/LeaveRequest';
 import LabTechProfile from './pages/LabTechnician/LabTechProfile';
 import BranchAdminDashboard from './pages/BranchAdmin/BranchAdminDashboard';
 import ManageDoctors from './pages/BranchAdmin/ManageDoctors';
@@ -205,8 +206,11 @@ export default function App() {
           } />
           <Route path="/lab-technician/leave" element={
             <ProtectedRoute allowedRoles={['labtech']}>
-              <DemoPage pageTitle="Leave" />
+              <LeaveRequest />
             </ProtectedRoute>
+          } />
+          <Route path="/lab-technician/leave-request" element={
+            <Navigate to="/lab-technician/leave" replace />
           } />
           <Route path="/lab-technician/profile" element={
             <ProtectedRoute allowedRoles={['labtech']}>
