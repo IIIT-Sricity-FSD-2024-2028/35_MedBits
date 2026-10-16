@@ -87,4 +87,66 @@ export class CreateMedicalRecordDto {
   @IsString()
   @IsOptional()
   duration?: string;
+
+  @ApiPropertyOptional({ example: 'MR001' })
+  @IsString()
+  @IsOptional()
+  id?: string;
+}
+
+export class UpdateMedicalRecordDto {
+  @ApiPropertyOptional({ example: 'Ria Sharma' })
+  @IsString()
+  @IsOptional()
+  patientName?: string;
+
+  @ApiPropertyOptional({ example: 'Patient complains of chest pain.' })
+  @IsString()
+  @IsOptional()
+  consultationNote?: string;
+
+  @ApiPropertyOptional({ example: 'Aspirin 75mg' })
+  @IsString()
+  @IsOptional()
+  medicines?: string;
+
+  @ApiPropertyOptional({ example: 'Review after 1 week' })
+  @IsString()
+  @IsOptional()
+  followUp?: string;
+
+  @ApiPropertyOptional({ example: '2026-05-17' })
+  @IsString()
+  @IsOptional()
+  followUpDate?: string;
+
+  @ApiPropertyOptional({ example: 'APT001' })
+  @IsString()
+  @IsOptional()
+  appointmentId?: string;
+
+  @ApiPropertyOptional({ example: 'ECG' })
+  @IsString()
+  @IsOptional()
+  tests?: string;
+
+  @ApiPropertyOptional({ example: '2026-05-12' })
+  @IsString()
+  @IsOptional()
+  labTestDate?: string;
+
+  @ApiPropertyOptional({ example: 'Avoid spicy food' })
+  @IsString()
+  @IsOptional()
+  lifestyle?: string;
+
+  @ApiPropertyOptional({ example: 'Low sodium' })
+  @IsString()
+  @IsOptional()
+  diet?: string;
+
+  @ApiPropertyOptional({ example: '15 mins' })
+  @IsString()
+  @IsOptional()
+  duration?: string;
 }
