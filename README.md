@@ -43,7 +43,7 @@ It provides role-based access for patients, doctors, front-desk staff, lab techn
     git clone https://github.com/IIIT-Sricity-FSD-2024-2028/35_MedBits.git
     cd 35_MedBits
 ## Backend Setup and to run server
-    cd backend
+    cd back-end
     npm install
     npm run start:dev
 ## Frontend Setup
