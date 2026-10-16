@@ -44,6 +44,7 @@ import FollowUpReferral from './pages/FrontDesk/FollowUpReferral';
 import QueueManagement from './pages/FrontDesk/QueueManagement';
 import FrontDeskProfile from './pages/FrontDesk/FrontDeskProfile';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
+import TestRequests from './pages/LabTechnician/TestRequests';
 import BranchAdminDashboard from './pages/BranchAdmin/BranchAdminDashboard';
 import ManageDoctors from './pages/BranchAdmin/ManageDoctors';
 import ManageFrontDesk from './pages/BranchAdmin/ManageFrontDesk';
@@ -192,7 +193,7 @@ export default function App() {
           } />
           <Route path="/lab-technician/test-requests" element={
             <ProtectedRoute allowedRoles={['labtech']}>
-              <DemoPage pageTitle="Test Requests" />
+              <TestRequests />
             </ProtectedRoute>
           } />
           <Route path="/lab-technician/lab-reports" element={
