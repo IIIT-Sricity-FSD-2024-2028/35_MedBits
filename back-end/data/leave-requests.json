@@ -127,5 +127,23 @@
     "status": "approved",
     "createdAt": "2026-08-22T20:21:58.199Z",
     "actionedOn": "Aug 23, 2026, 01:52 AM"
+  },
+  {
+    "id": "LR1792173584488",
+    "doctorId": "c6bae3c7-060f-4235-ad7f-ceaa30292ae6",
+    "date": "2026-10-22",
+    "type": "Casual",
+    "reason": "yes",
+    "status": "pending",
+    "createdAt": "2026-10-16T17:59:44.488Z"
+  },
+  {
+    "id": "LR1792174152799",
+    "doctorId": "c6bae3c7-060f-4235-ad7f-ceaa30292ae6",
+    "date": "2026-10-30",
+    "type": "Casual",
+    "reason": "Sick",
+    "status": "pending",
+    "createdAt": "2026-10-16T18:09:12.799Z"
   }
 ]
