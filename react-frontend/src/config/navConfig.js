@@ -27,8 +27,8 @@ export const NAV_CONFIG = {
      Old sidebar: html/superuser/components/sidebar.html
      ───────────────────────────────────────────── */
   super_admin: [
-    { key: 'dashboard',         label: 'Dashboard',         path: '/superuser/dashboard',         icon: '⊞' },
-    { key: 'earnings',          label: 'Earnings',          path: '/superuser/earnings',          icon: '₹' },
+    { key: 'dashboard', label: 'Dashboard', path: '/superuser/dashboard', icon: '⊞' },
+    { key: 'earnings', label: 'Earnings', path: '/superuser/earnings', icon: '₹' },
     { key: 'branch-statistics', label: 'Branch Statistics', path: '/superuser/branch-statistics', icon: '📊' },
   ],
 
@@ -37,12 +37,12 @@ export const NAV_CONFIG = {
      Old sidebar: html/branch-admin/components/ba_sidebar.html
      ───────────────────────────────────────────── */
   branch_admin: [
-    { key: 'dashboard',        label: 'Dashboard',          path: '/branch-admin/dashboard',        icon: '⊞' },
-    { key: 'doctors',          label: 'Manage Doctors',     path: '/branch-admin/doctors',          icon: '🩺' },
-    { key: 'frontdesk',        label: 'Manage Front Desk',  path: '/branch-admin/frontdesk',        icon: '🖥️' },
-    { key: 'lab-technicians',  label: 'Lab Technicians',    path: '/branch-admin/lab-technicians',  icon: '🔬' },
-    { key: 'leave-management', label: 'Leave Management',   path: '/branch-admin/leave-management', icon: '📅' },
-    { key: 'earnings',         label: 'Earnings',           path: '/branch-admin/earnings',         icon: '₹' },
+    { key: 'dashboard', label: 'Dashboard', path: '/branch-admin/dashboard', icon: '⊞' },
+    { key: 'doctors', label: 'Manage Doctors', path: '/branch-admin/doctors', icon: '🩺' },
+    { key: 'frontdesk', label: 'Manage Front Desk', path: '/branch-admin/frontdesk', icon: '🖥️' },
+    { key: 'lab-technicians', label: 'Lab Technicians', path: '/branch-admin/lab-technicians', icon: '🔬' },
+    { key: 'leave-management', label: 'Leave Management', path: '/branch-admin/leave-management', icon: '📅' },
+    { key: 'earnings', label: 'Earnings', path: '/branch-admin/earnings', icon: '₹' },
   ],
 
   /* alias — 'admin' is treated the same as 'branch_admin' in auth.js */
@@ -53,13 +53,13 @@ export const NAV_CONFIG = {
      Old sidebar: html/doctor/components/sidebar.html
      ───────────────────────────────────────────── */
   doctor: [
-    { key: 'dashboard',          label: 'Dashboard',          path: '/doctor/dashboard',          icon: '⊞' },
-    { key: 'profile',            label: 'Profile',            path: '/doctor/profile',            icon: '◉' },
+    { key: 'dashboard', label: 'Dashboard', path: '/doctor/dashboard', icon: '⊞' },
+    { key: 'profile', label: 'Profile', path: '/doctor/profile', icon: '◉' },
     { key: 'consultation-notes', label: 'Consultation Notes', path: '/doctor/consultation-notes', icon: '📋' },
-    { key: 'internal-referral',  label: 'Internal Referral',  path: '/doctor/internal-referral',  icon: '🔗' },
-    { key: 'treatment-plan',     label: 'Treatment Plan',     path: '/doctor/treatment-plan',     icon: '💊' },
-    { key: 'slot-management',    label: 'Slot Management',    path: '/doctor/slot-management',    icon: '🕐' },
-    { key: 'earnings',           label: 'Earnings',           path: '/doctor/earnings',           icon: '₹' },
+    { key: 'internal-referral', label: 'Internal Referral', path: '/doctor/internal-referral', icon: '🔗' },
+    { key: 'treatment-plan', label: 'Treatment Plan', path: '/doctor/treatment-plan', icon: '💊' },
+    { key: 'slot-management', label: 'Slot Management', path: '/doctor/slot-management', icon: '🕐' },
+    { key: 'earnings', label: 'Earnings', path: '/doctor/earnings', icon: '₹' },
   ],
 
   /* ─────────────────────────────────────────────
@@ -67,12 +67,12 @@ export const NAV_CONFIG = {
      Old sidebar: html/components/fd_sidebar.html + shared.js navItems[]
      ───────────────────────────────────────────── */
   frontdesk: [
-    { key: 'dashboard',    label: 'Dashboard',                        path: '/front-desk/dashboard',    icon: '⊞' },
-    { key: 'walkin',       label: 'Walk-in Registrations',            path: '/front-desk/walkin',       icon: '🚶' },
-    { key: 'appointments', label: 'Appointment Management',           path: '/front-desk/appointments', icon: '📅' },
-    { key: 'followup',     label: 'Follow-Up & Referral',             path: '/front-desk/followup',     icon: '🔄' },
-    { key: 'queue',        label: 'Queue Management',                 path: '/front-desk/queue',        icon: '📋' },
-    { key: 'profile',      label: 'Profile',                         path: '/front-desk/profile',      icon: '◉' },
+    { key: 'dashboard', label: 'Dashboard', path: '/front-desk/dashboard', icon: '⊞' },
+    { key: 'walkin', label: 'Walk-in Registrations', path: '/front-desk/walkin', icon: '🚶' },
+    { key: 'appointments', label: 'Appointment Management', path: '/front-desk/appointments', icon: '📅' },
+    { key: 'followup', label: 'Follow-Up & Referral', path: '/front-desk/followup', icon: '🔄' },
+    { key: 'queue', label: 'Queue Management', path: '/front-desk/queue', icon: '📋' },
+    { key: 'profile', label: 'Profile', path: '/front-desk/profile', icon: '◉' },
   ],
 
   /* ─────────────────────────────────────────────
@@ -80,11 +80,11 @@ export const NAV_CONFIG = {
      Old sidebar: js/lab-technician/components.js getSidebarTemplate()
      ───────────────────────────────────────────── */
   labtech: [
-    { key: 'dashboard',     label: 'Dashboard',     path: '/lab-technician/dashboard',     icon: '⊞' },
+    { key: 'dashboard', label: 'Dashboard', path: '/lab-technician/dashboard', icon: '⊞' },
     { key: 'test-requests', label: 'Test Requests', path: '/lab-technician/test-requests', icon: '📋' },
-    { key: 'lab-reports',   label: 'Lab Reports',   path: '/lab-technician/lab-reports',   icon: '📊' },
-    { key: 'leave',         label: 'Leave Request', path: '/lab-technician/leave',         icon: '📅' },
-    { key: 'profile',       label: 'Profile',       path: '/lab-technician/profile',       icon: '◉' },
+    { key: 'lab-reports', label: 'Lab Reports', path: '/lab-technician/lab-reports', icon: '📊' },
+    { key: 'leave', label: 'Leave Request', path: '/lab-technician/leave', icon: '📅' },
+    { key: 'profile', label: 'Profile', path: '/lab-technician/profile', icon: '◉' },
   ],
 
   /* ─────────────────────────────────────────────
@@ -92,13 +92,12 @@ export const NAV_CONFIG = {
      Old sidebar: html/components/p_sidebar.html
      ───────────────────────────────────────────── */
   patient: [
-    { key: 'dashboard',    label: 'Dashboard',       path: '/patient/dashboard',    icon: '⊞' },
-    { key: 'profile',      label: 'Profile',         path: '/patient/profile',      icon: '◉' },
-    { key: 'appointments', label: 'Appointments',    path: '/patient/appointments', icon: '📅' },
-    { key: 'labtests',     label: 'Lab Tests',       path: '/patient/labtests',     icon: '🧪' },
-    { key: 'records',      label: 'Medical Records', path: '/patient/records',      icon: '📋' },
-    { key: 'billing',      label: 'Billing',         path: '/patient/billing',      icon: '💳' },
-    { key: 'feedback',     label: 'Feedback',        path: '/patient/feedback',     icon: '💬' },
+    { key: 'dashboard', label: 'Dashboard', path: '/patient/dashboard', icon: '⊞' },
+    { key: 'profile', label: 'Profile', path: '/patient/profile', icon: '◉' },
+    { key: 'appointments', label: 'Appointments', path: '/patient/appointments', icon: '📅' },
+    { key: 'labtests', label: 'Lab Tests', path: '/patient/labtests', icon: '🧪' },
+    { key: 'records', label: 'Medical Records', path: '/patient/records', icon: '📋' },
+    { key: 'feedback', label: 'Feedback', path: '/patient/feedback', icon: '💬' },
   ],
 };
 
@@ -107,13 +106,13 @@ export const NAV_CONFIG = {
  * Mirrors the old hardcoded strings in each components.js / shared.js.
  */
 export const PORTAL_LABELS = {
-  super_admin:  'Super Admin Portal',
+  super_admin: 'Super Admin Portal',
   branch_admin: 'Branch Admin Portal',
-  admin:        'Branch Admin Portal',
-  doctor:       'Doctor Portal',
-  frontdesk:    'Frontdesk Portal',
-  labtech:      'Lab Technician Portal',
-  patient:      'Patient Portal',
+  admin: 'Branch Admin Portal',
+  doctor: 'Doctor Portal',
+  frontdesk: 'Frontdesk Portal',
+  labtech: 'Lab Technician Portal',
+  patient: 'Patient Portal',
 };
 
 /**
