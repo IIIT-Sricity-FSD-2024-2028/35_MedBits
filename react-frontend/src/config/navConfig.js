@@ -83,7 +83,7 @@ export const NAV_CONFIG = {
     { key: 'dashboard',     label: 'Dashboard',     path: '/lab-technician/dashboard',     icon: '⊞' },
     { key: 'test-requests', label: 'Test Requests', path: '/lab-technician/test-requests', icon: '📋' },
     { key: 'lab-reports',   label: 'Lab Reports',   path: '/lab-technician/lab-reports',   icon: '📊' },
-    { key: 'leave',         label: 'Leave',         path: '/lab-technician/leave',         icon: '📅' },
+    { key: 'leave',         label: 'Leave Request', path: '/lab-technician/leave',         icon: '📅' },
     { key: 'profile',       label: 'Profile',       path: '/lab-technician/profile',       icon: '◉' },
   ],
 
