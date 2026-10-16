@@ -58,39 +58,23 @@ export default function DoctorEarnings() {
 
       if (res.ok) {
         const data = await res.json();
-        if (data && (data.totalEarnings > 0 || (data.entries && data.entries.length > 0))) {
+        if (data && typeof data === 'object') {
           setSummary(data);
           setLoading(false);
           return;
         }
       }
     } catch (_) {
-      // Continue to fallback
+      // Continue to empty state
     }
 
-    // Default fallback so doctor earnings is never empty or 0
-    const todayStr = new Date().toISOString().split('T')[0];
-    const fallbackEntries = [
-      { appointmentId: 'APT_TODAY_001', date: todayStr, slot: '09:00', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT_TODAY_002', date: todayStr, slot: '09:30', patientName: 'Arun Menon', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1791795073099', date: '2026-10-12', slot: '11:00', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1791795054937', date: '2026-10-12', slot: '11:30', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1791781433824', date: '2026-10-12', slot: '12:00', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1788204949935', date: '2026-09-03', slot: '12:00', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1788200861587', date: '2026-09-03', slot: '11:00', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1788200853489', date: '2026-09-01', slot: '10:00', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1788198749465', date: '2026-08-31', slot: '12:00', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1788198151986', date: '2026-09-01', slot: '10:30', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1788190349111', date: '2026-08-31', slot: '10:30', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-      { appointmentId: 'APT1788183684948', date: '2026-08-31', slot: '11:30', patientName: 'Ria Sharma', doctorId, consultationFee: 1000, percentageCut: 50, doctorEarning: 500, branchProfit: 500 },
-    ];
     setSummary({
       doctorId,
-      doctorName: user?.name || 'Dr. S Madhuri',
+      doctorName: user?.name || 'Doctor',
       percentageCut: 50,
-      totalEarnings: fallbackEntries.reduce((s, e) => s + e.doctorEarning, 0),
-      currentMonthEarnings: fallbackEntries.filter(e => e.date?.startsWith(todayStr.slice(0, 7))).reduce((s, e) => s + e.doctorEarning, 0),
-      entries: fallbackEntries,
+      totalEarnings: 0,
+      currentMonthEarnings: 0,
+      entries: [],
     });
     setError(null);
     setLoading(false);

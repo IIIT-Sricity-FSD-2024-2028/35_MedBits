@@ -18,13 +18,7 @@ import './treatment/treatment.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// ── Default Registered Patients Fallback Catalog ──────────────────────────────
-const DEFAULT_PATIENTS = [
-  { userId: 'PAT001', id: 'PAT001', firstName: 'Ria', lastName: 'Sharma', name: 'Ria Sharma', phone: '9473487399', email: 'ria@medbits.com', gender: 'Female', bloodGroup: 'A+' },
-  { userId: 'PAT002', id: 'PAT002', firstName: 'Arun', lastName: 'Menon', name: 'Arun Menon', phone: '9123456780', email: 'arun.menon@medbits.com', gender: 'Male', bloodGroup: 'O+' },
-  { userId: 'PAT003', id: 'PAT003', firstName: 'Farah', lastName: 'Ali', name: 'Farah Ali', phone: '9988776655', email: 'farah.ali@medbits.com', gender: 'Female', bloodGroup: 'A-' },
-  { userId: 'PAT004', id: 'PAT004', firstName: 'Dev', lastName: 'Patel', name: 'Dev Patel', phone: '9012345678', email: 'dev.patel@medbits.com', gender: 'Male', bloodGroup: 'AB+' },
-];
+const DEFAULT_PATIENTS = [];
 
 // ── Default Lab Tests Catalog ─────────────────────────────────────────────────
 const DEFAULT_LAB_TESTS = [
@@ -38,45 +32,9 @@ const DEFAULT_LAB_TESTS = [
   { id: 'LT008', name: 'HbA1c', price: 500, department: 'Biochemistry' },
 ];
 
-// ── Default Appointments Fallback Catalog ─────────────────────────────────────
-const DEFAULT_APPOINTMENTS = [
-  { id: 'APT_NEW_001', userId: 'PAT001', patientId: 'PAT001', patientName: 'Ria Sharma', patient: { id: 'PAT001', name: 'Ria Sharma', firstName: 'Ria', lastName: 'Sharma' }, date: '2026-10-14', slot: '10:00', status: 'upcoming' },
-  { id: 'APT_NEW_002', userId: 'PAT002', patientId: 'PAT002', patientName: 'Arun Menon', patient: { id: 'PAT002', name: 'Arun Menon', firstName: 'Arun', lastName: 'Menon' }, date: '2026-10-14', slot: '10:30', status: 'upcoming' },
-  { id: 'APT_NEW_003', userId: 'PAT003', patientId: 'PAT003', patientName: 'Farah Ali', patient: { id: 'PAT003', name: 'Farah Ali', firstName: 'Farah', lastName: 'Ali' }, date: '2026-10-15', slot: '11:00', status: 'upcoming' },
-  { id: 'APT_NEW_004', userId: 'PAT004', patientId: 'PAT004', patientName: 'Dev Patel', patient: { id: 'PAT004', name: 'Dev Patel', firstName: 'Dev', lastName: 'Patel' }, date: '2026-10-15', slot: '11:30', status: 'upcoming' },
-  { id: 'APT_NEW_005', userId: 'PAT001', patientId: 'PAT001', patientName: 'Ria Sharma', patient: { id: 'PAT001', name: 'Ria Sharma', firstName: 'Ria', lastName: 'Sharma' }, date: '2026-10-16', slot: '14:00', status: 'upcoming' },
-  { id: 'APT_NEW_006', userId: 'PAT002', patientId: 'PAT002', patientName: 'Arun Menon', patient: { id: 'PAT002', name: 'Arun Menon', firstName: 'Arun', lastName: 'Menon' }, date: '2026-10-16', slot: '14:30', status: 'upcoming' },
-];
+const DEFAULT_APPOINTMENTS = [];
 
-// ── Initial Treatment Plans Demo Seed ─────────────────────────────────────────
-const INITIAL_DEMO_PLANS = [
-  {
-    id: 'REC_TP_001',
-    patientId: 'PAT001',
-    patientName: 'Ria Sharma',
-    appointmentId: 'APT_NEW_001',
-    date: '2026-10-12',
-    duration: '2 weeks',
-    medicines: 'Cetirizine 10mg – once daily at bedtime\nCalamine soothing lotion – apply twice daily\nVitamin C 500mg – once daily after breakfast',
-    tests: 'Complete Blood Count (CBC) | Fasting Blood Sugar',
-    labTestDate: '2026-10-14',
-    lifestyle: 'Drink at least 2.5L water daily. Avoid direct intense sun exposure between 11 AM - 3 PM.',
-    diet: 'Low-histamine diet. Avoid processed and packaged foods. Increase green leafy vegetables.',
-  },
-  {
-    id: 'REC_TP_002',
-    patientId: 'PAT002',
-    patientName: 'Arun Menon',
-    appointmentId: 'APT_NEW_002',
-    date: '2026-10-10',
-    duration: '1 month',
-    medicines: 'Atorvastatin 10mg – once daily at bedtime\nTelmisartan 40mg – once daily in the morning',
-    tests: 'Lipid Profile | Liver Function Test (LFT)',
-    labTestDate: '2026-10-15',
-    lifestyle: 'Brisk walking 40 mins 5 days a week. Keep track of blood pressure twice weekly.',
-    diet: 'Low-sodium, heart-healthy Mediterranean-style meals. Limit saturated fats and fried items.',
-  },
-];
+const INITIAL_DEMO_PLANS = [];
 
 function normalizePatient(p) {
   const id = p.userId || p.id || p.patientId || '';
@@ -118,10 +76,10 @@ export default function TreatmentPlan() {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'create'
 
   // ── Data ──────────────────────────────────────────────────────────────────
-  const [plans,        setPlans]        = useState(INITIAL_DEMO_PLANS);
+  const [plans,        setPlans]        = useState([]);
   const [labCatalog,   setLabCatalog]   = useState(DEFAULT_LAB_TESTS);
-  const [appointments, setAppointments] = useState(DEFAULT_APPOINTMENTS);
-  const [patients,     setPatients]     = useState(DEFAULT_PATIENTS.map(normalizePatient));
+  const [appointments, setAppointments] = useState([]);
+  const [patients,     setPatients]     = useState([]);
   const [loading,      setLoading]      = useState(false);
   const [saving,       setSaving]       = useState(false);
   const [alert,        setAlert]        = useState(null);
@@ -150,12 +108,7 @@ export default function TreatmentPlan() {
       // 1. Treatment plans
       if (recRes.status === 'fulfilled' && recRes.value.ok) {
         const d = await recRes.value.json();
-        if (Array.isArray(d)) {
-          const fetchedPlans = d.filter((r) => r.type === 'treatment');
-          if (fetchedPlans.length > 0) {
-            setPlans(fetchedPlans);
-          }
-        }
+        setPlans(Array.isArray(d) ? d.filter((r) => r.type === 'treatment') : []);
       }
 
       // 2. Lab catalog
@@ -167,21 +120,19 @@ export default function TreatmentPlan() {
       }
 
       // 3. Appointments
-      let loadedAppts = DEFAULT_APPOINTMENTS;
+      let loadedAppts = [];
       if (apptRes.status === 'fulfilled' && apptRes.value.ok) {
         const d = await apptRes.value.json();
-        if (Array.isArray(d) && d.length > 0) {
+        if (Array.isArray(d)) {
           loadedAppts = d;
           setAppointments(d);
         }
+      } else {
+        setAppointments([]);
       }
 
-      // 4. Patients — multi-source aggregation (API + appointments + default catalog)
+      // 4. Patients — multi-source aggregation (API + appointments)
       const patientMap = new Map();
-      DEFAULT_PATIENTS.forEach((p) => {
-        const norm = normalizePatient(p);
-        patientMap.set(norm.userId, norm);
-      });
 
       // Extract patients from appointments
       loadedAppts.forEach((a) => {
