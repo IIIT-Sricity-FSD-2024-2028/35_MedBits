@@ -1,0 +1,358 @@
+/* ==========================================================================
+   SuperUserDashboard.css — Super Admin Branch & Admin Management Styles
+   ========================================================================== */
+
+.sud-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* ── Hero Banner ── */
+.sud-hero {
+  position: relative;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  padding: 1.75rem 2rem;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.sud-hero::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  bottom: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sud-eyebrow {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  margin-bottom: 0.6rem;
+}
+
+.sud-hero h1 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  color: #ffffff;
+}
+
+.sud-hero p {
+  color: #94a3b8;
+  font-size: 0.92rem;
+  max-width: 650px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Toast Notification ── */
+.sud-toast {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  padding: 0.85rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: sudFadeIn 0.25s ease-out;
+}
+
+.sud-toast.success {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.sud-toast.error {
+  background: #be123c;
+  color: #ffffff;
+}
+
+@keyframes sudFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Two Column Panel Grid ── */
+.sud-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .sud-panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Card Containers ── */
+.sud-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.sud-card-header {
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.sud-card-header h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem;
+}
+
+.sud-card-header p {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ── Forms ── */
+.sud-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sud-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.sud-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sud-field.full {
+  grid-column: 1 / -1;
+}
+
+.sud-field span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.sud-field input,
+.sud-field select,
+.sud-field textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #0f172a;
+  background-color: #f8fafc;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.sud-field input:focus,
+.sud-field select:focus,
+.sud-field textarea:focus {
+  border-color: #0284c7;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.sud-field textarea {
+  resize: vertical;
+  min-height: 68px;
+}
+
+.sud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  margin-top: 0.5rem;
+}
+
+.sud-btn:hover:not(:disabled) {
+  background: #0369a1;
+  transform: translateY(-1px);
+}
+
+.sud-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Live Registry Table ── */
+.sud-search-box {
+  position: relative;
+  min-width: 280px;
+}
+
+.sud-search-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem 0.6rem 2.2rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  font-size: 0.85rem;
+  outline: none;
+  box-sizing: border-box;
+  background: #f8fafc;
+}
+
+.sud-search-input:focus {
+  border-color: #0284c7;
+  background: #ffffff;
+}
+
+.sud-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.sud-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+}
+
+.sud-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.sud-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sud-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.sud-table tr:last-child td {
+  border-bottom: none;
+}
+
+.sud-table tr:hover {
+  background: #f8fafc;
+}
+
+.sud-branch-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sud-hospital-sub {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Admin cell */
+.sud-admin-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.sud-admin-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+/* Status Badges */
+.sud-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.sud-badge.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.sud-badge.inactive {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.sud-badge.unassigned {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.sud-view-btn {
+  padding: 0.45rem 0.85rem;
+  background: #f0f9ff;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sud-view-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.sud-empty-cell {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #94a3b8;
+}
