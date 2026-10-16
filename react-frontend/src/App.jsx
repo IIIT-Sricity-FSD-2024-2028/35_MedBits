@@ -46,6 +46,7 @@ import FrontDeskProfile from './pages/FrontDesk/FrontDeskProfile';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import TestRequests from './pages/LabTechnician/TestRequests';
 import LabReports from './pages/LabTechnician/LabReports';
+import LabTechProfile from './pages/LabTechnician/LabTechProfile';
 import BranchAdminDashboard from './pages/BranchAdmin/BranchAdminDashboard';
 import ManageDoctors from './pages/BranchAdmin/ManageDoctors';
 import ManageFrontDesk from './pages/BranchAdmin/ManageFrontDesk';
@@ -207,10 +208,13 @@ export default function App() {
               <DemoPage pageTitle="Leave" />
             </ProtectedRoute>
           } />
-          <Route path="/lab-technician/my-account" element={
+          <Route path="/lab-technician/profile" element={
             <ProtectedRoute allowedRoles={['labtech']}>
-              <DemoPage pageTitle="My Account" />
+              <LabTechProfile />
             </ProtectedRoute>
+          } />
+          <Route path="/lab-technician/my-account" element={
+            <Navigate to="/lab-technician/profile" replace />
           } />
 
           {/* ── 6. BRANCH ADMIN ROUTES ──────────────────────────────────

@@ -422,18 +422,18 @@
     "requestDate": "2028-02-02",
     "consultationNote": "halo",
     "prescriptionMedicines": "",
-    "status": "draft_report",
+    "status": "completed",
     "acceptedByTechnicianId": "c6bae3c7-060f-4235-ad7f-ceaa30292ae6",
     "acceptedAt": "2026-08-30T16:57:05.185Z",
     "startedAt": "2026-08-30T16:57:05.185Z",
     "draftSavedAt": "2026-08-31T14:44:37.657Z",
-    "completedAt": null,
+    "completedAt": "2026-10-16T12:09:46.756Z",
     "rejectedAt": null,
     "rejectedByTechnicianId": null,
     "rejectionReason": null,
     "reportId": "LREP1788187477657934",
     "createdAt": "2026-08-30T16:56:47.411Z",
-    "updatedAt": "2026-08-31T14:44:37.657Z"
+    "updatedAt": "2026-10-16T12:09:46.756Z"
   },
   {
     "id": "LREQ1788107163933001",
