@@ -47,13 +47,14 @@ export default function UserProfile({
   transformDataOnLoad,
   transformDataOnSave,
   onSaveSuccess,
+  initialData,
 }) {
   const { user } = useAuth();
 
-  const [profile, setProfile] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  const [profile, setProfile] = useState(initialData || null);
+  const [editForm, setEditForm] = useState(initialData || {});
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && Boolean(fetchUrl));
   const [isSaving, setIsSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -62,12 +63,27 @@ export default function UserProfile({
     setReloadKey((prev) => prev + 1);
   }, []);
 
+  // Update if initialData changes and no fetchUrl is used
+  useEffect(() => {
+    if (initialData && !fetchUrl) {
+      const finalData = transformDataOnLoad ? transformDataOnLoad(initialData) : initialData;
+      setProfile(finalData);
+      setEditForm(finalData);
+      setIsLoading(false);
+    }
+  }, [initialData, fetchUrl, transformDataOnLoad]);
+
   // ── Fetch Profile ────────────────────────────────────────────────
   useEffect(() => {
     let isMounted = true;
 
     async function loadProfile() {
       if (!fetchUrl) {
+        if (initialData) {
+          const finalData = transformDataOnLoad ? transformDataOnLoad(initialData) : initialData;
+          setProfile(finalData);
+          setEditForm(finalData);
+        }
         setIsLoading(false);
         return;
       }

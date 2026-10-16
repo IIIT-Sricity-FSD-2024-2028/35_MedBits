@@ -274,7 +274,7 @@
     "technicianId": "c6bae3c7-060f-4235-ad7f-ceaa30292ae6",
     "technicianName": "Suresh Kumar",
     "testName": "halo",
-    "result": "",
+    "result": "done",
     "findings": "",
     "remarks": "",
     "fileAttachment": null,
@@ -284,10 +284,10 @@
     "uploadedFileMimeType": null,
     "uploadedFileSize": null,
     "uploadedAt": null,
-    "status": "draft",
+    "status": "submitted",
     "createdAt": "2026-08-31T14:44:37.657Z",
-    "updatedAt": "2026-08-31T14:44:37.657Z",
-    "submittedAt": null
+    "updatedAt": "2026-10-16T12:09:46.756Z",
+    "submittedAt": "2026-10-16T12:09:46.756Z"
   },
   {
     "id": "LREP1788112020838784",
