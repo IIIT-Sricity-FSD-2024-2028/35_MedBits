@@ -1,0 +1,571 @@
+/**
+ * LabReports.css — Styling for Lab Technician Lab Reports & Reporting
+ * ==============================================================================
+ * Clean, modern layout matching the MedBits design system:
+ *  - Responsive data table & tabs
+ *  - Send Report modal with patient summary & diagnostic inputs
+ *  - Branded printable diagnostic report sheet
+ */
+
+/* ── Container Layout ────────────────────────────────────────────────────────── */
+.lr-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Alert Notification Banner ──────────────────────────────────────────────── */
+.lr-alert-banner {
+  padding: 12px 18px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.lr-alert-banner--success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.lr-alert-banner--error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.lr-alert-banner--info {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.lr-alert-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  color: inherit;
+  padding: 0 4px;
+}
+
+/* ── Card Containers ─────────────────────────────────────────────────────────── */
+.lr-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+/* ── Toolbar: Search & Filter Tabs ───────────────────────────────────────────── */
+.lr-toolbar {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.lr-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 14px;
+  flex: 1;
+  min-width: 260px;
+  max-width: 480px;
+  transition: border-color 0.15s ease;
+}
+
+.lr-search-box:focus-within {
+  border-color: #0d9488;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.lr-search-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+}
+
+.lr-search-input::placeholder {
+  color: #94a3b8;
+}
+
+/* ── Filter Buttons Group ────────────────────────────────────────────────────── */
+.lr-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lr-filter-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lr-filter-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.lr-filter-btn--active {
+  background: #0d9488;
+  border-color: #0d9488;
+  color: #ffffff;
+}
+
+.lr-filter-btn--active:hover {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
+.lr-filter-count {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.lr-filter-btn--active .lr-filter-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ── Table Header Strip ──────────────────────────────────────────────────────── */
+.lr-table-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lr-table-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.lr-table-badge {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* ── Responsive Table ────────────────────────────────────────────────────────── */
+.lr-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.lr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+
+.lr-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.lr-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.lr-table tr:hover td {
+  background: #fcfdfe;
+}
+
+.lr-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Status Badges ───────────────────────────────────────────────────────────── */
+.lr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.lr-badge--in-progress {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.lr-badge--draft {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.lr-badge--completed {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+/* ── Table Action Buttons ────────────────────────────────────────────────────── */
+.lr-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.lr-btn--primary {
+  background: #0d9488;
+  color: #ffffff;
+  border-color: #0d9488;
+}
+
+.lr-btn--primary:hover:not(:disabled) {
+  background: #0f766e;
+  border-color: #0f766e;
+}
+
+.lr-btn--outline {
+  background: #ffffff;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.lr-btn--outline:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.lr-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Modal Dialog Styles ─────────────────────────────────────────────────────── */
+.lr-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+}
+
+.lr-modal-dialog {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.lr-modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lr-modal-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.lr-modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.lr-modal-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.lr-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.lr-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+/* Patient Summary Box inside Send Modal */
+.lr-patient-summary {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.lr-ps-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.lr-ps-value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Form Controls in Send Modal */
+.lr-form-group {
+  margin-bottom: 14px;
+}
+
+.lr-form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.lr-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #0f172a;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.lr-textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+/* File Dropzone & Attached Chip */
+.lr-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lr-dropzone:hover {
+  border-color: #0d9488;
+  background: #f0fdf4;
+}
+
+.lr-file-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  margin-top: 8px;
+  font-size: 13.5px;
+}
+
+/* ── Printable Diagnostic Report Sheet ───────────────────────────────────────── */
+.lr-report-sheet {
+  background: #ffffff;
+  padding: 8px;
+}
+
+.lr-report-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #0f172a;
+  margin-bottom: 18px;
+}
+
+.lr-report-brand-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #0f172a;
+}
+
+.lr-report-brand-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.lr-report-meta-box {
+  text-align: right;
+  font-size: 12.5px;
+  color: #475569;
+}
+
+.lr-report-grid {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.lr-report-section {
+  margin-bottom: 16px;
+}
+
+.lr-report-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.lr-report-result-box {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #14532d;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.lr-report-text-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.lr-report-signoff {
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px dashed #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .lr-modal-dialog,
+  .lr-modal-dialog * {
+    visibility: visible;
+  }
+  .lr-modal-dialog {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+  }
+  .lr-modal-header,
+  .lr-modal-footer {
+    display: none !important;
+  }
+}
