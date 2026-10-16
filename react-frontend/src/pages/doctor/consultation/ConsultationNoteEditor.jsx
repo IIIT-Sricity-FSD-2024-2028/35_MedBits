@@ -17,6 +17,7 @@ export default function ConsultationNoteEditor({
   patient,
   initialRecord,
   labCatalog = [],
+  labReports = [],
   onCancel,
   onSave,
   isSaving,
@@ -33,6 +34,35 @@ export default function ConsultationNoteEditor({
   );
   const [labTestDate, setLabTestDate] = useState(initialRecord?.labTestDate || '');
   const [followUpDate, setFollowUpDate] = useState(initialRecord?.followUpDate || initialRecord?.followUp || '');
+
+  // Only show returned lab reports if specifically editing an existing medical record
+  // that already has a completed lab report specifically linked to it.
+  // When writing a note for a patient, previous lab reports must NOT be shown.
+  const isEditing = Boolean(initialRecord?.id);
+  const relevantReports = isEditing
+    ? [
+        ...(initialRecord?.labReport ? [initialRecord.labReport] : []),
+        ...(labReports || []).filter((r) => {
+          if (
+            initialRecord?.labReport &&
+            (r.id === initialRecord.labReport.id || r.labRequestId === initialRecord.labReport.labRequestId)
+          ) {
+            return false;
+          }
+          return r.medicalRecordId && r.medicalRecordId === initialRecord.id;
+        }),
+      ]
+    : [];
+
+  if (isEditing && relevantReports.length === 0 && (initialRecord?.labResult || initialRecord?.labFindings)) {
+    relevantReports.push({
+      testName: initialRecord.tests || 'Diagnostic Lab Test',
+      result: initialRecord.labResult,
+      findings: initialRecord.labFindings,
+      remarks: initialRecord.labRemarks,
+      status: initialRecord.labReportStatus || 'submitted',
+    });
+  }
 
   // Prescription adder & remover
   const handleAddMedicine = () => {
@@ -62,8 +92,10 @@ export default function ConsultationNoteEditor({
   const handleSubmit = (e) => {
     e.preventDefault();
     onSave({
-      patientId: patient?.userId || patient?.id,
-      patientName: patient?.name || `${patient?.firstName || ''} ${patient?.lastName || ''}`.trim() || 'Patient',
+      id: initialRecord?.id,
+      appointmentId: initialRecord?.appointmentId || patient?.appointmentId,
+      patientId: patient?.userId || patient?.id || initialRecord?.patientId || 'PAT001',
+      patientName: patient?.name || (patient?.firstName ? `${patient.firstName} ${patient.lastName || ''}`.trim() : null) || initialRecord?.patientName || 'Patient',
       consultationNote: notes.trim(),
       medicines: medicines.join('|'),
       tests: labTests.join('|'),
@@ -95,6 +127,119 @@ export default function ConsultationNoteEditor({
           </span>
         </div>
       </div>
+
+      {/* Returned Diagnostic Lab Report from Technician */}
+      {relevantReports.length > 0 && (
+        <div className="cn-section-card" style={{ borderLeft: '4px solid #10b981', marginBottom: '20px' }}>
+          <div className="cn-section-header" style={{ marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🧪</span>
+              <h3 className="cn-section-title" style={{ margin: 0, color: '#065f46' }}>
+                Diagnostic Lab Test Report (Returned by Lab Technician)
+              </h3>
+            </div>
+            <span
+              style={{
+                background: '#ecfdf5',
+                color: '#065f46',
+                border: '1px solid #a7f3d0',
+                padding: '3px 10px',
+                borderRadius: '9999px',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+            >
+              ✓ Report Received
+            </span>
+          </div>
+
+          {relevantReports.map((rep, idx) => (
+            <div
+              key={rep.id || idx}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: idx < relevantReports.length - 1 ? '12px' : 0,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#1e293b' }}>
+                    {rep.testName || rep.testType || 'Diagnostic Lab Test'}
+                  </h4>
+                  <div style={{ fontSize: '13px', color: '#64748b' }}>
+                    Lab Technician: <strong>{rep.technicianName || 'Certified Technician'}</strong> •{' '}
+                    Completed: {rep.submittedAt ? rep.submittedAt.split('T')[0] : (rep.completedDate || rep.date || 'Recently')}
+                  </div>
+                </div>
+
+                {rep.result && (
+                  <div
+                    style={{
+                      background: '#ecfdf5',
+                      border: '1px solid #a7f3d0',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      textAlign: 'right',
+                    }}
+                  >
+                    <span style={{ fontSize: '11px', color: '#065f46', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Measured Result
+                    </span>
+                    <strong style={{ fontSize: '14px', color: '#047857' }}>{rep.result}</strong>
+                  </div>
+                )}
+              </div>
+
+              {rep.findings && (
+                <div style={{ marginTop: '12px', padding: '10px 12px', background: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '2px' }}>
+                    Clinical Findings & Observations:
+                  </span>
+                  <div style={{ fontSize: '13.5px', color: '#1e293b', whiteSpace: 'pre-wrap' }}>
+                    {rep.findings}
+                  </div>
+                </div>
+              )}
+
+              {rep.remarks && (
+                <div style={{ marginTop: '8px', fontSize: '12.5px', color: '#64748b' }}>
+                  <strong>Technician Remarks:</strong> {rep.remarks}
+                </div>
+              )}
+
+              {rep.fileAttachment?.fileData && (
+                <div style={{ marginTop: '10px' }}>
+                  <a
+                    href={rep.fileAttachment.fileData}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: '13px', color: '#2563eb', fontWeight: 600, textDecoration: 'underline' }}
+                  >
+                    📎 Download Attached Report File ({rep.fileAttachment.fileName || 'Report'})
+                  </a>
+                </div>
+              )}
+
+              <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn-back"
+                  style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0', fontSize: '12px', padding: '4px 10px' }}
+                  onClick={() => {
+                    const textToAppend = `[Lab Findings - ${rep.testName || 'Test'}]: Result: ${rep.result || 'Completed'}. Findings: ${rep.findings || 'Within normal parameters.'}`;
+                    setNotes((prev) => (prev ? `${prev}\n\n${textToAppend}` : textToAppend));
+                  }}
+                >
+                  📋 Append Findings to Consultation Note
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Form Card */}
       <div className="cn-section-card">

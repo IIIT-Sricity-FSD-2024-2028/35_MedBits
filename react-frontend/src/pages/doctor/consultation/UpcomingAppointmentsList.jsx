@@ -14,18 +14,24 @@ export default function UpcomingAppointmentsList({
   appointments = [],
   onStartConsultation,
 }) {
+  const upcomingList = appointments.filter((apt) => apt.status === 'upcoming');
+  const MAX_DISPLAY = 5;
+  const displayedAppointments = upcomingList.slice(0, MAX_DISPLAY);
+
   return (
     <div className="cn-section-card">
       <div className="cn-section-header">
         <h3 className="cn-section-title">Upcoming Appointments</h3>
-        <span className="cn-count-badge">{appointments.length} patients waiting</span>
+        <span className="cn-count-badge">
+          {displayedAppointments.length}{displayedAppointments.length < upcomingList.length ? ` of ${upcomingList.length}` : ''} patients waiting
+        </span>
       </div>
 
-      {appointments.length === 0 ? (
+      {displayedAppointments.length === 0 ? (
         <p className="cn-empty-text">No upcoming appointments scheduled for today.</p>
       ) : (
         <div className="cn-list-column">
-          {appointments.map((apt) => {
+          {displayedAppointments.map((apt) => {
             const patientName = apt.patient?.name || apt.patientName || apt.userId || 'Patient';
             const initials = (patientName.slice(0, 2)).toUpperCase();
 
@@ -37,7 +43,7 @@ export default function UpcomingAppointmentsList({
                   <div>
                     <h4 className="cn-item-name">{patientName}</h4>
                     <div className="cn-item-subtitle">
-                      Token: <strong>{apt.token || '—'}</strong> | Time: {apt.slot || apt.time || '—'}
+                      Token: <strong>{apt.token || apt.id || '—'}</strong> | Time: {apt.slot || apt.time || '—'} | Date: {apt.date || '—'}
                     </div>
                   </div>
                 </div>
@@ -53,6 +59,11 @@ export default function UpcomingAppointmentsList({
               </div>
             );
           })}
+          {upcomingList.length > MAX_DISPLAY && (
+            <div style={{ fontSize: '13px', color: '#64748b', textAlign: 'center', padding: '8px 0 2px' }}>
+              + {upcomingList.length - MAX_DISPLAY} more scheduled appointments (use search above to find any patient)
+            </div>
+          )}
         </div>
       )}
     </div>

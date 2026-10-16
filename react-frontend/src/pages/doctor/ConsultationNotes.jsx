@@ -34,6 +34,7 @@ export default function ConsultationNotes() {
   // 'editor' = Note-taking workspace for selected patient
   const [viewMode, setViewMode] = useState('list');
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [editingRecord, setEditingRecord] = useState(null);
   const [activeReport, setActiveReport] = useState(null);
 
@@ -51,13 +52,16 @@ export default function ConsultationNotes() {
   // ── DATA FETCHING: Load initial OPD data from backend ─────────────────
   const loadConsultationData = useCallback(async () => {
     try {
-      // 1. Fetch appointments assigned to this doctor
+      // 1. Fetch appointments assigned to this doctor (only upcoming ones)
       const apptRes = await fetch(`${API_BASE}/appointments/doctor/${encodeURIComponent(doctorId)}`, {
         headers: { role: 'doctor' },
       });
       if (apptRes.ok) {
         const apptData = await apptRes.json();
-        setAppointments(Array.isArray(apptData) ? apptData : []);
+        const activeUpcoming = (Array.isArray(apptData) ? apptData : []).filter(
+          (apt) => apt.status === 'upcoming'
+        );
+        setAppointments(activeUpcoming);
       } else {
         setAppointments([]);
       }
@@ -68,7 +72,10 @@ export default function ConsultationNotes() {
       });
       if (recordsRes.ok) {
         const recData = await recordsRes.json();
-        setRecords(Array.isArray(recData) ? recData : []);
+        const consultRecords = (Array.isArray(recData) ? recData : []).filter(
+          (rec) => rec.type === 'consultation' || !rec.type
+        );
+        setRecords(consultRecords);
       }
 
       // 3. Fetch diagnostic lab tests catalog
@@ -79,6 +86,17 @@ export default function ConsultationNotes() {
         const testsData = await testsRes.json();
         setLabCatalog(Array.isArray(testsData) ? testsData : []);
       }
+
+      // 4. Fetch submitted lab reports for this doctor
+      try {
+        const reportsRes = await fetch(`${API_BASE}/lab-reports/doctor`, {
+          headers: { role: 'doctor', 'x-user-id': doctorId },
+        });
+        if (reportsRes.ok) {
+          const reportsData = await reportsRes.json();
+          setLabReports(Array.isArray(reportsData) ? reportsData : []);
+        }
+      } catch (_) {}
     } catch {
       setAppointments([]);
     }
@@ -92,12 +110,17 @@ export default function ConsultationNotes() {
 
   // Triggered when doctor starts or edits a note for an appointment
   const handleStartConsultation = (appointment) => {
+    setSelectedAppointment(appointment);
     const patientObj = appointment.patient || {
       name: appointment.patientName || appointment.userId,
       userId: appointment.userId || appointment.patientId,
       gender: appointment.gender,
       age: appointment.age,
+      appointmentId: appointment.id,
     };
+    if (!patientObj.appointmentId) {
+      patientObj.appointmentId = appointment.id;
+    }
     setSelectedPatient(patientObj);
     setEditingRecord(null);
     setViewMode('editor');
@@ -106,50 +129,113 @@ export default function ConsultationNotes() {
 
   // Triggered when doctor edits an existing record
   const handleEditRecord = (rec) => {
+    setSelectedAppointment(null);
     setSelectedPatient({
       name: rec.patientName || rec.patientId,
       userId: rec.patientId,
       gender: rec.gender,
       age: rec.age,
+      appointmentId: rec.appointmentId,
     });
     setEditingRecord(rec);
     setViewMode('editor');
     setAlertBanner(null);
   };
 
-  // Submit consultation record to backend (POST /medical-records)
+  // Submit consultation record to backend (PUT if editing, POST if new)
   const handleSaveNote = async (notePayload) => {
     setIsSaving(true);
     setAlertBanner(null);
 
     const payload = {
-      doctorId: user?.id,
+      doctorId: doctorId || user?.doctorId || user?.id,
       doctorName: user?.name || 'Dr. Medical Officer',
       specialization: user?.specialization || 'General Physician',
       date: new Date().toISOString().split('T')[0],
       ...notePayload,
     };
 
+    const targetAppointmentId =
+      notePayload.appointmentId || selectedAppointment?.id;
+
     try {
-      const response = await fetch(`${API_BASE}/medical-records`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          role: 'doctor',
-        },
-        body: JSON.stringify(payload),
-      });
+      if (editingRecord?.id) {
+        // ── UPDATE EXISTING RECORD (PREVENTS 2 COPIES) ──────────────
+        const response = await fetch(
+          `${API_BASE}/medical-records/${encodeURIComponent(editingRecord.id)}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              role: 'doctor',
+            },
+            body: JSON.stringify(payload),
+          }
+        );
 
-      if (!response.ok) {
-        throw new Error('Failed to save record');
+        if (!response.ok) {
+          throw new Error('Failed to update record');
+        }
+
+        const updatedRecord = await response.json();
+        // Replace old record in state in-place so no duplicate is created
+        setRecords((prev) =>
+          prev.map((r) => (r.id === editingRecord.id ? updatedRecord : r))
+        );
+        setEditingRecord(null);
+        setSelectedPatient(null);
+        setSelectedAppointment(null);
+        setViewMode('list');
+        setAlertBanner({
+          type: 'success',
+          text: 'Consultation note updated successfully!',
+        });
+      } else {
+        // ── CREATE NEW RECORD ───────────────────────────────────────
+        const response = await fetch(`${API_BASE}/medical-records`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            role: 'doctor',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save record');
+        }
+
+        const savedRecord = await response.json();
+        setRecords((prev) => [savedRecord, ...prev]);
+
+        // Complete the appointment in backend and remove from upcoming queue
+        if (targetAppointmentId) {
+          await fetch(
+            `${API_BASE}/appointments/${encodeURIComponent(targetAppointmentId)}/complete`,
+            {
+              method: 'POST',
+              headers: { role: 'doctor' },
+            }
+          ).catch(() => {});
+
+          setAppointments((prev) =>
+            prev.filter((a) => a.id !== targetAppointmentId)
+          );
+        }
+
+        setSelectedAppointment(null);
+        setSelectedPatient(null);
+        setViewMode('list');
+        setAlertBanner({
+          type: 'success',
+          text: 'Consultation note saved successfully!',
+        });
       }
-
-      const savedRecord = await response.json();
-      setRecords((prev) => [savedRecord, ...prev]);
-      setViewMode('list');
-      setAlertBanner({ type: 'success', text: 'Consultation note saved successfully!' });
     } catch {
-      setAlertBanner({ type: 'error', text: 'Failed to save note. Please check backend connection.' });
+      setAlertBanner({
+        type: 'error',
+        text: 'Failed to save note. Please check backend connection.',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -183,6 +269,7 @@ export default function ConsultationNotes() {
               appointments={appointments}
               onSelectAppointment={handleStartConsultation}
               onCreateNewNote={() => {
+                setSelectedAppointment(null);
                 setSelectedPatient(null);
                 setEditingRecord(null);
                 setViewMode('editor');
@@ -198,6 +285,7 @@ export default function ConsultationNotes() {
               records={records}
               onViewAll={() => {}}
               onEditRecord={handleEditRecord}
+              onViewLabReport={(rep) => setActiveReport(rep)}
             />
 
             <CompletedLabReportsList
@@ -211,6 +299,7 @@ export default function ConsultationNotes() {
             patient={selectedPatient}
             initialRecord={editingRecord}
             labCatalog={labCatalog}
+            labReports={labReports}
             onCancel={() => setViewMode('list')}
             onSave={handleSaveNote}
             isSaving={isSaving}

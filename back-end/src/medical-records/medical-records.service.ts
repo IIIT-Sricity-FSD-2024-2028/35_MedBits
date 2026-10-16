@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { AppointmentsService } from '../appointments/appointments.service';
@@ -28,9 +28,15 @@ export type MedicalRecord = {
   lifestyle?: string;
   diet?: string;
   duration?: string;
+  labReport?: any;
+  labReportStatus?: string;
+  labResult?: string;
+  labFindings?: string;
+  labRemarks?: string;
 };
 
 export type CreateMedicalRecordInput = {
+  id?: string;
   doctorId: string;
   patientId: string;
   patientName?: string;
@@ -146,7 +152,33 @@ export class MedicalRecordsService {
   }
 
   getRecordsByDoctorId(doctorId: string) {
-    return this.medicalRecords.filter((record) => record.doctorId === doctorId);
+    const cleanDoctorId = doctorId?.trim();
+    const records = this.medicalRecords.filter((record) => record.doctorId === cleanDoctorId);
+
+    let doctorReports: any[] = [];
+    try {
+      doctorReports = this.labRequestsService.findReportsForDoctor(cleanDoctorId);
+    } catch (_) {}
+
+    return records.map((record) => {
+      const matchingReport = (doctorReports || []).find(
+        (rep) =>
+          (rep.medicalRecordId && rep.medicalRecordId === record.id) ||
+          (record.appointmentId && rep.appointmentId === record.appointmentId) ||
+          (rep.patientId === record.patientId && rep.testName && record.tests && record.tests.includes(rep.testName)),
+      );
+      if (matchingReport) {
+        return {
+          ...record,
+          labReport: matchingReport,
+          labReportStatus: matchingReport.status || 'submitted',
+          labResult: matchingReport.result,
+          labFindings: matchingReport.findings,
+          labRemarks: matchingReport.remarks,
+        };
+      }
+      return { ...record };
+    });
   }
 
   getFollowUps() {
@@ -184,6 +216,13 @@ export class MedicalRecordsService {
   }
 
   async createRecord(input: CreateMedicalRecordInput): Promise<MedicalRecord> {
+    if (input.id) {
+      const existing = this.medicalRecords.find((r) => r.id === input.id);
+      if (existing) {
+        return this.updateRecord(input.id, input);
+      }
+    }
+
     if (!input.doctorId || !input.patientId || !input.type) {
       throw new BadRequestException('doctorId, patientId, and type are required');
     }
@@ -197,7 +236,7 @@ export class MedicalRecordsService {
       input.followUpDate?.trim() || input.followUp?.trim() || undefined;
 
     const record: MedicalRecord = {
-      id: `MR${Date.now()}`,
+      id: input.id || `MR${Date.now()}`,
       doctorId: input.doctorId,
       patientId: input.patientId,
       patientName: input.patientName?.trim(),
@@ -228,6 +267,39 @@ export class MedicalRecordsService {
     }
 
     this.medicalRecords.unshift(record);
+    this.persistRecords();
+
+    if (record.tests) {
+      await this.createLabRequestsForRecord(record);
+    }
+
+    return {
+      ...record,
+      followUpDate: record.followUpDate || record.followUp,
+    };
+  }
+
+  async updateRecord(id: string, input: Partial<CreateMedicalRecordInput>): Promise<MedicalRecord> {
+    const record = this.medicalRecords.find((r) => r.id === id);
+    if (!record) {
+      throw new NotFoundException(`Medical record with ID ${id} not found`);
+    }
+
+    if (input.consultationNote !== undefined) record.consultationNote = input.consultationNote?.trim();
+    if (input.medicines !== undefined) record.medicines = input.medicines?.trim();
+    if (input.tests !== undefined) record.tests = input.tests?.trim();
+    if (input.labTestDate !== undefined) record.labTestDate = input.labTestDate?.trim();
+    if (input.followUpDate !== undefined || input.followUp !== undefined) {
+      const followUp = (input.followUpDate || input.followUp || '').trim() || undefined;
+      record.followUp = followUp;
+      record.followUpDate = followUp;
+    }
+    if (input.lifestyle !== undefined) record.lifestyle = input.lifestyle?.trim();
+    if (input.diet !== undefined) record.diet = input.diet?.trim();
+    if (input.duration !== undefined) record.duration = input.duration?.trim();
+    if (input.patientName !== undefined) record.patientName = input.patientName?.trim();
+    if (input.appointmentId !== undefined) record.appointmentId = input.appointmentId?.trim();
+
     this.persistRecords();
 
     if (record.tests) {
