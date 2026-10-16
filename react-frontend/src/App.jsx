@@ -45,6 +45,7 @@ import QueueManagement from './pages/FrontDesk/QueueManagement';
 import FrontDeskProfile from './pages/FrontDesk/FrontDeskProfile';
 import LabTechDashboard from './pages/dashboards/LabTechDashboard';
 import TestRequests from './pages/LabTechnician/TestRequests';
+import LabReports from './pages/LabTechnician/LabReports';
 import BranchAdminDashboard from './pages/BranchAdmin/BranchAdminDashboard';
 import ManageDoctors from './pages/BranchAdmin/ManageDoctors';
 import ManageFrontDesk from './pages/BranchAdmin/ManageFrontDesk';
@@ -198,7 +199,7 @@ export default function App() {
           } />
           <Route path="/lab-technician/lab-reports" element={
             <ProtectedRoute allowedRoles={['labtech']}>
-              <DemoPage pageTitle="Lab Reports" />
+              <LabReports />
             </ProtectedRoute>
           } />
           <Route path="/lab-technician/leave" element={
