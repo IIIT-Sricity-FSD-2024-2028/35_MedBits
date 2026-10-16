@@ -4882,13 +4882,20 @@
           "branchId": {
             "type": "string",
             "description": "Hospital branch UUID. Ignored for branch admin requests."
+          },
+          "phone": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "gender": {
+            "type": "string",
+            "example": "Female"
           }
         },
         "required": [
           "name",
           "email",
-          "password",
-          "branchId"
+          "password"
         ]
       },
       "CreateTestBookingDto": {
