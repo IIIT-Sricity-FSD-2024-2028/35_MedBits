@@ -31,35 +31,10 @@ const STATUS_COLORS = {
   completed: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', label: 'Completed' },
 };
 
-// ── Default Registered Patients Fallback Catalog ──────────────────────────────
-const DEFAULT_PATIENTS = [
-  { userId: 'PAT001', id: 'PAT001', firstName: 'Ria', lastName: 'Sharma', name: 'Ria Sharma', phone: '9473487399', email: 'ria@medbits.com', gender: 'Female', bloodGroup: 'A+' },
-  { userId: 'PAT002', id: 'PAT002', firstName: 'Arun', lastName: 'Menon', name: 'Arun Menon', phone: '9123456780', email: 'arun.menon@medbits.com', gender: 'Male', bloodGroup: 'O+' },
-  { userId: 'PAT003', id: 'PAT003', firstName: 'Farah', lastName: 'Ali', name: 'Farah Ali', phone: '9988776655', email: 'farah.ali@medbits.com', gender: 'Female', bloodGroup: 'A-' },
-  { userId: 'PAT004', id: 'PAT004', firstName: 'Dev', lastName: 'Patel', name: 'Dev Patel', phone: '9012345678', email: 'dev.patel@medbits.com', gender: 'Male', bloodGroup: 'AB+' },
-];
-
-// ── Default Doctors Fallback Catalog ──────────────────────────────────────────
-const DEFAULT_DOCTORS = [
-  { id: 'DOC002', userId: 'DOC002', name: 'Dr. Ashwini Ray', specialization: 'Dermatologist', department: 'Dermatology', consultationFee: 700 },
-  { id: 'DOC003', userId: 'DOC003', name: 'Dr. Sarah Johnson', specialization: 'Cardiologist', department: 'Cardiology', consultationFee: 850 },
-  { id: 'DOC005', userId: 'DOC005', name: 'Dr. Paul Johnson', specialization: 'Pediatrician', department: 'Paediatrics', consultationFee: 1100 },
-  { id: 'DOC006', userId: 'DOC006', name: 'Dr. Robert Wilson', specialization: 'Orthopedic', department: 'Orthopaedics', consultationFee: 550 },
-  { id: 'DOC008', userId: 'DOC008', name: 'Dr. Kavita Sharma', specialization: 'General', department: 'General Medicine', consultationFee: 600 },
-  { id: 'DOC009', userId: 'DOC009', name: 'Dr. Vikram Nair', specialization: 'General', department: 'General Medicine', consultationFee: 900 },
-  { id: 'DOC014', userId: 'DOC014', name: 'Dr. Jani', specialization: 'Dermatologist', department: 'Dermatology', consultationFee: 500 },
-  { id: 'DOC015', userId: 'DOC015', name: 'Dr. Jane Smith', specialization: 'Cardiologist', department: 'Cardiology Dept', consultationFee: 900 },
-];
-
-// ── Default Appointments Fallback Catalog ─────────────────────────────────────
-const DEFAULT_APPOINTMENTS = [
-  { id: 'APT_NEW_001', userId: 'PAT001', patientId: 'PAT001', patientName: 'Ria Sharma', patient: { id: 'PAT001', name: 'Ria Sharma', firstName: 'Ria', lastName: 'Sharma' }, date: '2026-10-14', slot: '10:00', status: 'upcoming' },
-  { id: 'APT_NEW_002', userId: 'PAT002', patientId: 'PAT002', patientName: 'Arun Menon', patient: { id: 'PAT002', name: 'Arun Menon', firstName: 'Arun', lastName: 'Menon' }, date: '2026-10-14', slot: '10:30', status: 'upcoming' },
-  { id: 'APT_NEW_003', userId: 'PAT003', patientId: 'PAT003', patientName: 'Farah Ali', patient: { id: 'PAT003', name: 'Farah Ali', firstName: 'Farah', lastName: 'Ali' }, date: '2026-10-15', slot: '11:00', status: 'upcoming' },
-  { id: 'APT_NEW_004', userId: 'PAT004', patientId: 'PAT004', patientName: 'Dev Patel', patient: { id: 'PAT004', name: 'Dev Patel', firstName: 'Dev', lastName: 'Patel' }, date: '2026-10-15', slot: '11:30', status: 'upcoming' },
-  { id: 'APT_NEW_005', userId: 'PAT001', patientId: 'PAT001', patientName: 'Ria Sharma', patient: { id: 'PAT001', name: 'Ria Sharma', firstName: 'Ria', lastName: 'Sharma' }, date: '2026-10-16', slot: '14:00', status: 'upcoming' },
-  { id: 'APT_NEW_006', userId: 'PAT002', patientId: 'PAT002', patientName: 'Arun Menon', patient: { id: 'PAT002', name: 'Arun Menon', firstName: 'Arun', lastName: 'Menon' }, date: '2026-10-16', slot: '14:30', status: 'upcoming' },
-];
+// ── Catalogs loaded dynamically from backend APIs ──────────────────────────
+const DEFAULT_PATIENTS = [];
+const DEFAULT_DOCTORS = [];
+const DEFAULT_APPOINTMENTS = [];
 
 function normalizePatient(p) {
   const id = p.userId || p.id || p.patientId || '';
@@ -139,21 +114,19 @@ export default function InternalReferral() {
       }
 
       // 3. Appointments
-      let loadedAppts = DEFAULT_APPOINTMENTS;
+      let loadedAppts = [];
       if (apptRes.status === 'fulfilled' && apptRes.value.ok) {
         const d = await apptRes.value.json();
-        if (Array.isArray(d) && d.length > 0) {
+        if (Array.isArray(d)) {
           loadedAppts = d;
           setAppointments(d);
         }
+      } else {
+        setAppointments([]);
       }
 
-      // 4. Patients — merge API + appointment-extracted + default patients
+      // 4. Patients — merge API + appointment-extracted
       const patientMap = new Map();
-      DEFAULT_PATIENTS.forEach((p) => {
-        const norm = normalizePatient(p);
-        patientMap.set(norm.userId, norm);
-      });
 
       // Extract patients from loaded appointments
       loadedAppts.forEach((a) => {
@@ -303,8 +276,8 @@ export default function InternalReferral() {
       const localSaved = {
         id: `REF${Date.now()}`,
         fromDoctorId: myId,
-        fromDoctorName: user?.name || 'Dr. S Madhuri',
-        fromSpecialization: user?.specialization || 'Dermatologist',
+        fromDoctorName: user?.name || 'Doctor',
+        fromSpecialization: user?.specialization || 'General',
         toDoctorId: form.toDoctorId,
         toDoctorName: selectedDoc?.name || form.toDoctorId,
         toSpecialization: selectedDoc?.specialization || 'Specialist',

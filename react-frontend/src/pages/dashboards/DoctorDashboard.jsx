@@ -24,40 +24,14 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
-// ── Seed data: shown instantly so dashboard never shows 0 ─────────────────────
-const SEED_APPOINTMENTS = [
-  { id: 'APT_TODAY_001', userId: 'PAT001', patientId: 'PAT001', patient: { name: 'Ria Sharma', firstName: 'Ria', lastName: 'Sharma', gender: 'Female', dob: '1990-10-24' }, date: TODAY, slot: '09:00', status: 'completed', appointmentType: 'Dermatology Consultation' },
-  { id: 'APT_TODAY_002', userId: 'PAT002', patientId: 'PAT002', patient: { name: 'Arun Menon',  firstName: 'Arun', lastName: 'Menon', gender: 'Male', dob: '1988-02-28' }, date: TODAY, slot: '09:30', status: 'completed', appointmentType: 'Follow-up' },
-  { id: 'APT_TODAY_003', userId: 'PAT003', patientId: 'PAT003', patient: { name: 'Farah Ali',   firstName: 'Farah', lastName: 'Ali', gender: 'Female', dob: '2001-11-06' }, date: TODAY, slot: '10:00', status: 'upcoming',  appointmentType: 'General Consultation' },
-  { id: 'APT_TODAY_004', userId: 'PAT004', patientId: 'PAT004', patient: { name: 'Dev Patel',   firstName: 'Dev', lastName: 'Patel', gender: 'Male', dob: '1992-07-19' }, date: TODAY, slot: '10:30', status: 'upcoming',  appointmentType: 'Dermatology Consultation' },
-  { id: 'APT_TODAY_005', userId: 'PAT001', patientId: 'PAT001', patient: { name: 'Ria Sharma',  firstName: 'Ria', lastName: 'Sharma', gender: 'Female', dob: '1990-10-24' }, date: TODAY, slot: '11:00', status: 'upcoming',  appointmentType: 'Prescription Renewal' },
-  // Upcoming future appointments
-  { id: 'APT_NEW_001', userId: 'PAT001', patientId: 'PAT001', patient: { name: 'Ria Sharma' }, date: '2026-10-14', slot: '10:00', status: 'upcoming', appointmentType: 'Follow-up' },
-  { id: 'APT_NEW_002', userId: 'PAT002', patientId: 'PAT002', patient: { name: 'Arun Menon' }, date: '2026-10-14', slot: '10:30', status: 'upcoming', appointmentType: 'General Consultation' },
-  { id: 'APT_NEW_003', userId: 'PAT003', patientId: 'PAT003', patient: { name: 'Farah Ali'  }, date: '2026-10-14', slot: '11:00', status: 'upcoming', appointmentType: 'Dermatology' },
-  { id: 'APT_NEW_004', userId: 'PAT004', patientId: 'PAT004', patient: { name: 'Dev Patel'  }, date: '2026-10-15', slot: '11:30', status: 'upcoming', appointmentType: 'Follow-up' },
-  // Past completed appointments for stats
-  ...Array.from({ length: 20 }, (_, i) => ({
-    id: `APT_PAST_${String(i + 1).padStart(3, '0')}`,
-    userId: ['PAT001', 'PAT002', 'PAT003', 'PAT004'][i % 4],
-    date: `2026-${String(9 + Math.floor(i / 10)).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`,
-    slot: ['09:00', '10:00', '11:00', '14:00', '15:00'][i % 5],
-    status: 'completed',
-    patient: { name: ['Ria Sharma', 'Arun Menon', 'Farah Ali', 'Dev Patel'][i % 4] },
-    appointmentType: ['General Consultation', 'Follow-up', 'Dermatology', 'Prescription'][i % 4],
-  })),
-];
+// ── Empty initial states for clean multi-doctor data loading ────────────────
+const SEED_APPOINTMENTS = [];
 
 const SEED_EARNINGS = {
-  totalEarnings: 12000,
-  currentMonthEarnings: 5000,
+  totalEarnings: 0,
+  currentMonthEarnings: 0,
   percentageCut: 50,
-  entries: Array.from({ length: 10 }, (_, i) => ({
-    appointmentId: `APT_PAST_${i + 1}`,
-    date: `2026-10-${String(i + 1).padStart(2, '0')}`,
-    consultationFee: 1000,
-    doctorEarning: 500,
-  })),
+  entries: [],
 };
 
 function calcAge(dob) {
@@ -73,11 +47,11 @@ export default function DoctorDashboard() {
 
   const doctorId = user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
 
-  // ── State — pre-seeded so dashboard is never empty ────────────────────────
-  const [appointments,    setAppointments]    = useState(SEED_APPOINTMENTS);
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [appointments,    setAppointments]    = useState([]);
   const [earningsSummary, setEarningsSummary] = useState(SEED_EARNINGS);
-  const [recordsCount,    setRecordsCount]    = useState(13);
-  const [pendingLabCount, setPendingLabCount] = useState(5);
+  const [recordsCount,    setRecordsCount]    = useState(0);
+  const [pendingLabCount, setPendingLabCount] = useState(0);
   const [loading,         setLoading]         = useState(true);
 
   // ── Fetch all dashboard data ──────────────────────────────────────────────
@@ -96,18 +70,12 @@ export default function DoctorDashboard() {
         }),
       ]);
 
-      // 1. Appointments — use API data if we get any, else keep seed
+      // 1. Appointments — set actual doctor's appointments from API
       if (apptRes.status === 'fulfilled' && apptRes.value.ok) {
         const data = await apptRes.value.json();
-        if (Array.isArray(data) && data.length > 0) {
-          // Merge seed today-appointments with API data
-          // (so if API doesn't have today entries, seed ones show)
-          const apiIds = new Set(data.map(a => a.id));
-          const seedTodayOnly = SEED_APPOINTMENTS.filter(
-            a => a.date === TODAY && !apiIds.has(a.id)
-          );
-          setAppointments([...data, ...seedTodayOnly]);
-        }
+        setAppointments(Array.isArray(data) ? data : []);
+      } else {
+        setAppointments([]);
       }
 
       // 2. Earnings
@@ -124,11 +92,11 @@ export default function DoctorDashboard() {
         if (Array.isArray(data)) {
           setRecordsCount(data.length);
           const labPending = data.filter(r => r.tests && r.type === 'treatment').length;
-          setPendingLabCount(labPending > 0 ? labPending : pendingLabCount);
+          setPendingLabCount(labPending);
         }
       }
     } catch {
-      // Silently fall back to seed data
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -260,7 +228,7 @@ export default function DoctorDashboard() {
           <StatCard
             label="This Month's Earnings"
             value={`₹${Number(monthlyEarnings).toLocaleString('en-IN')}`}
-            delta={`${percentageCut}% cut · ₹${Number(earningsSummary?.totalEarnings ?? 12000).toLocaleString('en-IN')} all-time`}
+            delta={`${percentageCut}% cut · ₹${Number(earningsSummary?.totalEarnings ?? 0).toLocaleString('en-IN')} all-time`}
             deltaType="info"
             icon="₹"
           />
