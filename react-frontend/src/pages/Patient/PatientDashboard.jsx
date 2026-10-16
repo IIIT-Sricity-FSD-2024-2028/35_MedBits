@@ -100,9 +100,9 @@ export default function PatientDashboard() {
 
         // ── MAP LAB ORDERS DIRECTLY (NO ID COLUMN) ──────────────────
         const formattedLabOrders = (labList || []).map((lab) => ({
-          testName: lab.testName || 'Diagnostic Test',
+          testName: lab.testName || lab.labTest?.name || 'Diagnostic Test',
           doctor: lab.doctorName || 'Pathology Department',
-          date: lab.requestDate || lab.date || 'Recent',
+          date: lab.requestDate || lab.date || (lab.createdAt ? lab.createdAt.split('T')[0] : 'Recent'),
           status: lab.status || 'Pending',
         }));
 

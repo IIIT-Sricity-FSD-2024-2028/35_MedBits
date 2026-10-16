@@ -170,6 +170,45 @@ export default function PatientLabTest() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackNotice, setFeedbackNotice] = useState(null);
 
+  // ── LOAD DIAGNOSTIC HISTORY ────────────────────────────────────────
+  const loadDiagnosticHistory = async (uid) => {
+    const idToUse = uid || userId;
+    let list = [];
+    try {
+      const histRes = await fetch(`${API_BASE_URL}/lab-requests/patient`, {
+        headers: { role: 'patient', 'x-user-id': idToUse },
+      });
+      if (histRes.ok) {
+        const data = await histRes.json();
+        if (Array.isArray(data)) list = data;
+      }
+    } catch (_) {}
+
+    try {
+      const bookedRes = await fetch(`${API_BASE_URL}/labtests/history/${encodeURIComponent(idToUse)}`, {
+        headers: { role: 'patient', 'x-user-id': idToUse },
+      });
+      if (bookedRes.ok) {
+        const bookedData = await bookedRes.json();
+        if (Array.isArray(bookedData)) {
+          const existingBookingIds = new Set(list.map((r) => r.sourceBookingId).filter(Boolean));
+          const extra = bookedData
+            .filter((b) => !existingBookingIds.has(b.id))
+            .map((b) => ({
+              id: b.id,
+              testName: b.labTest?.name || 'Diagnostic Health Panel',
+              requestDate: new Date().toISOString().split('T')[0],
+              doctorName: 'Central Pathology Department',
+              status: b.status === 'booked' ? 'pending' : (b.status || 'pending'),
+            }));
+          list = [...list, ...extra];
+        }
+      }
+    } catch (_) {}
+
+    setHistoryOrders(list);
+  };
+
   // ── DATA FETCHING ──────────────────────────────────────────────────
   useEffect(() => {
     let isMounted = true;
@@ -222,17 +261,7 @@ export default function PatientLabTest() {
         }
 
         // 3. Fetch Lab Orders History
-        try {
-          const histRes = await fetch(`${API_BASE_URL}/lab-requests/patient`, {
-            headers: { role: 'patient', 'x-user-id': userId },
-          });
-          if (histRes.ok) {
-            const hData = await histRes.json();
-            if (isMounted && Array.isArray(hData)) {
-              setHistoryOrders(hData);
-            }
-          }
-        } catch {}
+        await loadDiagnosticHistory(userId);
 
       } finally {
         if (isMounted) setIsLoading(false);
@@ -348,6 +377,8 @@ export default function PatientLabTest() {
 
     try {
       const branchId = selectedBranchId || '00000000-0000-4000-8000-000000000001';
+
+      // 1. Add all cart items to backend cart
       for (const item of cartItems) {
         await fetch(`${API_BASE_URL}/labtests/book`, {
           method: 'POST',
@@ -360,7 +391,24 @@ export default function PatientLabTest() {
             labTestId: item.test.id,
             branchId,
           }),
-        }).catch(() => {});
+        });
+      }
+
+      // 2. Confirm booking to generate orders and notify Lab Technician
+      const patientDisplayName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Patient');
+      const confirmRes = await fetch(`${API_BASE_URL}/labtests/confirm/${encodeURIComponent(userId)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          role: 'patient',
+        },
+        body: JSON.stringify({
+          patientName: patientDisplayName,
+        }),
+      });
+
+      if (!confirmRes.ok) {
+        throw new Error('Failed to confirm booking');
       }
 
       setFeedbackNotice({
@@ -369,15 +417,10 @@ export default function PatientLabTest() {
       });
       setCartQuantities({});
 
-      // Refresh diagnostic orders
-      const histRes = await fetch(`${API_BASE_URL}/lab-requests/patient`, {
-        headers: { role: 'patient', 'x-user-id': userId },
-      }).catch(() => null);
-      if (histRes && histRes.ok) {
-        const refreshed = await histRes.json();
-        setHistoryOrders(refreshed);
-      }
-    } catch {
+      // 3. Refresh diagnostic orders
+      await loadDiagnosticHistory(userId);
+    } catch (err) {
+      console.error('Failed to book lab test:', err);
       setFeedbackNotice({
         type: 'error',
         text: 'Unable to complete test booking. Please check connection and retry.',
@@ -566,9 +609,9 @@ export default function PatientLabTest() {
                   {historyOrders.map((order, idx) => (
                     <tr key={order.id || idx}>
                       <td className="test-name-bold">
-                        {order.testName || order.test?.name || 'Diagnostic Health Panel'}
+                        {order.testName || order.labTest?.name || order.test?.name || 'Diagnostic Health Panel'}
                       </td>
-                      <td>{order.requestDate || order.date || 'Recent'}</td>
+                      <td>{order.requestDate || order.date || (order.createdAt ? order.createdAt.split('T')[0] : 'Recent')}</td>
                       <td>{order.doctorName || 'Central Pathology Department'}</td>
                       <td>
                         <StatusBadge status={order.status || 'Pending'} />
