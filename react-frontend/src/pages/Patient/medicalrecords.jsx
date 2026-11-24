@@ -1,4 +1,4 @@
-/**
+﻿/**
  * medicalrecords.jsx — Patient Medical Records & Clinical History
  * ====================================================================
  * Location: src/pages/Patient/medicalrecords.jsx
@@ -11,12 +11,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './medicalrecords.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
 // Base URL for backend API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 /**
  * Formats ISO date string into user-friendly clinical date
@@ -228,7 +228,7 @@ function LabTestCard({ record }) {
 }
 
 export default function MedicalRecords() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const patientId = (user?.userId || user?.patientId || user?.id || '').trim();
 
   // Component state
@@ -271,7 +271,6 @@ export default function MedicalRecords() {
   );
 
   return (
-    <AppShell pageTitle="Medical Records">
       <div className="records-container">
 
         {/* Hero banner */}
@@ -397,6 +396,5 @@ export default function MedicalRecords() {
         )}
 
       </div>
-    </AppShell>
   );
 }

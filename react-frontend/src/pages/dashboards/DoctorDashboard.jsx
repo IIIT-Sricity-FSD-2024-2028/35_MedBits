@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DoctorDashboard.jsx — Doctor Main Dashboard Page
  * ====================================================================
  * Fetches live data from backend APIs with reliable fallbacks:
@@ -12,15 +12,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -42,7 +42,7 @@ function calcAge(dob) {
 }
 
 export default function DoctorDashboard() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   const doctorId = user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
@@ -59,13 +59,13 @@ export default function DoctorDashboard() {
     setLoading(true);
     try {
       const [apptRes, earningsRes, recordsRes] = await Promise.allSettled([
-        fetch(`${API_BASE}/appointments/doctor/${encodeURIComponent(doctorId)}`, {
+        fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(doctorId)}`, {
           headers: { role: 'doctor' },
         }),
-        fetch(`${API_BASE}/appointments/earnings/doctor/${encodeURIComponent(doctorId)}`, {
+        fetch(`${API_BASE_URL}/appointments/earnings/doctor/${encodeURIComponent(doctorId)}`, {
           headers: { role: 'doctor' },
         }),
-        fetch(`${API_BASE}/medical-records/doctor/${encodeURIComponent(doctorId)}`, {
+        fetch(`${API_BASE_URL}/medical-records/doctor/${encodeURIComponent(doctorId)}`, {
           headers: { role: 'doctor' },
         }),
       ]);
@@ -187,7 +187,6 @@ export default function DoctorDashboard() {
   ];
 
   return (
-    <AppShell pageTitle="Doctor Dashboard">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* ── 1. WELCOME BANNER ──────────────────────────────────────────────── */}
@@ -357,6 +356,5 @@ export default function DoctorDashboard() {
         </div>
 
       </div>
-    </AppShell>
   );
 }

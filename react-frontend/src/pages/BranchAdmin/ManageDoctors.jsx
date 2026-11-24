@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ManageDoctors.jsx — Branch Admin Manage Doctors Page
  * =========================================================================
  * Clean, simplified doctor management for Branch Admins:
@@ -11,8 +11,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import Modal from '../../components/common/Modal';
 import DoctorFormModal from '../../components/branch-admin/DoctorFormModal';
@@ -43,7 +43,7 @@ function formatDate(dateStr) {
 }
 
 export default function ManageDoctors() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // Data & Filter State
   const [doctors, setDoctors] = useState([]);
@@ -193,7 +193,6 @@ export default function ManageDoctors() {
   const apptCancelled = doctorAppts.filter((a) => ['rejected', 'cancelled'].includes(String(a.status).toLowerCase())).length;
 
   return (
-    <AppShell pageTitle="Manage Doctors">
       <div className="manage-doctors-page">
 
         {/* ── TOP ALERT BANNER ────────────────────────────────────────────── */}
@@ -642,6 +641,5 @@ export default function ManageDoctors() {
         )}
 
       </div>
-    </AppShell>
   );
 }

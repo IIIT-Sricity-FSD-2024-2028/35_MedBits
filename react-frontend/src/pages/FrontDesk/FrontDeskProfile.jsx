@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FrontDeskProfile.jsx — Front Desk Staff Profile & Operational Assignment
  * =========================================================================
  * Location: src/pages/FrontDesk/FrontDeskProfile.jsx
@@ -14,13 +14,14 @@
  */
 
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import UserProfile from '../../components/profile/UserProfile';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function FrontDeskProfile() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   const frontdeskFields = [
     { name: 'name', label: 'Staff Full Name', readOnlyAlways: true },

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DoctorFormModal.jsx — Doctor Creation & Edit Modal Dialog
  * =========================================================================
  * Focused component for Branch Admin to create and update branch doctors,
@@ -6,7 +6,8 @@
  */
 
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import Modal from '../common/Modal';
 import { API_BASE_URL, formatTime12, isValidEmail, getAuthHeaders } from './staffHelpers';
 import './StaffFormModal.css';
@@ -17,7 +18,7 @@ const TIME_PRESETS = [
 ];
 
 function DoctorDialog({ isOpen, onClose, initialData = null, branchId: propBranchId, onSuccess, onSubmit }) {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const isEdit = Boolean(initialData);
   const effectiveBranchId = propBranchId || user?.branchId || initialData?.branchId || '';
 

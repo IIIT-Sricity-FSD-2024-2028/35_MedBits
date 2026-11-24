@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DoctorEarnings.jsx — Doctor Earnings Dashboard
  * ================================================
  * Fetches and visualises a doctor's earnings from completed appointments.
@@ -17,14 +17,14 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import './earnings/earnings.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const MONTH_NAMES = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -36,7 +36,7 @@ function fmt(amount) {
 }
 
 export default function DoctorEarnings() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [summary, setSummary] = useState(null);
@@ -52,7 +52,7 @@ export default function DoctorEarnings() {
 
     try {
       const res = await fetch(
-        `${API_BASE}/appointments/earnings/doctor/${encodeURIComponent(doctorId)}`,
+        `${API_BASE_URL}/appointments/earnings/doctor/${encodeURIComponent(doctorId)}`,
         { headers: { role: 'doctor' } },
       );
 
@@ -148,7 +148,6 @@ export default function DoctorEarnings() {
   ];
 
   return (
-    <AppShell pageTitle="Earnings">
       <div className="earnings-page">
 
         {/* ── Loading / Error ─────────────────────────────────────────────── */}
@@ -292,6 +291,5 @@ export default function DoctorEarnings() {
         )}
 
       </div>
-    </AppShell>
   );
 }

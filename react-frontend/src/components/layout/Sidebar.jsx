@@ -25,7 +25,8 @@
  *                  (replaces window.location.replace() / window.location.href)
  */
 
-import { useAuth }            from '../../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout, selectCurrentUser } from '../../store/slices/authSlice';
 import { getNavItems }        from '../../config/navConfig';
 import { NavLink, useNavigate } from 'react-router-dom';
 import './Sidebar.css';
@@ -38,7 +39,8 @@ import './Sidebar.css';
  * @param {function} onCloseMobile — callback to close on mobile overlay tap
  */
 export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }) {
-  const { user, logout } = useAuth();   // read user + logout from global context
+  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
   const navigate = useNavigate();       // for redirecting after logout
 
   /* Get the correct nav items for this user's role (e.g. doctor, labtech, etc.) */
@@ -50,7 +52,7 @@ export default function Sidebar({ isCollapsed, isMobileOpen, onCloseMobile }) {
    */
   function handleLogout(e) {
     e.preventDefault();         // prevent the <a> tag from navigating
-    logout();                   // clears localStorage + React state
+    dispatch(logout());         // clears localStorage + Redux state
     navigate('/login');         // go to login page
   }
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * branch-statistics.jsx — Super Admin Branch Statistics Page
  * =========================================================================
  * Clean, readable React component for inspecting hospital branch personnel & operations:
@@ -12,11 +12,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import AppShell from '../../components/layout/AppShell';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './branch-statistics.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Fallback demo branches for offline preview
 const DEFAULT_BRANCHES = [
@@ -26,7 +26,7 @@ const DEFAULT_BRANCHES = [
 ];
 
 export default function BranchStatistics() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -188,7 +188,6 @@ export default function BranchStatistics() {
   const summary = stats.summary;
 
   return (
-    <AppShell pageTitle="Branch Statistics">
       <div className="bs-wrapper">
 
         {/* ── 1. HERO BANNER & BRANCH SELECTOR ── */}
@@ -505,6 +504,5 @@ export default function BranchStatistics() {
         </section>
 
       </div>
-    </AppShell>
   );
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * QueueManagement.jsx — Front Desk Clinic Queue & Token Coordination
  * ==============================================================================
  * Central Front Desk page for:
@@ -10,13 +10,12 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import AppShell from '../../components/layout/AppShell';
 import QueueCheckInCard from './components/QueueCheckInCard';
 import QueueEntryCard from './components/QueueEntryCard';
 import TokenGeneratedModal from './components/TokenGeneratedModal';
 import './QueueManagement.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // ── Default Seed Data for Seamless Offline Fallbacks ────────────────────────
 const SEED_PATIENTS = [
@@ -100,7 +99,7 @@ export default function QueueManagement() {
   // ── Data Fetching ──────────────────────────────────────────────────────────
   const loadQueue = useCallback(async (customDocs, customPats) => {
     try {
-      const res = await fetch(`${API_BASE}/queue`, {
+      const res = await fetch(`${API_BASE_URL}/queue`, {
         headers: { role: 'frontdesk' },
       });
       if (res.ok) {
@@ -134,8 +133,8 @@ export default function QueueManagement() {
       let loadedDocs = SEED_DOCTORS;
 
       const [patRes, docRes] = await Promise.allSettled([
-        fetch(`${API_BASE}/patients`, { headers: { role: 'frontdesk' } }),
-        fetch(`${API_BASE}/doctors`, { headers: { role: 'frontdesk' } }),
+        fetch(`${API_BASE_URL}/patients`, { headers: { role: 'frontdesk' } }),
+        fetch(`${API_BASE_URL}/doctors`, { headers: { role: 'frontdesk' } }),
       ]);
 
       if (patRes.status === 'fulfilled' && patRes.value.ok) {
@@ -197,7 +196,7 @@ export default function QueueManagement() {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/queue`, {
+      const res = await fetch(`${API_BASE_URL}/queue`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -279,7 +278,7 @@ export default function QueueManagement() {
     setUpdatingId(queueId);
 
     try {
-      const res = await fetch(`${API_BASE}/queue/${encodeURIComponent(queueId)}`, {
+      const res = await fetch(`${API_BASE_URL}/queue/${encodeURIComponent(queueId)}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -342,7 +341,6 @@ export default function QueueManagement() {
   const doneCount = queueItems.filter((q) => q.status === 'done').length;
 
   return (
-    <AppShell pageTitle="Queue Management">
       <div className="queue-page-container">
 
         {/* ── Alert Notification Banner ─────────────────────────────────── */}
@@ -507,6 +505,5 @@ export default function QueueManagement() {
         />
 
       </div>
-    </AppShell>
   );
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TestRequests.jsx — Lab Technician Test Requests Management
  * ==============================================================================
  * A concise, clean React component providing complete test request lifecycle:
@@ -12,11 +12,11 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './TestRequests.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Status badge styling and label mapping
 const STATUS_MAP = {
@@ -29,7 +29,7 @@ const STATUS_MAP = {
 };
 
 export default function TestRequests() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
   const techId = user?.userId || user?.id || 'LABTECH_001';
 
@@ -46,7 +46,7 @@ export default function TestRequests() {
   const loadRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/lab-requests`, {
+      const res = await fetch(`${API_BASE_URL}/lab-requests`, {
         headers: { role: 'labtech', 'x-user-id': techId },
       });
       if (res.ok) setRequests(await res.json());
@@ -60,7 +60,7 @@ export default function TestRequests() {
 
   // ── 2. Accept Test Action ──────────────────────────────────────────────────
   const handleAccept = async (id) => {
-    const res = await fetch(`${API_BASE}/lab-requests/${id}/accept`, {
+    const res = await fetch(`${API_BASE_URL}/lab-requests/${id}/accept`, {
       method: 'PATCH',
       headers: { role: 'labtech', 'x-user-id': techId },
     });
@@ -73,7 +73,7 @@ export default function TestRequests() {
   // ── 3. Reject Test Action ──────────────────────────────────────────────────
   const handleReject = async () => {
     if (!rejectItem) return;
-    const res = await fetch(`${API_BASE}/lab-requests/${rejectItem.id}/reject`, {
+    const res = await fetch(`${API_BASE_URL}/lab-requests/${rejectItem.id}/reject`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', role: 'labtech', 'x-user-id': techId },
       body: JSON.stringify({ reason: rejectReason || 'Declined by lab tech' }),
@@ -115,7 +115,6 @@ export default function TestRequests() {
   };
 
   return (
-    <AppShell pageTitle="Test Requests">
       <div className="tr-page-container">
 
         {/* ── Search Bar & Filter Tabs Strip ──────────────────────────────── */}
@@ -294,6 +293,5 @@ export default function TestRequests() {
         )}
 
       </div>
-    </AppShell>
   );
 }

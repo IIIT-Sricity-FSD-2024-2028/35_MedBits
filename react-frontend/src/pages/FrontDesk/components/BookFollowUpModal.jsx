@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BookFollowUpModal.jsx — Front Desk Follow-Up & Referral Booking Dialog
  * ==============================================================================
  * WHAT THIS COMPONENT DOES:
@@ -16,10 +16,11 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../store/slices/authSlice';
 import Modal from '../../../components/common/Modal';
+import { API_BASE_URL } from '../../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const todayIso = () => new Date().toISOString().split('T')[0];
 
 const DEFAULT_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '14:00', '14:30', '15:00'];
@@ -45,7 +46,7 @@ function formatDisplayDate(dateValue) {
  * @param {function} onSuccess   - Callback invoked on successful booking
  */
 export default function BookFollowUpModal({ isOpen, onClose, item, onSuccess }) {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // Selected date and time slot
   const [selectedDate, setSelectedDate] = useState(todayIso());
@@ -81,7 +82,7 @@ export default function BookFollowUpModal({ isOpen, onClose, item, onSuccess }) 
     setErrorMessage(null);
     try {
       const res = await fetch(
-        `${API_BASE}/doctors/${encodeURIComponent(docId)}/slots?date=${encodeURIComponent(date)}`,
+        `${API_BASE_URL}/doctors/${encodeURIComponent(docId)}/slots?date=${encodeURIComponent(date)}`,
         {
           headers: { role: 'frontdesk' },
         },
@@ -142,7 +143,7 @@ export default function BookFollowUpModal({ isOpen, onClose, item, onSuccess }) 
     };
 
     try {
-      const res = await fetch(`${API_BASE}/appointments`, {
+      const res = await fetch(`${API_BASE_URL}/appointments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +167,7 @@ export default function BookFollowUpModal({ isOpen, onClose, item, onSuccess }) 
       if (item.isReferral && item.id) {
         try {
           await fetch(
-            `${API_BASE}/doctors/${encodeURIComponent(item.fromDoctorId || 'DOC001')}/referrals/${item.id}/status`,
+            `${API_BASE_URL}/doctors/${encodeURIComponent(item.fromDoctorId || 'DOC001')}/referrals/${item.id}/status`,
             {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json', role: 'doctor' },

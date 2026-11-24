@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BookAppointmentModal.jsx — Front Desk Schedule New Appointment Dialog
  * =========================================================================
  * Full booking modal allowing front desk staff to:
@@ -16,10 +16,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../store/slices/authSlice';
 import Modal from '../../../components/common/Modal';
 import FormField from '../../../components/common/FormField';
 import AlertBanner from '../../../components/dashboard/AlertBanner';
+import { API_BASE_URL } from '../../../api/apiClient';
 
 const todayIso = () => new Date().toISOString().split('T')[0];
 
@@ -27,9 +29,9 @@ export default function BookAppointmentModal({
   isOpen,
   onClose,
   onSuccess,
-  apiBaseUrl = 'http://localhost:3000',
+  apiBaseUrl = API_BASE_URL,
 }) {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   // Data sources

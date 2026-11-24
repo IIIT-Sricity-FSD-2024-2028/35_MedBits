@@ -8,9 +8,17 @@
  *  - Email validation
  *  - Branch-scoped authentication headers (role & x-user-id)
  *  - String and display formatting (initials, shift hours)
+ *
+ * API_BASE_URL and getAuthHeaders are now re-exported from the central
+ * apiClient.js — this keeps backward compatibility so existing imports
+ * of `{ API_BASE_URL, getAuthHeaders }` from staffHelpers continue to work.
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Re-export from the centralized API client (single source of truth)
+// API_BASE_URL and getAuthHeaders now point to apiClient.js — single source of truth.
+// All other helpers (parseTime24, formatTime12, etc.) remain defined below.
+import { API_BASE_URL, getRequestHeaders } from '../../../api/apiClient';
+export { API_BASE_URL };
 
 /** Parses 12-hour AM/PM time string to 24-hour "HH:MM" format for HTML time inputs */
 export function parseTime24(timeStr) {
@@ -48,11 +56,7 @@ export function isValidEmail(email) {
  * Automatically passes role and x-user-id so the backend auto-scopes queries by branchId
  */
 export function getAuthHeaders(user) {
-  return {
-    'Content-Type': 'application/json',
-    role: user?.role || 'branch_admin',
-    'x-user-id': user?.id || user?.userId || '',
-  };
+  return getRequestHeaders(user, user?.role ? {} : { role: 'branch_admin' });
 }
 
 /** Extracts two-letter initials from a person's full name */

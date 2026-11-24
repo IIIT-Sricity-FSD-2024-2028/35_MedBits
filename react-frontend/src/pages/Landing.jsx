@@ -8,12 +8,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, ROLE_ROUTES } from '../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser, ROLE_ROUTES } from '../store/slices/authSlice';
 import './Landing.css';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // Determine user dashboard target route if already authenticated
   const dashboardPath = user ? (ROLE_ROUTES[user.role] || '/doctor/dashboard') : '/login';

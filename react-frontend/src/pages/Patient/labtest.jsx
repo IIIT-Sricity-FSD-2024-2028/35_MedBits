@@ -1,4 +1,4 @@
-/**
+﻿/**
  * labtest.jsx — Patient Diagnostic Lab Tests Booking Page
  * ==========================================================
  * Location: src/pages/Patient/labtest.jsx
@@ -11,16 +11,16 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import SpecialityCard from '../../components/appointments/SpecialityCard';
 import LabTestFilters from '../../components/labtests/LabTestFilters';
 import LabTestCard from '../../components/labtests/LabTestCard';
 import LabTestCart, { LabTestCartBar } from '../../components/labtests/LabTestCart';
 import StatusBadge from '../../components/common/StatusBadge';
 import './labtest.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Canonical test catalog with medical descriptions
 const FALLBACK_TESTS = [
@@ -151,7 +151,7 @@ const HEALTH_CATEGORIES = [
 ];
 
 export default function PatientLabTest() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const userId = user?.id || 'PAT001';
 
   // ── FILTER STATE ───────────────────────────────────────────────────
@@ -433,7 +433,6 @@ export default function PatientLabTest() {
   const selectedBranchObj = branches.find((b) => b.id === selectedBranchId);
 
   return (
-    <AppShell pageTitle="Lab Tests">
       <div className="labtest-page-container">
 
         {/* ── TOP HERO BANNER ────────────────────────────────────────── */}
@@ -633,6 +632,5 @@ export default function PatientLabTest() {
         />
 
       </div>
-    </AppShell>
   );
 }

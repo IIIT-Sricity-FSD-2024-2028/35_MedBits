@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PatientDashboard.jsx — Patient Main Dashboard Page
  * ====================================================================
  * Location: src/pages/patient/PatientDashboard.jsx
@@ -11,18 +11,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import QuickActions from '../../components/dashboard/QuickActions';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
+import { API_BASE_URL } from '../../api/apiClient';
 
 // Backend API Base URL from environment or local port 3000
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function PatientDashboard() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   // ── STATE: Dynamic backend data ───────────────────────────────────
@@ -213,7 +213,6 @@ export default function PatientDashboard() {
   ];
 
   return (
-    <AppShell pageTitle="Patient Dashboard">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* ── 1. WELCOME HERO BANNER ────────────────────────────────── */}
@@ -281,6 +280,5 @@ export default function PatientDashboard() {
         </div>
 
       </div>
-    </AppShell>
   );
 }

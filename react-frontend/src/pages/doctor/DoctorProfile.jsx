@@ -1,17 +1,19 @@
-/**
+﻿/**
  * DoctorProfile.jsx — Doctor Professional Profile & Clinical Settings
  * ====================================================================
  * Utilizes the shared <UserProfile> component configured for the Doctor role.
  */
 
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectCurrentUser, updateUserProfile } from '../../store/slices/authSlice';
 import UserProfile from '../../components/profile/UserProfile';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function DoctorProfile() {
-  const { user, login } = useAuth();
+  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
 
   const doctorFields = [
     { name: 'name', label: 'Doctor Full Name', required: true },
@@ -34,11 +36,12 @@ export default function DoctorProfile() {
 
   function handleSaveSuccess(updatedProfile) {
     if (user) {
-      login({
-        ...user,
-        name: updatedProfile.name || user.name,
-        email: updatedProfile.email || user.email,
-      });
+      dispatch(
+        updateUserProfile({
+          name: updatedProfile.name || user.name,
+          email: updatedProfile.email || user.email,
+        })
+      );
     }
   }
 

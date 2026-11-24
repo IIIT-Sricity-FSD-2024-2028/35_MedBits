@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Login.jsx — Authentication Page with Backend Integration
  * ====================================================================
  * Connects with the MedBits NestJS backend API (POST /users/login).
@@ -15,11 +15,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, ROLE_ROUTES } from '../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  loginUser,
+  setUser,
+  clearAuthError,
+  selectCurrentUser,
+  selectAuthStatus,
+  selectAuthError,
+  selectAuthIsOffline,
+  ROLE_ROUTES,
+} from '../store/slices/authSlice';
 import './Login.css';
 
 // Backend API URL (defaults to http://localhost:3000 if not specified in .env)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Preset credentials for all 6 actors for quick testing and demonstration
 const DEMO_ACCOUNTS = [
@@ -33,7 +42,11 @@ const DEMO_ACCOUNTS = [
 
 export default function Login() {
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const dispatch = useDispatch();
+  const user = useSelector(selectCurrentUser);
+  const authStatus = useSelector(selectAuthStatus);
+  const authError = useSelector(selectAuthError);
+  const isServerOffline = useSelector(selectAuthIsOffline);
 
   // Form input state
   const [email, setEmail] = useState('');
@@ -41,15 +54,16 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Status and error handling state
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isServerOffline, setIsServerOffline] = useState(false);
+  // Local validation / UI state
+  const [validationError, setValidationError] = useState('');
   const [activeChipRole, setActiveChipRole] = useState(null);
+
+  const isLoading = authStatus === 'loading';
+  const errorMessage = validationError || authError || '';
 
   /**
    * Auto-redirect if already logged in:
-   * If a valid session exists in AuthContext, navigate straight to their dashboard.
+   * If a valid session exists in Redux auth state, navigate straight to their dashboard.
    */
   useEffect(() => {
     if (user && user.role) {
@@ -65,8 +79,8 @@ export default function Login() {
     setEmail(demo.email);
     setPassword(demo.password);
     setActiveChipRole(demo.role);
-    setErrorMessage('');
-    setIsServerOffline(false);
+    setValidationError('');
+    dispatch(clearAuthError());
   }
 
   /**
@@ -87,71 +101,30 @@ export default function Login() {
       branchId: '00000000-0000-4000-8000-000000000001',
     };
 
-    login(mockUser);
+    dispatch(setUser(mockUser));
     const targetPath = ROLE_ROUTES[mockUser.role] || '/doctor/dashboard';
     navigate(targetPath);
   }
 
   /**
    * Main Login Submission Handler
-   * Sends POST request to the backend /users/login endpoint.
+   * Dispatches loginUser thunk against the NestJS /users/login endpoint.
    */
   async function handleSubmit(e) {
     if (e) e.preventDefault();
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) {
-      setErrorMessage('Please enter both your email and password.');
+      setValidationError('Please enter both your email and password.');
       return;
     }
 
-    setErrorMessage('');
-    setIsServerOffline(false);
-    setIsLoading(true);
+    setValidationError('');
+    const result = await dispatch(loginUser({ email: trimmedEmail, password }));
 
-    try {
-      // ── API REQUEST: Call NestJS /users/login ───────────────────
-      const response = await fetch(`${API_BASE_URL}/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: trimmedEmail,
-          password: password,
-        }),
-      });
-
-      // Handle invalid credentials (401 or 400 response from backend)
-      if (!response.ok) {
-        setIsLoading(false);
-        if (response.status === 401 || response.status === 400) {
-          setErrorMessage('Invalid email or password. Please verify your credentials.');
-        } else {
-          setErrorMessage(`Login failed (Server error: HTTP ${response.status}).`);
-        }
-        return;
-      }
-
-      // ── SUCCESS: Parse authenticated user object ───────────────
-      const authenticatedUser = await response.json();
-      setIsLoading(false);
-
-      // Save user to React state and localStorage via AuthContext
-      login(authenticatedUser);
-
-      // ── REDIRECT: Navigate to role-specific dashboard ──────────
-      const userRole = authenticatedUser.role;
-      const targetRoute = ROLE_ROUTES[userRole] || '/doctor/dashboard';
+    if (loginUser.fulfilled.match(result)) {
+      const targetRoute = ROLE_ROUTES[result.payload.role] || '/doctor/dashboard';
       navigate(targetRoute);
-
-    } catch {
-      // ── NETWORK ERROR: Backend unreachable or offline ──────────
-      setIsLoading(false);
-      setIsServerOffline(true);
-      setErrorMessage(
-        'Unable to reach backend server on port 3000. Ensure the NestJS backend is running, or continue in Demo Mode below.'
-      );
     }
   }
 

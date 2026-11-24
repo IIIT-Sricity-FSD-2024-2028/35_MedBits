@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DemoPage.jsx — Phase 1 Demo Page
  * ==================================
  * A temporary placeholder page that demonstrates the AppShell working.
@@ -6,22 +6,18 @@
  *
  * Usage pattern (how every page will look going forward):
  *
- *   import AppShell from '../../components/layout/AppShell';
- *
+ *    *
  *   export default function MyPage() {
  *     return (
- *       <AppShell pageTitle="My Page Name">
- *         <p>My page content here</p>
- *       </AppShell>
- *     );
+ *    *         <p>My page content here</p>
+ *    *     );
  *   }
  */
 
-import AppShell from '../../components/layout/AppShell';
 
 export default function DemoPage({ pageTitle = 'Dashboard' }) {
   return (
-    <AppShell pageTitle={pageTitle}>
+    <>
       {/* ── DEMO CONTENT ─── replace this with real page content ── */}
       <div style={{
         background: 'var(--white)',
@@ -42,6 +38,6 @@ export default function DemoPage({ pageTitle = 'Dashboard' }) {
           Current page: <strong>{pageTitle}</strong>
         </p>
       </div>
-    </AppShell>
+    </>
   );
 }
