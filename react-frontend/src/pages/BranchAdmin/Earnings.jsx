@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Earnings.jsx — Hospital Branch Admin Earnings Page
  * =========================================================================
  * Real-time financial insights for Branch Administrators:
@@ -11,8 +11,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import AppShell from '../../components/layout/AppShell';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import { API_BASE_URL, getAuthHeaders } from '../../components/branch-admin/staffHelpers';
 import './Earnings.css';
 
@@ -91,7 +91,7 @@ function calcPct(part, total) {
 }
 
 export default function Earnings() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   const [data, setData] = useState(null);
   const [selectedMonthKey, setSelectedMonthKey] = useState('');
@@ -215,7 +215,7 @@ export default function Earnings() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
-    <AppShell pageTitle="Branch Earnings">
+    <>
       {isLoading ? (
         <div className="earnings-loading-state">
           <div className="earnings-spinner" />
@@ -511,6 +511,6 @@ export default function Earnings() {
           </div>
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

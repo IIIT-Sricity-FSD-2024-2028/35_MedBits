@@ -1,4 +1,4 @@
-/**
+﻿/**
  * WalkInRegistration.jsx — Front Desk Walk-in Registration Page
  * ====================================================================
  * Connects with the MedBits NestJS backend API:
@@ -10,16 +10,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import AlertBanner from '../../components/dashboard/AlertBanner';
 import WalkInRegistrationForm from './components/WalkInRegistrationForm';
 import RegistrationSuccessCard from './components/RegistrationSuccessCard';
+import { API_BASE_URL } from '../../api/apiClient';
 
 // Backend API URL (defaults to http://localhost:3000 if not specified in .env)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const INITIAL_FORM_STATE = {
   firstName: '',
@@ -33,7 +33,7 @@ const INITIAL_FORM_STATE = {
 };
 
 export default function WalkInRegistration() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   // Form input state
@@ -367,7 +367,6 @@ export default function WalkInRegistration() {
   ];
 
   return (
-    <AppShell pageTitle="Walk-in Registration">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
         {/* ── 1. SUCCESS NOTIFICATION BANNER ──────────────────────── */}
@@ -443,6 +442,5 @@ export default function WalkInRegistration() {
         </ContentCard>
 
       </div>
-    </AppShell>
   );
 }

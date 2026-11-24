@@ -1,4 +1,4 @@
-/**
+﻿/**
  * feedback.jsx — Patient Doctor Feedback & Reviews
  * ====================================================================
  * Location: src/pages/Patient/feedback.jsx
@@ -8,12 +8,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './feedback.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
 // Base URL for backend API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Rating configuration options
 const RATING_OPTIONS = [
@@ -88,7 +88,7 @@ async function fetchPatientFeedback(id) {
 }
 
 export default function PatientFeedback() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const userId = user?.id;
 
   // Component state
@@ -227,7 +227,6 @@ export default function PatientFeedback() {
   }
 
   return (
-    <AppShell pageTitle="Doctor Feedback">
       <div className="feedback-container">
 
         {/* Hero banner */}
@@ -439,6 +438,5 @@ export default function PatientFeedback() {
         </div>
 
       </div>
-    </AppShell>
   );
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FollowUpReferral.jsx — Front Desk Follow-Up & Referral Coordination Page
  * ==============================================================================
  * Central workspace for front desk personnel to:
@@ -10,15 +10,14 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import AppShell from '../../components/layout/AppShell';
 import FollowUpSearchCard from './components/FollowUpSearchCard';
 import ReferralCard from './components/ReferralCard';
 import FollowUpCard from './components/FollowUpCard';
 import FollowUpEmptyState from './components/FollowUpEmptyState';
 import BookFollowUpModal from './components/BookFollowUpModal';
 import './FollowUpReferral.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // ── Fallback Seed Data (Safe offline demo fallback) ──────────────────────────
 const SEED_FOLLOWUPS = [
@@ -112,7 +111,7 @@ export default function FollowUpReferral() {
     setIsLoading(true);
     try {
       // 1. Fetch Follow-ups from GET /followups
-      const fuRes = await fetch(`${API_BASE}/followups`, {
+      const fuRes = await fetch(`${API_BASE_URL}/followups`, {
         headers: { role: 'frontdesk' },
       }).catch(() => null);
 
@@ -154,7 +153,7 @@ export default function FollowUpReferral() {
 
       // Also try fetching from default doctor referrals endpoint
       try {
-        const refRes = await fetch(`${API_BASE}/doctors/DOC001/referrals`, {
+        const refRes = await fetch(`${API_BASE_URL}/doctors/DOC001/referrals`, {
           headers: { role: 'doctor' },
         }).catch(() => null);
 
@@ -273,7 +272,6 @@ export default function FollowUpReferral() {
       : filteredReferrals.length + filteredFollowUps.length;
 
   return (
-    <AppShell pageTitle="Follow-Up & Referral Coordination">
       <div className="followup-page-container">
 
         {/* ── Success/Feedback Alert Banner ───────────────────────────────── */}
@@ -392,6 +390,5 @@ export default function FollowUpReferral() {
         />
 
       </div>
-    </AppShell>
   );
 }

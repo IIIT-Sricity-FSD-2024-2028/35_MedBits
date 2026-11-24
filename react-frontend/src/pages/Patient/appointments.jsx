@@ -1,4 +1,4 @@
-/**
+﻿/**
  * appointments.jsx — Patient Doctor Appointments & Booking Page
  * ================================================================
  * Location: src/pages/Patient/appointments.jsx
@@ -9,15 +9,15 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import AppointmentFilters from '../../components/appointments/AppointmentFilters';
 import SpecialityCard from '../../components/appointments/SpecialityCard';
 import BookingModal from '../../components/appointments/BookingModal';
 import StatusBadge from '../../components/common/StatusBadge';
 import './appointments.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -30,7 +30,7 @@ function formatDate(dateStr) {
 }
 
 export default function PatientAppointments() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const userId = user?.id;
 
   // Filter state
@@ -181,7 +181,6 @@ export default function PatientAppointments() {
   }
 
   return (
-    <AppShell pageTitle="Appointments">
       <div className="appt-container">
 
         {/* Status notification alert */}
@@ -351,6 +350,5 @@ export default function PatientAppointments() {
         />
 
       </div>
-    </AppShell>
   );
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AppointmentFilters.jsx — Search Filters & Dropdowns Component
  * ==============================================================
  * Location: src/components/appointments/AppointmentFilters.jsx
@@ -20,8 +20,8 @@
 
 import React, { useState, useEffect } from 'react';
 import './AppointmentFilters.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 function getTodayIso() {
   return new Date().toISOString().split('T')[0];

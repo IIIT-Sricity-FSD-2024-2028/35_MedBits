@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LabTechFormModal.jsx — Lab Technician Creation & Edit Modal Dialog
  * =========================================================================
  * Focused component for Branch Admin to onboard and manage diagnostic
@@ -6,13 +6,14 @@
  */
 
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import Modal from '../common/Modal';
 import { API_BASE_URL, isValidEmail, getAuthHeaders } from './staffHelpers';
 import './StaffFormModal.css';
 
 function LabTechDialog({ isOpen, onClose, initialData = null, branchId: propBranchId, onSuccess, onSubmit }) {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const isEdit = Boolean(initialData);
   const effectiveBranchId = propBranchId || user?.branchId || initialData?.branchId || '';
 

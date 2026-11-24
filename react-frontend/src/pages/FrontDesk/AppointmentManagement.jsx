@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AppointmentManagement.jsx — Front Desk Appointment Management Page
  * =========================================================================
  * Location: src/pages/FrontDesk/AppointmentManagement.jsx
@@ -17,8 +17,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
@@ -31,14 +31,14 @@ import CancelAppointmentModal from './components/CancelAppointmentModal';
 import AppointmentStatusBadge from './components/AppointmentStatusBadge';
 import AppointmentActionButtons from './components/AppointmentActionButtons';
 import './AppointmentManagement.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
 // Backend API URL (defaults to http://localhost:3000 if not specified in .env)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const todayIso = () => new Date().toISOString().split('T')[0];
 
 export default function AppointmentManagement() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // Data state
   const [appointments, setAppointments] = useState([]);
@@ -319,13 +319,8 @@ export default function AppointmentManagement() {
   ];
 
   return (
-    <AppShell
-      role="frontdesk"
-      activePath="/front-desk/appointments"
-      pageTitle="Appointment Management"
-      subtitle="Schedule, reschedule, and manage outpatient clinic appointments"
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Error and Success Notifications */}
         {errorMessage && (
           <AlertBanner
@@ -462,6 +457,6 @@ export default function AppointmentManagement() {
         }}
         onConfirm={handleCancelSubmit}
       />
-    </AppShell>
+    </>
   );
 }

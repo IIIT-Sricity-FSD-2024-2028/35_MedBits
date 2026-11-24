@@ -30,8 +30,9 @@
  *                 (replaces window.location.replace() / window.location.href)
  */
 
-import { useAuth }    from '../../context/AuthContext';
-import { Navigate }   from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
+import { Navigate } from 'react-router-dom';
 
 /**
  * ProtectedRoute Component
@@ -41,7 +42,7 @@ import { Navigate }   from 'react-router-dom';
  * @param {ReactNode} children    — the page component to render if authorised
  */
 export default function ProtectedRoute({ allowedRoles, children }) {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   /* CASE 1: Not logged in at all → go to login page */
   if (!user) {

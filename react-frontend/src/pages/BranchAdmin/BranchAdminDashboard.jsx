@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BranchAdminDashboard.jsx — Hospital Branch Admin Dashboard Page
  * =========================================================================
  * Dynamic dashboard connected to the MedBits backend:
@@ -11,8 +11,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -21,7 +21,7 @@ import DataTable from '../../components/dashboard/DataTable';
 import { API_BASE_URL, getAuthHeaders } from '../../components/branch-admin/staffHelpers';
 
 export default function BranchAdminDashboard() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   // Backend Data State
@@ -193,7 +193,6 @@ export default function BranchAdminDashboard() {
   ];
 
   return (
-    <AppShell pageTitle="Branch Admin Dashboard">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* ── 1. WELCOME BANNER ────────────────────────────────────────────── */}
@@ -360,6 +359,5 @@ export default function BranchAdminDashboard() {
         </ContentCard>
 
       </div>
-    </AppShell>
   );
 }

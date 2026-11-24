@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LeaveRequest.jsx — Lab Technician Leave Request & History Page
  * ==============================================================================
  * A concise, clean React component providing complete leave management:
@@ -9,11 +9,11 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './LeaveRequest.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Status badge styling and label mapping
 const STATUS_MAP = {
@@ -30,7 +30,7 @@ const INITIAL_FORM = {
 };
 
 export default function LeaveRequest() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const techId = user?.userId || user?.id || 'LABTECH_001';
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ export default function LeaveRequest() {
   const loadRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/leave-requests`, {
+      const res = await fetch(`${API_BASE_URL}/leave-requests`, {
         headers: { role: 'labtech', 'x-user-id': techId },
       });
       if (res.ok) {
@@ -83,7 +83,7 @@ export default function LeaveRequest() {
     setFeedback(null);
 
     try {
-      const res = await fetch(`${API_BASE}/leave-requests`, {
+      const res = await fetch(`${API_BASE_URL}/leave-requests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,6 @@ export default function LeaveRequest() {
   }), [requests]);
 
   return (
-    <AppShell pageTitle="Leave Request">
       <div className="lvr-page">
 
         {/* ── Optional Feedback Message ───────────────────────────────────── */}
@@ -274,6 +273,5 @@ export default function LeaveRequest() {
 
         </div>
       </div>
-    </AppShell>
   );
 }

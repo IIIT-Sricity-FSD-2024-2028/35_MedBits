@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LeaveManagement.jsx — Branch Admin Leave Requests Management Page
  * =========================================================================
  * Enables Branch Admins to inspect, approve, or reject leave requests submitted
@@ -16,8 +16,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import DataTable from '../../components/dashboard/DataTable';
@@ -28,7 +28,7 @@ import { API_BASE_URL, getAuthHeaders, formatDate, getInitials } from './utils/s
 import './LeaveManagement.css';
 
 export default function LeaveManagement() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // State
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -299,7 +299,6 @@ export default function LeaveManagement() {
   ];
 
   return (
-    <AppShell pageTitle="Leave Management">
       <div className="leave-mgmt-page">
 
         {/* ── NOTIFICATION ALERT BANNER ───────────────────────────────────── */}
@@ -580,6 +579,5 @@ export default function LeaveManagement() {
         )}
 
       </div>
-    </AppShell>
   );
 }

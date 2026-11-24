@@ -1,4 +1,4 @@
-/**
+﻿/**
  * earnings.jsx — Super Admin Financial Earnings
  * =========================================================================
  * Clean, readable React port of the Super Admin earnings portal:
@@ -11,11 +11,11 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import AppShell from '../../components/layout/AppShell';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './earnings.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const STORAGE_KEY = 'superadmin-selected-branch-id';
 
 const MONTH_NAMES = [
@@ -51,7 +51,7 @@ function getMonthLabel(key) {
 }
 
 export default function Earnings() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // State: Platform-wide overview & branch list
   const [overview, setOverview] = useState(null);
@@ -232,7 +232,6 @@ export default function Earnings() {
   };
 
   return (
-    <AppShell pageTitle="Earnings">
       <div className="sa-earnings-wrapper">
 
         {/* ── 1. PLATFORM OVERVIEW BANNER & 4 HIGH-LEVEL CARDS ── */}
@@ -552,6 +551,5 @@ export default function Earnings() {
         </div>
 
       </div>
-    </AppShell>
   );
 }

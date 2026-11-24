@@ -1,4 +1,4 @@
-/**
+﻿/**
  * InternalReferral.jsx — Doctor Internal Referral Management
  * ============================================================
  * Fully functional referral system with:
@@ -10,12 +10,12 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import './referral/referral.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const URGENCY_OPTIONS = ['Routine', 'Urgent', 'Emergency'];
 
@@ -56,7 +56,7 @@ function resolveId(user) {
 }
 
 export default function InternalReferral() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const myId = resolveId(user);
 
   // ── Tab state ─────────────────────────────────────────────────────────────
@@ -91,10 +91,10 @@ export default function InternalReferral() {
     setLoading(true);
     try {
       const [docRes, refRes, patRes, apptRes] = await Promise.allSettled([
-        fetch(`${API_BASE}/doctors`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE}/doctors/${encodeURIComponent(myId)}/referrals`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE}/patients`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE}/appointments/doctor/${encodeURIComponent(myId)}`, { headers: { role: 'doctor' } }),
+        fetch(`${API_BASE_URL}/doctors`, { headers: { role: 'doctor' } }),
+        fetch(`${API_BASE_URL}/doctors/${encodeURIComponent(myId)}/referrals`, { headers: { role: 'doctor' } }),
+        fetch(`${API_BASE_URL}/patients`, { headers: { role: 'doctor' } }),
+        fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(myId)}`, { headers: { role: 'doctor' } }),
       ]);
 
       // 1. Doctors
@@ -248,7 +248,7 @@ export default function InternalReferral() {
 
     try {
       const res = await fetch(
-        `${API_BASE}/doctors/${encodeURIComponent(myId)}/referrals`,
+        `${API_BASE_URL}/doctors/${encodeURIComponent(myId)}/referrals`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', role: 'doctor' },
@@ -302,7 +302,7 @@ export default function InternalReferral() {
   const handleStatusUpdate = async (referralId, newStatus) => {
     try {
       const res = await fetch(
-        `${API_BASE}/doctors/${encodeURIComponent(myId)}/referrals/${referralId}/status`,
+        `${API_BASE_URL}/doctors/${encodeURIComponent(myId)}/referrals/${referralId}/status`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', role: 'doctor' },
@@ -353,7 +353,6 @@ export default function InternalReferral() {
     : appointments;
 
   return (
-    <AppShell pageTitle="Internal Referral">
       <div className="referral-page">
 
         {/* Alert Banner */}
@@ -667,7 +666,6 @@ export default function InternalReferral() {
         )}
 
       </div>
-    </AppShell>
   );
 }
 

@@ -18,6 +18,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '../../../components/common/Modal';
 import FormField from '../../../components/common/FormField';
 import AlertBanner from '../../../components/dashboard/AlertBanner';
+import { API_BASE_URL } from '../../../api/apiClient';
 
 const todayIso = () => new Date().toISOString().split('T')[0];
 
@@ -26,7 +27,7 @@ export default function RescheduleAppointmentModal({
   appointment,
   isRescheduling,
   error,
-  apiBaseUrl = 'http://localhost:3000',
+  apiBaseUrl = API_BASE_URL,
   onClose,
   onReschedule,
 }) {

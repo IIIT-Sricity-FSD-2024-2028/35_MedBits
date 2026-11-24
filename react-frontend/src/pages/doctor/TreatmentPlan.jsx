@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TreatmentPlan.jsx — Doctor Treatment Plan Management Page
  * ============================================================
  * Fully functional with:
@@ -11,12 +11,12 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import './treatment/treatment.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const DEFAULT_PATIENTS = [];
 
@@ -69,7 +69,7 @@ function defaultForm() {
 }
 
 export default function TreatmentPlan() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const myId = resolveDoctorId(user);
 
   // ── View mode ──────────────────────────────────────────────────────────────
@@ -95,14 +95,14 @@ export default function TreatmentPlan() {
     setLoading(true);
     try {
       const [recRes, testRes, apptRes, patRes] = await Promise.allSettled([
-        fetch(`${API_BASE}/medical-records/doctor/${encodeURIComponent(myId)}`, {
+        fetch(`${API_BASE_URL}/medical-records/doctor/${encodeURIComponent(myId)}`, {
           headers: { role: 'doctor' },
         }),
-        fetch(`${API_BASE}/labtests`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE}/appointments/doctor/${encodeURIComponent(myId)}`, {
+        fetch(`${API_BASE_URL}/labtests`, { headers: { role: 'doctor' } }),
+        fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(myId)}`, {
           headers: { role: 'doctor' },
         }),
-        fetch(`${API_BASE}/patients`, { headers: { role: 'doctor' } }),
+        fetch(`${API_BASE_URL}/patients`, { headers: { role: 'doctor' } }),
       ]);
 
       // 1. Treatment plans
@@ -260,7 +260,7 @@ export default function TreatmentPlan() {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/medical-records`, {
+      const res = await fetch(`${API_BASE_URL}/medical-records`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', role: 'doctor' },
         body: JSON.stringify(payload),
@@ -316,7 +316,6 @@ export default function TreatmentPlan() {
     : appointments;
 
   return (
-    <AppShell pageTitle="Treatment Plan">
       <div className="treatment-page">
 
         {/* Alert Banner */}
@@ -641,7 +640,6 @@ export default function TreatmentPlan() {
         )}
 
       </div>
-    </AppShell>
   );
 }
 

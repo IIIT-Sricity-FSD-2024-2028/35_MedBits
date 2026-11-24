@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SuperUserDashboard.jsx — Super Admin Branch & Admin Management Component
  * =========================================================================
  * Clean React port of `front-end/html/superuser/dashboard.html`.
@@ -12,10 +12,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './SuperUserDashboard.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Fallback demo data if backend is offline or empty
 const FALLBACK_BRANCHES = [
@@ -49,7 +50,7 @@ const FALLBACK_BRANCHES = [
 ];
 
 export default function SuperUserDashboard() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   // ── 1. Component States ────────────────────────────────────────────────
@@ -96,7 +97,7 @@ export default function SuperUserDashboard() {
   const loadBranches = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/super-admin/dashboard`, {
+      const res = await fetch(`${API_BASE_URL}/super-admin/dashboard`, {
         headers: getHeaders(),
       });
       if (!res.ok) throw new Error('Failed to load branches');
@@ -120,7 +121,7 @@ export default function SuperUserDashboard() {
   const handleCreateBranch = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API_BASE}/super-admin/hospital-branches`, {
+      const res = await fetch(`${API_BASE_URL}/super-admin/hospital-branches`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(branchForm),
@@ -158,7 +159,7 @@ export default function SuperUserDashboard() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/super-admin/branch-admins`, {
+      const res = await fetch(`${API_BASE_URL}/super-admin/branch-admins`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(adminForm),

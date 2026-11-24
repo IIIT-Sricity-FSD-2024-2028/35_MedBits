@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UserProfile.jsx — Shared Generic Profile Component
  * ====================================================================
  * Location: src/components/profile/UserProfile.jsx
@@ -32,8 +32,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import AlertBanner from '../dashboard/AlertBanner';
 import './UserProfile.css';
 
@@ -49,7 +49,7 @@ export default function UserProfile({
   onSaveSuccess,
   initialData,
 }) {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   const [profile, setProfile] = useState(initialData || null);
   const [editForm, setEditForm] = useState(initialData || {});
@@ -203,7 +203,6 @@ export default function UserProfile({
   ).toUpperCase();
 
   return (
-    <AppShell pageTitle={pageTitle}>
       <div className="profile-container">
 
         {/* ── 1. HERO BANNER ────────────────────────────────────────── */}
@@ -359,6 +358,5 @@ export default function UserProfile({
         </div>
 
       </div>
-    </AppShell>
   );
 }

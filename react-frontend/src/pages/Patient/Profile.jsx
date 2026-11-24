@@ -1,17 +1,19 @@
-/**
+﻿/**
  * Profile.jsx — Patient Personal Profile & Account Details
  * ====================================================================
  * Utilizes the shared <UserProfile> component configured for the Patient role.
  */
 
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectCurrentUser, updateUserProfile } from '../../store/slices/authSlice';
 import UserProfile from '../../components/profile/UserProfile';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function PatientProfile() {
-  const { user, login } = useAuth();
+  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
 
   const patientFields = [
     { name: 'firstName', label: 'First Name', required: true },
@@ -31,13 +33,14 @@ export default function PatientProfile() {
 
   function handleSaveSuccess(updatedProfile) {
     if (user) {
-      login({
-        ...user,
-        firstName: updatedProfile.firstName,
-        lastName: updatedProfile.lastName,
-        name: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim(),
-        email: updatedProfile.email,
-      });
+      dispatch(
+        updateUserProfile({
+          firstName: updatedProfile.firstName,
+          lastName: updatedProfile.lastName,
+          name: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim(),
+          email: updatedProfile.email,
+        })
+      );
     }
   }
 

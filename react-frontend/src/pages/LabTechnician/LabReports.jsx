@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LabReports.jsx — Lab Technician Diagnostic Lab Reports & Submissions
  * ==============================================================================
  * Clean, compact component handling the complete diagnostic reporting workflow:
@@ -12,14 +12,14 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import './LabReports.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function LabReports() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const [searchParams] = useSearchParams();
   const techId = user?.userId || user?.id || 'LABTECH_001';
 
@@ -46,8 +46,8 @@ export default function LabReports() {
     try {
       const headers = { role: 'labtech', 'x-user-id': techId };
       const [reqs, reps] = await Promise.all([
-        fetch(`${API_BASE}/lab-requests`, { headers }).then((r) => (r.ok ? r.json() : [])),
-        fetch(`${API_BASE}/lab-reports`, { headers }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`${API_BASE_URL}/lab-requests`, { headers }).then((r) => (r.ok ? r.json() : [])),
+        fetch(`${API_BASE_URL}/lab-reports`, { headers }).then((r) => (r.ok ? r.json() : [])),
       ]);
       setRequests(reqs);
       setReports(reps);
@@ -76,7 +76,7 @@ export default function LabReports() {
     setReportForm({ result: '', findings: '', remarks: '' });
     setAttachedFile(null);
     try {
-      const res = await fetch(`${API_BASE}/lab-requests/${encodeURIComponent(req.id)}/report`, {
+      const res = await fetch(`${API_BASE_URL}/lab-requests/${encodeURIComponent(req.id)}/report`, {
         headers: { role: 'labtech', 'x-user-id': techId },
       });
       if (res.ok) {
@@ -110,7 +110,7 @@ export default function LabReports() {
     setSubmitting(true);
     const endpoint = isSubmit ? 'submit' : 'draft';
     try {
-      const res = await fetch(`${API_BASE}/lab-requests/${encodeURIComponent(reportingReq.id)}/report/${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}/lab-requests/${encodeURIComponent(reportingReq.id)}/report/${endpoint}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', role: 'labtech', 'x-user-id': techId },
         body: JSON.stringify({ ...reportForm, fileAttachment: attachedFile || undefined }),
@@ -152,7 +152,6 @@ export default function LabReports() {
   }, [activeTab, inProgressList, submittedList, search]);
 
   return (
-    <AppShell pageTitle="Lab Reports">
       <div className="lr-page-container">
 
         {/* Alert Banner */}
@@ -373,6 +372,5 @@ export default function LabReports() {
         )}
 
       </div>
-    </AppShell>
   );
 }

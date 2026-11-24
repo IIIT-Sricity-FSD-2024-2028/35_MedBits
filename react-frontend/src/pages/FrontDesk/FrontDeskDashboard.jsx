@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FrontDeskDashboard.jsx — Front Desk Reception Dashboard Page
  * ====================================================================
  * Connects with the MedBits NestJS backend API:
@@ -13,8 +13,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -22,12 +22,12 @@ import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import AlertBanner from '../../components/dashboard/AlertBanner';
 import StatusBadge from '../../components/common/StatusBadge';
+import { API_BASE_URL } from '../../api/apiClient';
 
 // Backend API URL (defaults to http://localhost:3000 if not specified in .env)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function FrontDeskDashboard() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   // State for data fetching, loading, and error handling
@@ -293,7 +293,6 @@ export default function FrontDeskDashboard() {
   ];
 
   return (
-    <AppShell pageTitle="Front Desk Dashboard">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* ── 0. ERROR BANNER (Displayed if backend requests fail) ──── */}
@@ -407,6 +406,5 @@ export default function FrontDeskDashboard() {
         </ContentCard>
 
       </div>
-    </AppShell>
   );
 }

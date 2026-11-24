@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ManageFrontDesk.jsx — Branch Admin Manage Front Desk Staff Page
  * =========================================================================
  * Modular, clean front desk staff management for Branch Admins:
@@ -12,8 +12,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import DataTable from '../../components/dashboard/DataTable';
@@ -33,7 +33,7 @@ import {
 import './ManageFrontDesk.css';
 
 export default function ManageFrontDesk() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // Data State
   const [staffList, setStaffList] = useState([]);
@@ -238,7 +238,6 @@ export default function ManageFrontDesk() {
   ];
 
   return (
-    <AppShell pageTitle="Manage Front Desk">
       <div className="manage-frontdesk-page">
 
         {/* ── NOTIFICATION ALERT BANNER ───────────────────────────────────── */}
@@ -372,6 +371,5 @@ export default function ManageFrontDesk() {
         />
 
       </div>
-    </AppShell>
   );
 }

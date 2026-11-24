@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SuperAdminDashboard.jsx — Super Admin Master Dashboard Page
  * ====================================================================
  * Utilizes the core reusable UI components: AppShell, WelcomeCard,
@@ -7,8 +7,8 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -16,7 +16,7 @@ import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 
 export default function SuperAdminDashboard() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
   // Mock hospital branches registry
@@ -68,7 +68,6 @@ export default function SuperAdminDashboard() {
   ];
 
   return (
-    <AppShell pageTitle="Super Admin Dashboard">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* ── 1. WELCOME BANNER ────────────────────────────────────── */}
@@ -135,6 +134,5 @@ export default function SuperAdminDashboard() {
         </ContentCard>
 
       </div>
-    </AppShell>
   );
 }

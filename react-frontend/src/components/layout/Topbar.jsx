@@ -34,7 +34,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link }           from 'react-router-dom';
-import { useAuth }                     from '../../context/AuthContext';
+import { useDispatch, useSelector }    from 'react-redux';
+import { logout, selectCurrentUser }   from '../../store/slices/authSlice';
+import { getInitials }                 from '../../utils/userHelpers';
 import { getPortalLabel }              from '../../config/navConfig';
 import './Topbar.css';
 
@@ -56,7 +58,8 @@ const DEMO_NOTIFICATIONS = [
  * @param {function} onToggle   — hamburger button click handler (passed from AppShell)
  */
 export default function Topbar({ pageTitle, onToggle }) {
-  const { user, logout, getInitials } = useAuth();
+  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   /*
@@ -128,7 +131,7 @@ export default function Topbar({ pageTitle, onToggle }) {
    */
   function handleLogout(e) {
     e.preventDefault();
-    logout();
+    dispatch(logout());
     navigate('/login');
   }
 

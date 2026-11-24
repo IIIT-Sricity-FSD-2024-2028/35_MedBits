@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SlotManagement.jsx — Doctor Slot Availability & Leaves Master Page
  * =========================================================================
  * Location: src/pages/doctor/SlotManagement.jsx
@@ -16,18 +16,18 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 
 import DailySlotManager from './slots/DailySlotManager';
 import UnavailableDatesManager from './slots/UnavailableDatesManager';
 import WeeklyOverviewCard from './slots/WeeklyOverviewCard';
 import './slots/slots.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function SlotManagement() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // Selected date defaults to today in YYYY-MM-DD
   const [selectedDate, setSelectedDate] = useState(
@@ -46,7 +46,7 @@ export default function SlotManagement() {
   // 1. Fetch Doctor profile to load base slot template
   const loadDoctorProfile = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/doctors/${encodeURIComponent(doctorId)}`, {
+      const res = await fetch(`${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}`, {
         headers: { role: 'doctor' },
       });
       if (res.ok) {
@@ -68,15 +68,15 @@ export default function SlotManagement() {
     try {
       const [blocksRes, apptsRes, unavailRes] = await Promise.all([
         fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/slot-blocks?date=${encodeURIComponent(date)}`,
+          `${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}/slot-blocks?date=${encodeURIComponent(date)}`,
           { headers: { role: 'doctor' } }
         ),
         fetch(
-          `${API_BASE}/appointments/doctor/${encodeURIComponent(doctorId)}`,
+          `${API_BASE_URL}/appointments/doctor/${encodeURIComponent(doctorId)}`,
           { headers: { role: 'doctor' } }
         ),
         fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates`,
+          `${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates`,
           { headers: { role: 'doctor' } }
         ),
       ]);
@@ -121,7 +121,7 @@ export default function SlotManagement() {
         // UNBLOCK: Call DELETE
         const targetId = blockId || slot;
         const res = await fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/slot-blocks/${encodeURIComponent(targetId)}`,
+          `${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}/slot-blocks/${encodeURIComponent(targetId)}`,
           {
             method: 'DELETE',
             headers: { role: 'doctor' },
@@ -144,7 +144,7 @@ export default function SlotManagement() {
         if (reason === null) return; // Doctor clicked Cancel on prompt
 
         const res = await fetch(
-          `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/slot-blocks`,
+          `${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}/slot-blocks`,
           {
             method: 'POST',
             headers: {
@@ -177,7 +177,7 @@ export default function SlotManagement() {
     setAlertMessage(null);
     try {
       const res = await fetch(
-        `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates`,
+        `${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates`,
         {
           method: 'POST',
           headers: {
@@ -206,7 +206,7 @@ export default function SlotManagement() {
     try {
       const targetParam = id || date;
       const res = await fetch(
-        `${API_BASE}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates/${encodeURIComponent(targetParam)}`,
+        `${API_BASE_URL}/doctors/${encodeURIComponent(doctorId)}/unavailable-dates/${encodeURIComponent(targetParam)}`,
         {
           method: 'DELETE',
           headers: { role: 'doctor' },
@@ -227,7 +227,6 @@ export default function SlotManagement() {
   const isCurrentDateUnavailable = unavailableDates.some((u) => u.date === selectedDate);
 
   return (
-    <AppShell pageTitle="Slot Management">
       <div className="slots-page-container">
 
         {/* Status notification banner */}
@@ -269,6 +268,5 @@ export default function SlotManagement() {
         <WeeklyOverviewCard totalSlotsCount={allSlots.length} />
 
       </div>
-    </AppShell>
   );
 }

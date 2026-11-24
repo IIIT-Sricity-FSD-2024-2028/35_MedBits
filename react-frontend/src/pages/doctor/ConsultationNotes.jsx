@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ConsultationNotes.jsx — Doctor Consultation Notes Master Page
  * =========================================================================
  * Location: src/pages/doctor/ConsultationNotes.jsx
@@ -13,8 +13,8 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import AppShell from '../../components/layout/AppShell';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 
 import ConsultationToolbar from './consultation/ConsultationToolbar';
 import UpcomingAppointmentsList from './consultation/UpcomingAppointmentsList';
@@ -23,11 +23,11 @@ import CompletedLabReportsList from './consultation/CompletedLabReportsList';
 import ConsultationNoteEditor from './consultation/ConsultationNoteEditor';
 import LabReportModal from './consultation/LabReportModal';
 import './consultation/consultation.css';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function ConsultationNotes() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
 
   // ── VIEW STATE ────────────────────────────────────────────────────────
   // 'list' = Dashboard with queues & recent history
@@ -53,7 +53,7 @@ export default function ConsultationNotes() {
   const loadConsultationData = useCallback(async () => {
     try {
       // 1. Fetch appointments assigned to this doctor (only upcoming ones)
-      const apptRes = await fetch(`${API_BASE}/appointments/doctor/${encodeURIComponent(doctorId)}`, {
+      const apptRes = await fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(doctorId)}`, {
         headers: { role: 'doctor' },
       });
       if (apptRes.ok) {
@@ -67,7 +67,7 @@ export default function ConsultationNotes() {
       }
 
       // 2. Fetch doctor's existing consultation records
-      const recordsRes = await fetch(`${API_BASE}/medical-records/doctor/${encodeURIComponent(doctorId)}`, {
+      const recordsRes = await fetch(`${API_BASE_URL}/medical-records/doctor/${encodeURIComponent(doctorId)}`, {
         headers: { role: 'doctor' },
       });
       if (recordsRes.ok) {
@@ -79,7 +79,7 @@ export default function ConsultationNotes() {
       }
 
       // 3. Fetch diagnostic lab tests catalog
-      const testsRes = await fetch(`${API_BASE}/labtests`, {
+      const testsRes = await fetch(`${API_BASE_URL}/labtests`, {
         headers: { role: 'doctor' },
       });
       if (testsRes.ok) {
@@ -89,7 +89,7 @@ export default function ConsultationNotes() {
 
       // 4. Fetch submitted lab reports for this doctor
       try {
-        const reportsRes = await fetch(`${API_BASE}/lab-reports/doctor`, {
+        const reportsRes = await fetch(`${API_BASE_URL}/lab-reports/doctor`, {
           headers: { role: 'doctor', 'x-user-id': doctorId },
         });
         if (reportsRes.ok) {
@@ -162,7 +162,7 @@ export default function ConsultationNotes() {
       if (editingRecord?.id) {
         // ── UPDATE EXISTING RECORD (PREVENTS 2 COPIES) ──────────────
         const response = await fetch(
-          `${API_BASE}/medical-records/${encodeURIComponent(editingRecord.id)}`,
+          `${API_BASE_URL}/medical-records/${encodeURIComponent(editingRecord.id)}`,
           {
             method: 'PUT',
             headers: {
@@ -192,7 +192,7 @@ export default function ConsultationNotes() {
         });
       } else {
         // ── CREATE NEW RECORD ───────────────────────────────────────
-        const response = await fetch(`${API_BASE}/medical-records`, {
+        const response = await fetch(`${API_BASE_URL}/medical-records`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -211,7 +211,7 @@ export default function ConsultationNotes() {
         // Complete the appointment in backend and remove from upcoming queue
         if (targetAppointmentId) {
           await fetch(
-            `${API_BASE}/appointments/${encodeURIComponent(targetAppointmentId)}/complete`,
+            `${API_BASE_URL}/appointments/${encodeURIComponent(targetAppointmentId)}/complete`,
             {
               method: 'POST',
               headers: { role: 'doctor' },
@@ -242,7 +242,6 @@ export default function ConsultationNotes() {
   };
 
   return (
-    <AppShell pageTitle="Consultation Notes">
       <div className="consultation-page-container">
 
         {/* Status notification banner */}
@@ -313,6 +312,5 @@ export default function ConsultationNotes() {
         />
 
       </div>
-    </AppShell>
   );
 }

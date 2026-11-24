@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LabTechProfile.jsx — Lab Technician Profile & Operational Assignment
  * ==============================================================================
  * Utilizes the shared <UserProfile> component configured for the Lab Technician role.
@@ -10,13 +10,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
 import UserProfile from '../../components/profile/UserProfile';
+import { API_BASE_URL } from '../../api/apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function LabTechProfile() {
-  const { user } = useAuth();
+  const user = useSelector(selectCurrentUser);
   const [branchName, setBranchName] = useState('');
 
   // Fetch branch details to display friendly branch name alongside branchId

@@ -7,11 +7,13 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, ROLE_ROUTES } from '../context/AuthContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout, selectCurrentUser, ROLE_ROUTES } from '../store/slices/authSlice';
 
 export default function Unauthorized() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const dispatch = useDispatch();
+  const user = useSelector(selectCurrentUser);
 
   const userDashboard = user ? (ROLE_ROUTES[user.role] || '/') : '/login';
 
@@ -85,7 +87,7 @@ export default function Unauthorized() {
 
           <button
             onClick={() => {
-              logout();
+              dispatch(logout());
               navigate('/login');
             }}
             style={{
