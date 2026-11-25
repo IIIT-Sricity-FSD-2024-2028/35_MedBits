@@ -9,12 +9,26 @@
  *  - Seamless fallback so dropdowns work 100% reliably whether online or offline
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchReferralData,
+  submitReferral,
+  updateReferralStatus,
+  setActiveTab,
+  setDoctorSearch,
+  updateReferralField,
+  selectReferralPatient,
+  selectReferralAppointment,
+  resetReferralForm,
+  setReferralAlert,
+  clearReferralAlert,
+  selectInternalReferral,
+} from '../../store/slices/doctor/internalReferralSlice';
+import { resolveDoctorId } from '../../store/slices/doctor/doctorHelpers';
 import ContentCard from '../../components/dashboard/ContentCard';
 import './referral/referral.css';
-import { API_BASE_URL } from '../../api/apiClient';
 
 
 const URGENCY_OPTIONS = ['Routine', 'Urgent', 'Emergency'];
@@ -31,298 +45,72 @@ const STATUS_COLORS = {
   completed: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', label: 'Completed' },
 };
 
-// ── Catalogs loaded dynamically from backend APIs ──────────────────────────
-const DEFAULT_PATIENTS = [];
-const DEFAULT_DOCTORS = [];
-const DEFAULT_APPOINTMENTS = [];
-
-function normalizePatient(p) {
-  const id = p.userId || p.id || p.patientId || '';
-  const firstName = p.firstName || '';
-  const lastName = p.lastName || '';
-  const name = p.name || `${firstName} ${lastName}`.trim() || id;
-  return {
-    ...p,
-    userId: id,
-    id,
-    firstName: firstName || name.split(' ')[0] || '',
-    lastName: lastName || name.split(' ').slice(1).join(' ') || '',
-    name,
-  };
-}
-
-function resolveId(user) {
-  return user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
-}
-
 export default function InternalReferral() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
-  const myId = resolveId(user);
+  const myId = resolveDoctorId(user);
+  const {
+    activeTab,
+    doctors,
+    patients,
+    appointments,
+    referrals,
+    status,
+    submitStatus,
+    alert,
+    form,
+    doctorSearch,
+  } = useSelector(selectInternalReferral);
 
-  // ── Tab state ─────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState('new');
-
-  // ── Data ──────────────────────────────────────────────────────────────────
-  const [doctors, setDoctors] = useState(DEFAULT_DOCTORS.filter((d) => d.id !== myId));
-  const [patients, setPatients] = useState(DEFAULT_PATIENTS.map(normalizePatient));
-  const [appointments, setAppointments] = useState(DEFAULT_APPOINTMENTS);
-  const [referrals, setReferrals] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [alert, setAlert] = useState(null);
-
-  // ── New Referral Form ─────────────────────────────────────────────────────
-  const EMPTY_FORM = {
-    patientId: '',
-    patientName: '',
-    toDoctorId: '',
-    reason: '',
-    urgency: 'Routine',
-    preferredDate: '',
-    appointmentId: '',
-  };
-  const [form, setForm] = useState(EMPTY_FORM);
-
-  // ── Doctor Search Filter ──────────────────────────────────────────────────
-  const [doctorSearch, setDoctorSearch] = useState('');
+  const loading = status === 'loading';
+  const submitting = submitStatus === 'loading';
 
   // ── Fetch All Data with Safe Fallbacks ────────────────────────────────────
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [docRes, refRes, patRes, apptRes] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/doctors`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE_URL}/doctors/${encodeURIComponent(myId)}/referrals`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE_URL}/patients`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(myId)}`, { headers: { role: 'doctor' } }),
-      ]);
-
-      // 1. Doctors
-      if (docRes.status === 'fulfilled' && docRes.value.ok) {
-        const d = await docRes.value.json();
-        if (Array.isArray(d) && d.length > 0) {
-          setDoctors(d.filter((doc) => doc.id !== myId && doc.userId !== myId));
-        }
-      }
-
-      // 2. Referrals
-      if (refRes.status === 'fulfilled' && refRes.value.ok) {
-        const d = await refRes.value.json();
-        if (Array.isArray(d)) {
-          setReferrals(d);
-        }
-      }
-
-      // 3. Appointments
-      let loadedAppts = [];
-      if (apptRes.status === 'fulfilled' && apptRes.value.ok) {
-        const d = await apptRes.value.json();
-        if (Array.isArray(d)) {
-          loadedAppts = d;
-          setAppointments(d);
-        }
-      } else {
-        setAppointments([]);
-      }
-
-      // 4. Patients — merge API + appointment-extracted
-      const patientMap = new Map();
-
-      // Extract patients from loaded appointments
-      loadedAppts.forEach((a) => {
-        const pId = a.userId || a.patientId || a.patient?.userId || a.patient?.id;
-        if (pId) {
-          const pName = a.patient?.name
-            || (a.patient ? `${a.patient.firstName || ''} ${a.patient.lastName || ''}`.trim() : '')
-            || a.patientName
-            || pId;
-          if (!patientMap.has(pId)) {
-            patientMap.set(pId, normalizePatient({ userId: pId, name: pName }));
-          }
-        }
-      });
-
-      // Overlay patients from /patients endpoint
-      if (patRes.status === 'fulfilled' && patRes.value.ok) {
-        const d = await patRes.value.json();
-        if (Array.isArray(d)) {
-          d.forEach((p) => {
-            const norm = normalizePatient(p);
-            if (norm.userId) {
-              patientMap.set(norm.userId, norm);
-            }
-          });
-        }
-      }
-
-      setPatients(Array.from(patientMap.values()));
-    } catch {
-      // Graceful fallback to default state
-    } finally {
-      setLoading(false);
-    }
-  }, [myId]);
-
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    dispatch(fetchReferralData());
+    return () => {
+      dispatch(clearReferralAlert());
+    };
+  }, [dispatch, myId]);
 
   // Auto-dismiss alert after 5s
   useEffect(() => {
     if (!alert) return;
-    const t = setTimeout(() => setAlert(null), 5000);
+    const t = setTimeout(() => dispatch(clearReferralAlert()), 5000);
     return () => clearTimeout(t);
-  }, [alert]);
+  }, [alert, dispatch]);
 
   // ── Form Helpers ──────────────────────────────────────────────────────────
-  const handleFormChange = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+  const handleFormChange = (field, value) => dispatch(updateReferralField({ field, value }));
 
   // When patient selected from dropdown, also fill patientName
-  const handlePatientSelect = (patientId) => {
-    const pat = patients.find((p) => (p.userId || p.id) === patientId);
-    const pName = pat
-      ? (pat.name || `${pat.firstName || ''} ${pat.lastName || ''}`.trim() || patientId)
-      : '';
-    setForm((prev) => ({
-      ...prev,
-      patientId,
-      patientName: pName,
-    }));
-  };
+  const handlePatientSelect = (patientId) => dispatch(selectReferralPatient(patientId));
 
   // When appointment selected from dropdown, auto-fill patient
-  const handleAppointmentSelect = (apptId) => {
-    if (!apptId) {
-      setForm((prev) => ({ ...prev, appointmentId: '' }));
-      return;
-    }
-    const appt = appointments.find((a) => a.id === apptId);
-    if (appt) {
-      const pId = appt.userId || appt.patientId || appt.patient?.userId || appt.patient?.id || '';
-      const pName = appt.patient?.name
-        || (appt.patient ? `${appt.patient.firstName || ''} ${appt.patient.lastName || ''}`.trim() : '')
-        || appt.patientName
-        || pId;
+  const handleAppointmentSelect = (apptId) => dispatch(selectReferralAppointment(apptId));
 
-      // Ensure the patient is present in dropdown
-      if (pId && !patients.some((p) => (p.userId || p.id) === pId)) {
-        setPatients((prev) => [...prev, normalizePatient({ userId: pId, name: pName })]);
-      }
-
-      setForm((prev) => ({
-        ...prev,
-        appointmentId: apptId,
-        patientId: pId,
-        patientName: pName,
-      }));
-    } else {
-      setForm((prev) => ({ ...prev, appointmentId: '' }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
+    let error = null;
     if (!form.toDoctorId) {
-      setAlert({ type: 'error', text: 'Please select a target doctor/specialist to refer your patient to.' });
+      error = 'Please select a target doctor/specialist to refer your patient to.';
+    } else if (!form.patientId.trim()) {
+      error = 'Please select a patient for this referral.';
+    } else if (!form.reason.trim()) {
+      error = 'Please provide a clinical reason for the referral.';
+    }
+
+    if (error) {
+      dispatch(setReferralAlert({ type: 'error', text: error }));
       return;
     }
-    if (!form.patientId.trim()) {
-      setAlert({ type: 'error', text: 'Please select a patient for this referral.' });
-      return;
-    }
-    if (!form.reason.trim()) {
-      setAlert({ type: 'error', text: 'Please provide a clinical reason for the referral.' });
-      return;
-    }
 
-    setSubmitting(true);
-    setAlert(null);
-
-    const payload = {
-      patientId:     form.patientId.trim(),
-      patientName:   form.patientName.trim() || form.patientId.trim(),
-      toDoctorId:    form.toDoctorId,
-      reason:        form.reason.trim(),
-      urgency:       form.urgency || 'Routine',
-      preferredDate: form.preferredDate ? form.preferredDate : undefined,
-      appointmentId: form.appointmentId.trim() || undefined,
-    };
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/doctors/${encodeURIComponent(myId)}/referrals`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', role: 'doctor' },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to create referral on server');
-      }
-
-      const saved = await res.json();
-      setReferrals((prev) => [saved, ...prev]);
-      try {
-        const cached = JSON.parse(localStorage.getItem('referralHistory') || '[]');
-        localStorage.setItem('referralHistory', JSON.stringify([saved, ...cached.filter((c) => c.id !== saved.id)]));
-      } catch (_) {}
-      setAlert({ type: 'success', text: 'Referral sent successfully!' });
-      setForm(EMPTY_FORM);
-      setActiveTab('sent');
-    } catch (err) {
-      // Local fallback for offline mode or network issues
-      const selectedDoc = doctors.find((d) => (d.id || d.userId) === form.toDoctorId);
-      const localSaved = {
-        id: `REF${Date.now()}`,
-        fromDoctorId: myId,
-        fromDoctorName: user?.name || 'Doctor',
-        fromSpecialization: user?.specialization || 'General',
-        toDoctorId: form.toDoctorId,
-        toDoctorName: selectedDoc?.name || form.toDoctorId,
-        toSpecialization: selectedDoc?.specialization || 'Specialist',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        ...payload,
-      };
-      setReferrals((prev) => [localSaved, ...prev]);
-      try {
-        const cached = JSON.parse(localStorage.getItem('referralHistory') || '[]');
-        localStorage.setItem('referralHistory', JSON.stringify([localSaved, ...cached.filter((c) => c.id !== localSaved.id)]));
-      } catch (_) {}
-      setAlert({ type: 'success', text: 'Referral created and saved successfully!' });
-      setForm(EMPTY_FORM);
-      setActiveTab('sent');
-    } finally {
-      setSubmitting(false);
-    }
+    dispatch(submitReferral());
   };
 
   // ── Status Update ─────────────────────────────────────────────────────────
-  const handleStatusUpdate = async (referralId, newStatus) => {
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/doctors/${encodeURIComponent(myId)}/referrals/${referralId}/status`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', role: 'doctor' },
-          body: JSON.stringify({ status: newStatus }),
-        },
-      );
-      if (res.ok) {
-        const updated = await res.json();
-        setReferrals((prev) => prev.map((r) => (r.id === referralId ? updated : r)));
-        setAlert({ type: 'success', text: `Referral marked as ${newStatus}.` });
-        return;
-      }
-    } catch {
-      // fall through to local update
-    }
-    setReferrals((prev) =>
-      prev.map((r) => (r.id === referralId ? { ...r, status: newStatus } : r)),
-    );
-    setAlert({ type: 'success', text: `Referral marked as ${newStatus}.` });
-  };
+  const handleStatusUpdate = (referralId, newStatus) =>
+    dispatch(updateReferralStatus({ referralId, status: newStatus }));
 
   // ── Derived Lists ─────────────────────────────────────────────────────────
   const isMyId = (id) => {
@@ -372,7 +160,7 @@ export default function InternalReferral() {
             <button
               key={tab.key}
               className={`referral-tab ${activeTab === tab.key ? 'referral-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => dispatch(setActiveTab(tab.key))}
             >
               {tab.label}
             </button>
@@ -395,7 +183,7 @@ export default function InternalReferral() {
                   className="referral-search-input"
                   placeholder="Search by name or specialization…"
                   value={doctorSearch}
-                  onChange={(e) => setDoctorSearch(e.target.value)}
+                  onChange={(e) => dispatch(setDoctorSearch(e.target.value))}
                 />
               </div>
 
@@ -592,7 +380,7 @@ export default function InternalReferral() {
                   <button
                     type="button"
                     className="referral-btn referral-btn--ghost"
-                    onClick={() => setForm(EMPTY_FORM)}
+                    onClick={() => dispatch(resetReferralForm())}
                   >
                     Clear
                   </button>
