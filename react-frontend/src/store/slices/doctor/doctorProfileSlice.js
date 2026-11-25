@@ -19,17 +19,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiFetch } from '../../../api/apiClient';
 import { logout, updateUserProfile } from '../authSlice';
+import { resolveDoctorId } from './doctorHelpers';
 
 const LOAD_ERROR = 'Unable to load profile data from the backend server.';
 const SAVE_ERROR = 'Unable to update profile. Please ensure the backend server is running.';
-
-/**
- * Resolves the doctor id for the logged-in user. Mirrors the mapping used by
- * the other doctor pages (demo user DOCTOR_001 maps to seeded DOC001).
- */
-export function resolveDoctorId(user) {
-  return user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
-}
 
 /** Converts a form value to a number, or undefined when left blank. */
 function toNumberOrUndefined(value) {
