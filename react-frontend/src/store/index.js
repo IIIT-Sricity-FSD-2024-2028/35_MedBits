@@ -9,6 +9,7 @@ import authReducer from './slices/authSlice';
 import patientProfileReducer from './slices/patient/patientProfileSlice';
 import patientAppointmentsReducer from './slices/patient/patientAppointmentsSlice';
 import patientFeedbackReducer from './slices/patient/patientFeedbackSlice';
+import patientLabTestsReducer from './slices/patient/patientLabTestsSlice';
 import doctorProfileReducer from './slices/doctor/doctorProfileSlice';
 import doctorDashboardReducer from './slices/doctor/doctorDashboardSlice';
 import doctorEarningsReducer from './slices/doctor/doctorEarningsSlice';
@@ -23,6 +24,7 @@ export const store = configureStore({
     patientProfile: patientProfileReducer,
     patientAppointments: patientAppointmentsReducer,
     patientFeedback: patientFeedbackReducer,
+    patientLabTests: patientLabTestsReducer,
     doctorProfile: doctorProfileReducer,
     doctorDashboard: doctorDashboardReducer,
     doctorEarnings: doctorEarningsReducer,
