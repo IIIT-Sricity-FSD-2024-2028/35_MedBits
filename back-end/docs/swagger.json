@@ -3273,6 +3273,50 @@
         ]
       }
     },
+    "/medical-records/{id}": {
+      "put": {
+        "operationId": "MedicalRecordsController_updateRecord",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "header",
+            "description": "User role (admin, doctor, patient, frontdesk)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Medical record ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMedicalRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Medical record updated successfully"
+          }
+        },
+        "summary": "Update an existing medical record",
+        "tags": [
+          "Medical Records"
+        ]
+      }
+    },
     "/followups": {
       "get": {
         "operationId": "FollowUpsController_getFollowUps",
@@ -5038,6 +5082,10 @@
           "duration": {
             "type": "string",
             "example": "15 mins"
+          },
+          "id": {
+            "type": "string",
+            "example": "MR001"
           }
         },
         "required": [
@@ -5046,6 +5094,55 @@
           "doctorName",
           "specialization"
         ]
+      },
+      "UpdateMedicalRecordDto": {
+        "type": "object",
+        "properties": {
+          "patientName": {
+            "type": "string",
+            "example": "Ria Sharma"
+          },
+          "consultationNote": {
+            "type": "string",
+            "example": "Patient complains of chest pain."
+          },
+          "medicines": {
+            "type": "string",
+            "example": "Aspirin 75mg"
+          },
+          "followUp": {
+            "type": "string",
+            "example": "Review after 1 week"
+          },
+          "followUpDate": {
+            "type": "string",
+            "example": "2026-05-17"
+          },
+          "appointmentId": {
+            "type": "string",
+            "example": "APT001"
+          },
+          "tests": {
+            "type": "string",
+            "example": "ECG"
+          },
+          "labTestDate": {
+            "type": "string",
+            "example": "2026-05-12"
+          },
+          "lifestyle": {
+            "type": "string",
+            "example": "Avoid spicy food"
+          },
+          "diet": {
+            "type": "string",
+            "example": "Low sodium"
+          },
+          "duration": {
+            "type": "string",
+            "example": "15 mins"
+          }
+        }
       },
       "CreateQueueDto": {
         "type": "object",
