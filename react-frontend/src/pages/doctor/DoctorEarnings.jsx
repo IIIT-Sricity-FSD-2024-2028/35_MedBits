@@ -16,14 +16,20 @@
  * }
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchDoctorEarnings,
+  setFilterMonth,
+  selectDoctorEarningsSummary,
+  selectDoctorEarningsStatus,
+  selectDoctorEarningsFilterMonth,
+} from '../../store/slices/doctor/doctorEarningsSlice';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import './earnings/earnings.css';
-import { API_BASE_URL } from '../../api/apiClient';
 
 
 const MONTH_NAMES = [
@@ -36,53 +42,22 @@ function fmt(amount) {
 }
 
 export default function DoctorEarnings() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
+  const summary = useSelector(selectDoctorEarningsSummary);
+  const status = useSelector(selectDoctorEarningsStatus);
+  const filterMonth = useSelector(selectDoctorEarningsFilterMonth);
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filterMonth, setFilterMonth] = useState('all'); // 'all' | 'YYYY-MM'
+  const loading = status === 'loading' || status === 'idle';
+  const error = status === 'failed' ? 'Unable to load earnings.' : null;
+  const userId = user?.id;
+
+  const loadEarnings = () => dispatch(fetchDoctorEarnings());
 
   // ── Fetch Earnings ─────────────────────────────────────────────────────────
-  const loadEarnings = useCallback(async () => {
-    const doctorId = user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/appointments/earnings/doctor/${encodeURIComponent(doctorId)}`,
-        { headers: { role: 'doctor' } },
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data && typeof data === 'object') {
-          setSummary(data);
-          setLoading(false);
-          return;
-        }
-      }
-    } catch (_) {
-      // Continue to empty state
-    }
-
-    setSummary({
-      doctorId,
-      doctorName: user?.name || 'Doctor',
-      percentageCut: 50,
-      totalEarnings: 0,
-      currentMonthEarnings: 0,
-      entries: [],
-    });
-    setError(null);
-    setLoading(false);
-  }, [user]);
-
   useEffect(() => {
-    loadEarnings();
-  }, [loadEarnings]);
+    dispatch(fetchDoctorEarnings());
+  }, [dispatch, userId]);
 
   // ── Derived data ──────────────────────────────────────────────────────────
   const entries = summary?.entries || [];
@@ -233,7 +208,7 @@ export default function DoctorEarnings() {
                   <select
                     className="earnings-select"
                     value={filterMonth}
-                    onChange={(e) => setFilterMonth(e.target.value)}
+                    onChange={(e) => dispatch(setFilterMonth(e.target.value))}
                   >
                     <option value="all">All Time</option>
                     {availableMonths.map((m) => (
@@ -257,7 +232,7 @@ export default function DoctorEarnings() {
                   {filterMonth !== 'all' && (
                     <button
                       className="earnings-retry-btn"
-                      onClick={() => setFilterMonth('all')}
+                      onClick={() => dispatch(setFilterMonth('all'))}
                     >
                       Show All
                     </button>
