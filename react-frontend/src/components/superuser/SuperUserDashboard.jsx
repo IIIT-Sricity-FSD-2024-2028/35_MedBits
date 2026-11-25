@@ -1,7 +1,7 @@
-﻿/**
+/**
  * SuperUserDashboard.jsx — Super Admin Branch & Admin Management Component
  * =========================================================================
- * Clean React port of `front-end/html/superuser/dashboard.html`.
+ * Powered by Redux Toolkit (`superAdminDashboardSlice` + `authSlice`).
  *
  * Core Features:
  *  1. Hero section banner for Super Admin control room
@@ -10,173 +10,73 @@
  *  4. Live Branch Registry Table (instant search filter & quick statistics drill-down)
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../store/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchSuperAdminDashboard,
+  createHospitalBranch,
+  assignBranchAdmin,
+  setDashboardSearchQuery,
+  updateBranchFormField,
+  updateAdminFormField,
+  showDashboardToast,
+  clearDashboardToast,
+  selectDashboardBranches,
+  selectDashboardSearchQuery,
+  selectBranchForm,
+  selectAdminForm,
+  selectSuperAdminDashboardStatus,
+  selectIsCreatingBranch,
+  selectIsAssigningAdmin,
+  selectDashboardToast,
+} from '../../store/slices/superAdmin/superAdminDashboardSlice';
 import './SuperUserDashboard.css';
-import { API_BASE_URL } from '../../api/apiClient';
-
-
-// Fallback demo data if backend is offline or empty
-const FALLBACK_BRANCHES = [
-  {
-    id: 'br-blr-01',
-    branchName: 'Central Bangalore',
-    hospitalName: 'MedBits Central (Apollo Wing)',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    status: 'Active',
-    branchAdmin: { name: 'Admin User', email: 'admin@medbits.com', phone: '+91 98765 43210' },
-  },
-  {
-    id: 'br-blr-02',
-    branchName: 'Tech Hub Clinic',
-    hospitalName: 'MedBits Electronic City',
-    city: 'Bangalore',
-    state: 'Karnataka',
-    status: 'Active',
-    branchAdmin: { name: 'Ramesh Kumar', email: 'rameshmedbits@gmail.com', phone: '+91 98765 12345' },
-  },
-  {
-    id: 'br-hyd-01',
-    branchName: 'Cyber Towers Wing',
-    hospitalName: 'MedBits Hitec City',
-    city: 'Hyderabad',
-    state: 'Telangana',
-    status: 'Active',
-    branchAdmin: null, // Unassigned branch
-  },
-];
 
 export default function SuperUserDashboard() {
-  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ── 1. Component States ────────────────────────────────────────────────
-  const [branches, setBranches] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+  // ── 1. Redux State ─────────────────────────────────────────────────────
+  const branches = useSelector(selectDashboardBranches);
+  const searchQuery = useSelector(selectDashboardSearchQuery);
+  const branchForm = useSelector(selectBranchForm);
+  const adminForm = useSelector(selectAdminForm);
+  const status = useSelector(selectSuperAdminDashboardStatus);
+  const isCreatingBranch = useSelector(selectIsCreatingBranch);
+  const isAssigningAdmin = useSelector(selectIsAssigningAdmin);
+  const toast = useSelector(selectDashboardToast);
 
-  // Form states for creating a branch
-  const [branchForm, setBranchForm] = useState({
-    hospitalName: '',
-    branchName: '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    phone: '',
-    email: '',
-  });
+  const loading = status === 'loading';
 
-  // Form states for assigning a branch admin
-  const [adminForm, setAdminForm] = useState({
-    branchId: '',
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-  });
-
-  // ── 2. Auth Headers Helper ─────────────────────────────────────────────
-  const getHeaders = () => ({
-    'Content-Type': 'application/json',
-    role: user?.role || 'super_admin',
-    'x-user-id': user?.id || user?.userId || '',
-  });
-
-  // Helper to show temporary toast notification
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  // ── 3. Fetch Dashboard & Branches ──────────────────────────────────────
-  const loadBranches = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE_URL}/super-admin/dashboard`, {
-        headers: getHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed to load branches');
-      const data = await res.json();
-      setBranches(Array.isArray(data?.branches) && data.branches.length ? data.branches : FALLBACK_BRANCHES);
-    } catch (_err) {
-      // Gracefully fall back to demo branches if API is unreachable
-      setBranches(FALLBACK_BRANCHES);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Auto-dismiss toast notification after 3 seconds
   useEffect(() => {
-    loadBranches();
-  }, []);
+    if (!toast) return undefined;
+    const timer = setTimeout(() => dispatch(clearDashboardToast()), 3000);
+    return () => clearTimeout(timer);
+  }, [toast, dispatch]);
 
-  // ── 4. Form Handlers ───────────────────────────────────────────────────
+  // ── 2. Fetch Dashboard & Branches ──────────────────────────────────────
+  useEffect(() => {
+    dispatch(fetchSuperAdminDashboard());
+    return () => {
+      dispatch(clearDashboardToast());
+    };
+  }, [dispatch]);
 
-  // Handle: Create Branch Submit
-  const handleCreateBranch = async (e) => {
+  // ── 3. Form Handlers ───────────────────────────────────────────────────
+  const handleCreateBranch = (e) => {
     e.preventDefault();
-    try {
-      const res = await fetch(`${API_BASE_URL}/super-admin/hospital-branches`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(branchForm),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Could not create branch');
-      }
-
-      showToast('Branch created successfully!');
-      // Reset form & reload branches list
-      setBranchForm({
-        hospitalName: '',
-        branchName: '',
-        address: '',
-        city: '',
-        state: '',
-        pincode: '',
-        phone: '',
-        email: '',
-      });
-      loadBranches();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
+    dispatch(createHospitalBranch(branchForm));
   };
 
-  // Handle: Assign Branch Admin Submit
-  const handleAssignAdmin = async (e) => {
+  const handleAssignAdmin = (e) => {
     e.preventDefault();
     if (!adminForm.branchId) {
-      showToast('Please select a branch first', 'error');
+      dispatch(showDashboardToast({ message: 'Please select a branch first', type: 'error' }));
       return;
     }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/super-admin/branch-admins`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(adminForm),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Could not assign branch admin');
-      }
-
-      showToast('Branch admin created & linked successfully!');
-      // Reset admin form & reload branches list
-      setAdminForm({ branchId: '', name: '', email: '', phone: '', password: '' });
-      loadBranches();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
+    dispatch(assignBranchAdmin(adminForm));
   };
 
   // ── 5. Filtered Data & Unassigned Branches ────────────────────────────
@@ -244,7 +144,7 @@ export default function SuperUserDashboard() {
                   required
                   placeholder="e.g. MedBits Healthcare"
                   value={branchForm.hospitalName}
-                  onChange={(e) => setBranchForm({ ...branchForm, hospitalName: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'hospitalName', value: e.target.value }))}
                 />
               </label>
 
@@ -255,7 +155,7 @@ export default function SuperUserDashboard() {
                   required
                   placeholder="e.g. Indiranagar Branch"
                   value={branchForm.branchName}
-                  onChange={(e) => setBranchForm({ ...branchForm, branchName: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'branchName', value: e.target.value }))}
                 />
               </label>
 
@@ -266,7 +166,7 @@ export default function SuperUserDashboard() {
                   rows={2}
                   placeholder="Street address, landmark"
                   value={branchForm.address}
-                  onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'address', value: e.target.value }))}
                 />
               </label>
 
@@ -277,7 +177,7 @@ export default function SuperUserDashboard() {
                   required
                   placeholder="e.g. Bangalore"
                   value={branchForm.city}
-                  onChange={(e) => setBranchForm({ ...branchForm, city: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'city', value: e.target.value }))}
                 />
               </label>
 
@@ -288,7 +188,7 @@ export default function SuperUserDashboard() {
                   required
                   placeholder="e.g. Karnataka"
                   value={branchForm.state}
-                  onChange={(e) => setBranchForm({ ...branchForm, state: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'state', value: e.target.value }))}
                 />
               </label>
 
@@ -300,7 +200,7 @@ export default function SuperUserDashboard() {
                   maxLength={10}
                   placeholder="e.g. 560038"
                   value={branchForm.pincode}
-                  onChange={(e) => setBranchForm({ ...branchForm, pincode: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'pincode', value: e.target.value }))}
                 />
               </label>
 
@@ -312,7 +212,7 @@ export default function SuperUserDashboard() {
                   maxLength={20}
                   placeholder="e.g. +91 80 4123 4567"
                   value={branchForm.phone}
-                  onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'phone', value: e.target.value }))}
                 />
               </label>
 
@@ -323,13 +223,13 @@ export default function SuperUserDashboard() {
                   required
                   placeholder="branch@medbits.com"
                   value={branchForm.email}
-                  onChange={(e) => setBranchForm({ ...branchForm, email: e.target.value })}
+                  onChange={(e) => dispatch(updateBranchFormField({ field: 'email', value: e.target.value }))}
                 />
               </label>
             </div>
 
-            <button type="submit" className="sud-btn">
-              Create Branch
+            <button type="submit" className="sud-btn" disabled={isCreatingBranch}>
+              {isCreatingBranch ? 'Creating...' : 'Create Branch'}
             </button>
           </form>
         </div>
@@ -349,7 +249,7 @@ export default function SuperUserDashboard() {
               <select
                 required
                 value={adminForm.branchId}
-                onChange={(e) => setAdminForm({ ...adminForm, branchId: e.target.value })}
+                onChange={(e) => dispatch(updateAdminFormField({ field: 'branchId', value: e.target.value }))}
                 disabled={unassignedBranches.length === 0}
               >
                 <option value="">
@@ -373,7 +273,7 @@ export default function SuperUserDashboard() {
                   required
                   placeholder="e.g. Suresh Kumar"
                   value={adminForm.name}
-                  onChange={(e) => setAdminForm({ ...adminForm, name: e.target.value })}
+                  onChange={(e) => dispatch(updateAdminFormField({ field: 'name', value: e.target.value }))}
                 />
               </label>
 
@@ -384,7 +284,7 @@ export default function SuperUserDashboard() {
                   required
                   placeholder="admin@medbits.com"
                   value={adminForm.email}
-                  onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
+                  onChange={(e) => dispatch(updateAdminFormField({ field: 'email', value: e.target.value }))}
                 />
               </label>
 
@@ -396,7 +296,7 @@ export default function SuperUserDashboard() {
                   maxLength={20}
                   placeholder="+91 98765 43210"
                   value={adminForm.phone}
-                  onChange={(e) => setAdminForm({ ...adminForm, phone: e.target.value })}
+                  onChange={(e) => dispatch(updateAdminFormField({ field: 'phone', value: e.target.value }))}
                 />
               </label>
 
@@ -408,7 +308,7 @@ export default function SuperUserDashboard() {
                   minLength={8}
                   placeholder="Min. 8 characters"
                   value={adminForm.password}
-                  onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
+                  onChange={(e) => dispatch(updateAdminFormField({ field: 'password', value: e.target.value }))}
                 />
               </label>
             </div>
@@ -416,9 +316,9 @@ export default function SuperUserDashboard() {
             <button
               type="submit"
               className="sud-btn"
-              disabled={unassignedBranches.length === 0}
+              disabled={unassignedBranches.length === 0 || isAssigningAdmin}
             >
-              Create Branch Admin
+              {isAssigningAdmin ? 'Creating...' : 'Create Branch Admin'}
             </button>
           </form>
         </div>
@@ -441,7 +341,7 @@ export default function SuperUserDashboard() {
               className="sud-search-input"
               placeholder="Search by branch, city, state, or admin..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => dispatch(setDashboardSearchQuery(e.target.value))}
             />
           </div>
         </div>
