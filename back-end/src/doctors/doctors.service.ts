@@ -404,7 +404,9 @@ export class DoctorsService implements OnModuleInit {
     return dayNames.map((dayName, i) => {
       const d = new Date(startDate);
       d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().split('T')[0];
+      // Format with local date parts: toISOString() converts to UTC and shifts
+      // local midnight back one day in timezones ahead of UTC (e.g. IST).
+      const dateStr = this.toLocalDateString(d);
 
       const unavailable = this.isDateUnavailable(doctorId, dateStr);
       const blocked = unavailable
@@ -512,6 +514,13 @@ export class DoctorsService implements OnModuleInit {
   private persistUnavailableDates() {
     mkdirSync(dirname(UNAVAILABLE_DATES_FILE), { recursive: true });
     writeFileSync(UNAVAILABLE_DATES_FILE, JSON.stringify(this.unavailableDates, null, 2));
+  }
+
+  /** YYYY-MM-DD in the server's local timezone. */
+  private toLocalDateString(d: Date): string {
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
   }
 
   private getWeekMonday(date: Date): Date {

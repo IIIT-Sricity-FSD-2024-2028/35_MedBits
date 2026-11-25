@@ -10,288 +10,81 @@
  *  - Robust resilience so dropdowns and plans work 100% reliably whether online or offline
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchTreatmentData,
+  saveTreatmentPlan,
+  setTreatmentViewMode,
+  updateTreatmentField,
+  selectTreatmentPatient,
+  selectTreatmentAppointment,
+  toggleLabTest,
+  setTestSearch,
+  setPlanSearch,
+  resetTreatmentForm,
+  setTreatmentAlert,
+  clearTreatmentAlert,
+  selectTreatmentPlan,
+} from '../../store/slices/doctor/treatmentPlanSlice';
+import { resolveDoctorId } from '../../store/slices/doctor/doctorHelpers';
 import ContentCard from '../../components/dashboard/ContentCard';
 import './treatment/treatment.css';
-import { API_BASE_URL } from '../../api/apiClient';
 
-
-const DEFAULT_PATIENTS = [];
-
-// ── Default Lab Tests Catalog ─────────────────────────────────────────────────
-const DEFAULT_LAB_TESTS = [
-  { id: 'LT001', name: 'Complete Blood Count (CBC)', price: 400, department: 'Hematology' },
-  { id: 'LT002', name: 'Lipid Profile', price: 750, department: 'Biochemistry' },
-  { id: 'LT003', name: 'Fasting Blood Sugar', price: 150, department: 'Biochemistry' },
-  { id: 'LT004', name: 'Liver Function Test (LFT)', price: 800, department: 'Biochemistry' },
-  { id: 'LT005', name: 'Kidney Function Test (KFT)', price: 700, department: 'Biochemistry' },
-  { id: 'LT006', name: 'Thyroid Profile (T3, T4, TSH)', price: 650, department: 'Endocrinology' },
-  { id: 'LT007', name: 'Urine Routine Examination', price: 200, department: 'Clinical Pathology' },
-  { id: 'LT008', name: 'HbA1c', price: 500, department: 'Biochemistry' },
-];
-
-const DEFAULT_APPOINTMENTS = [];
-
-const INITIAL_DEMO_PLANS = [];
-
-function normalizePatient(p) {
-  const id = p.userId || p.id || p.patientId || '';
-  const firstName = p.firstName || '';
-  const lastName = p.lastName || '';
-  const name = p.name || `${firstName} ${lastName}`.trim() || id;
-  return {
-    ...p,
-    userId: id,
-    id,
-    firstName: firstName || name.split(' ')[0] || '',
-    lastName: lastName || name.split(' ').slice(1).join(' ') || '',
-    name,
-  };
-}
-
-function resolveDoctorId(user) {
-  return user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
-}
-
-function defaultForm() {
-  return {
-    patientId:     '',
-    patientName:   '',
-    appointmentId: '',
-    medicines:     '',
-    lifestyle:     '',
-    diet:          '',
-    duration:      '',
-    labTestDate:   '',
-  };
-}
 
 export default function TreatmentPlan() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const myId = resolveDoctorId(user);
+  const {
+    viewMode,
+    plans,
+    labCatalog,
+    appointments,
+    patients,
+    status,
+    saveStatus,
+    alert,
+    form,
+    selectedTests,
+    testSearch,
+    search,
+  } = useSelector(selectTreatmentPlan);
 
-  // ── View mode ──────────────────────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'create'
-
-  // ── Data ──────────────────────────────────────────────────────────────────
-  const [plans,        setPlans]        = useState([]);
-  const [labCatalog,   setLabCatalog]   = useState(DEFAULT_LAB_TESTS);
-  const [appointments, setAppointments] = useState([]);
-  const [patients,     setPatients]     = useState([]);
-  const [loading,      setLoading]      = useState(false);
-  const [saving,       setSaving]       = useState(false);
-  const [alert,        setAlert]        = useState(null);
-
-  // ── Form State ─────────────────────────────────────────────────────────────
-  const [form,          setForm]          = useState(defaultForm());
-  const [selectedTests, setSelectedTests] = useState([]);
-  const [testSearch,    setTestSearch]    = useState('');
-  const [search,        setSearch]        = useState('');
+  const loading = status === 'loading';
+  const saving = saveStatus === 'loading';
 
   // ── Fetch Data with Safe Fallbacks ─────────────────────────────────────────
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [recRes, testRes, apptRes, patRes] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/medical-records/doctor/${encodeURIComponent(myId)}`, {
-          headers: { role: 'doctor' },
-        }),
-        fetch(`${API_BASE_URL}/labtests`, { headers: { role: 'doctor' } }),
-        fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(myId)}`, {
-          headers: { role: 'doctor' },
-        }),
-        fetch(`${API_BASE_URL}/patients`, { headers: { role: 'doctor' } }),
-      ]);
-
-      // 1. Treatment plans
-      if (recRes.status === 'fulfilled' && recRes.value.ok) {
-        const d = await recRes.value.json();
-        setPlans(Array.isArray(d) ? d.filter((r) => r.type === 'treatment') : []);
-      }
-
-      // 2. Lab catalog
-      if (testRes.status === 'fulfilled' && testRes.value.ok) {
-        const d = await testRes.value.json();
-        if (Array.isArray(d) && d.length > 0) {
-          setLabCatalog(d);
-        }
-      }
-
-      // 3. Appointments
-      let loadedAppts = [];
-      if (apptRes.status === 'fulfilled' && apptRes.value.ok) {
-        const d = await apptRes.value.json();
-        if (Array.isArray(d)) {
-          loadedAppts = d;
-          setAppointments(d);
-        }
-      } else {
-        setAppointments([]);
-      }
-
-      // 4. Patients — multi-source aggregation (API + appointments)
-      const patientMap = new Map();
-
-      // Extract patients from appointments
-      loadedAppts.forEach((a) => {
-        const pId = a.userId || a.patientId || a.patient?.userId || a.patient?.id;
-        if (pId) {
-          const pName = a.patient?.name
-            || (a.patient ? `${a.patient.firstName || ''} ${a.patient.lastName || ''}`.trim() : '')
-            || a.patientName
-            || pId;
-          if (!patientMap.has(pId)) {
-            patientMap.set(pId, normalizePatient({ userId: pId, name: pName }));
-          }
-        }
-      });
-
-      // Overlay from /patients API
-      if (patRes.status === 'fulfilled' && patRes.value.ok) {
-        const d = await patRes.value.json();
-        if (Array.isArray(d)) {
-          d.forEach((p) => {
-            const norm = normalizePatient(p);
-            if (norm.userId) {
-              patientMap.set(norm.userId, norm);
-            }
-          });
-        }
-      }
-
-      setPatients(Array.from(patientMap.values()));
-    } catch {
-      // Graceful fallback to default state
-    } finally {
-      setLoading(false);
-    }
-  }, [myId]);
-
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    dispatch(fetchTreatmentData());
+    return () => {
+      dispatch(clearTreatmentAlert());
+    };
+  }, [dispatch, myId]);
 
   // Auto-dismiss alert
   useEffect(() => {
     if (!alert) return;
-    const t = setTimeout(() => setAlert(null), 5000);
+    const t = setTimeout(() => dispatch(clearTreatmentAlert()), 5000);
     return () => clearTimeout(t);
-  }, [alert]);
+  }, [alert, dispatch]);
 
-  // ── Form field change ─────────────────────────────────────────────────────
-  const handleChange = (field, value) => setForm((p) => ({ ...p, [field]: value }));
-
-  // ── Patient dropdown select ───────────────────────────────────────────────
-  const handlePatientSelect = (patientId) => {
-    const pat = patients.find((p) => (p.userId || p.id) === patientId);
-    const pName = pat
-      ? (pat.name || `${pat.firstName || ''} ${pat.lastName || ''}`.trim() || patientId)
-      : '';
-    setForm((p) => ({
-      ...p,
-      patientId,
-      patientName: pName,
-    }));
-  };
-
-  // ── Appointment dropdown select → auto-fills patient ─────────────────────
-  const handleAppointmentSelect = (apptId) => {
-    if (!apptId) {
-      setForm((p) => ({ ...p, appointmentId: '' }));
-      return;
-    }
-    const appt = appointments.find((a) => a.id === apptId);
-    if (appt) {
-      const pId = appt.userId || appt.patientId || appt.patient?.userId || appt.patient?.id || '';
-      const pName = appt.patient?.name
-        || (appt.patient ? `${appt.patient.firstName || ''} ${appt.patient.lastName || ''}`.trim() : '')
-        || appt.patientName
-        || pId;
-
-      // Ensure the patient is present in dropdown
-      if (pId && !patients.some((p) => (p.userId || p.id) === pId)) {
-        setPatients((prev) => [...prev, normalizePatient({ userId: pId, name: pName })]);
-      }
-
-      setForm((p) => ({
-        ...p,
-        appointmentId: apptId,
-        patientId:     pId,
-        patientName:   pName,
-      }));
-    } else {
-      setForm((p) => ({ ...p, appointmentId: '' }));
-    }
-  };
-
-  // ── Lab test toggle ───────────────────────────────────────────────────────
-  const toggleTest = (testName) => {
-    setSelectedTests((prev) =>
-      prev.includes(testName) ? prev.filter((t) => t !== testName) : [...prev, testName],
-    );
-  };
+  // ── Form helpers ──────────────────────────────────────────────────────────
+  const handleChange = (field, value) => dispatch(updateTreatmentField({ field, value }));
+  const handlePatientSelect = (patientId) => dispatch(selectTreatmentPatient(patientId));
+  const handleAppointmentSelect = (apptId) => dispatch(selectTreatmentAppointment(apptId));
+  const toggleTest = (testName) => dispatch(toggleLabTest(testName));
+  const setViewMode = (mode) => dispatch(setTreatmentViewMode(mode));
 
   // ── Submit treatment plan ─────────────────────────────────────────────────
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.patientId.trim()) {
-      setAlert({ type: 'error', text: 'Please select a patient.' });
+      dispatch(setTreatmentAlert({ type: 'error', text: 'Please select a patient.' }));
       return;
     }
-
-    setSaving(true);
-    setAlert(null);
-
-    const payload = {
-      doctorId:       myId,
-      doctorName:     user?.name || 'Dr. S Madhuri',
-      specialization: user?.specialization || 'Dermatologist',
-      patientId:      form.patientId.trim(),
-      patientName:    form.patientName.trim() || form.patientId.trim(),
-      type:           'treatment',
-      date:           new Date().toISOString().split('T')[0],
-      medicines:      form.medicines.trim() || undefined,
-      tests:          selectedTests.length > 0 ? selectedTests.join(' | ') : undefined,
-      labTestDate:    form.labTestDate || undefined,
-      lifestyle:      form.lifestyle.trim() || undefined,
-      diet:           form.diet.trim() || undefined,
-      duration:       form.duration.trim() || undefined,
-      appointmentId:  form.appointmentId.trim() || undefined,
-    };
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/medical-records`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', role: 'doctor' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to save treatment plan');
-      }
-
-      const saved = await res.json();
-      setPlans((prev) => [saved, ...prev]);
-      setAlert({ type: 'success', text: 'Treatment plan saved successfully!' });
-      setForm(defaultForm());
-      setSelectedTests([]);
-      setViewMode('list');
-    } catch {
-      // Local fallback for offline/demo mode
-      const localPlan = {
-        id: `TP${Date.now()}`,
-        ...payload,
-        createdAt: new Date().toISOString(),
-      };
-      setPlans((prev) => [localPlan, ...prev]);
-      setAlert({ type: 'success', text: 'Treatment plan saved successfully!' });
-      setForm(defaultForm());
-      setSelectedTests([]);
-      setViewMode('list');
-    } finally {
-      setSaving(false);
-    }
+    dispatch(saveTreatmentPlan());
   };
 
   // ── Filtered data ─────────────────────────────────────────────────────────
@@ -343,7 +136,6 @@ export default function TreatmentPlan() {
             className="treatment-btn treatment-btn--primary"
             onClick={() => {
               setViewMode(viewMode === 'create' ? 'list' : 'create');
-              setAlert(null);
             }}
           >
             {viewMode === 'create' ? '← Back to List' : '＋ New Treatment Plan'}
@@ -474,7 +266,7 @@ export default function TreatmentPlan() {
                   className="treatment-input"
                   placeholder="Filter tests (e.g. Blood, Urine, Thyroid)…"
                   value={testSearch}
-                  onChange={(e) => setTestSearch(e.target.value)}
+                  onChange={(e) => dispatch(setTestSearch(e.target.value))}
                   style={{ marginBottom: 12 }}
                 />
 
@@ -572,7 +364,7 @@ export default function TreatmentPlan() {
                 <button
                   type="button"
                   className="treatment-btn treatment-btn--ghost"
-                  onClick={() => { setForm(defaultForm()); setSelectedTests([]); }}
+                  onClick={() => dispatch(resetTreatmentForm())}
                 >
                   Clear Form
                 </button>
@@ -602,7 +394,7 @@ export default function TreatmentPlan() {
                 className="treatment-input"
                 placeholder="Search by patient name, ID, medicines…"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => dispatch(setPlanSearch(e.target.value))}
                 style={{ maxWidth: 380 }}
               />
             </div>
