@@ -1,6 +1,7 @@
-﻿/**
+/**
  * branch-statistics.jsx — Super Admin Branch Statistics Page
  * =========================================================================
+ * Powered by Redux Toolkit (`branchStatisticsSlice` + `authSlice`).
  * Clean, readable React component for inspecting hospital branch personnel & operations:
  *  - High-level KPI counters (Doctors, Appointments, Front Desk, Lab Techs)
  *  - Branch profile credentials, network status, and contact directory
@@ -10,136 +11,63 @@
  *  - Branch switcher synchronized via URL search params (?branchId=...)
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../store/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchSuperAdminBranches,
+  fetchBranchStatistics,
+  setDocSearch,
+  setFdSearch,
+  setLtSearch,
+  resetBranchStatsFilters,
+  selectSuperAdminBranches,
+  selectBranchStatistics,
+  selectDocSearch,
+  selectFdSearch,
+  selectLtSearch,
+  selectBranchStatsStatus,
+} from '../../store/slices/superAdmin/branchStatisticsSlice';
 import './branch-statistics.css';
-import { API_BASE_URL } from '../../api/apiClient';
-
-
-// Fallback demo branches for offline preview
-const DEFAULT_BRANCHES = [
-  { id: 'br-blr-01', branchName: 'Central Bangalore', hospitalName: 'MedBits Central (Apollo Wing)', city: 'Bangalore', state: 'Karnataka', email: 'indiranagar@medbits.com', phone: '+91 80 4123 4567', address: '100 Feet Road, Indiranagar', pincode: '560038', status: 'Active' },
-  { id: 'br-blr-02', branchName: 'Tech Hub Clinic', hospitalName: 'MedBits Electronic City', city: 'Bangalore', state: 'Karnataka', email: 'electroniccity@medbits.com', phone: '+91 80 9876 5432', address: 'Phase 1, Hosur Main Road', pincode: '560100', status: 'Active' },
-  { id: 'br-hyd-01', branchName: 'Cyber Towers Wing', hospitalName: 'MedBits Hitec City', city: 'Hyderabad', state: 'Telangana', email: 'hiteccity@medbits.com', phone: '+91 40 2345 6789', address: 'Madhapur Main Road', pincode: '500081', status: 'Active' },
-];
 
 export default function BranchStatistics() {
-  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Active branch ID from URL search parameters (?branchId=...)
   const selectedBranchId = searchParams.get('branchId') || '';
 
-  // Data states
-  const [branches, setBranches] = useState([]);
-  const [stats, setStats] = useState({
-    branch: null,
-    summary: { totalDoctors: 0, totalAppointments: 0, totalFrontdesks: 0, totalLabTechnicians: 0 },
-    doctors: [],
-    frontdesk: [],
-    labTechnicians: [],
-  });
+  const branches = useSelector(selectSuperAdminBranches);
+  const stats = useSelector(selectBranchStatistics);
+  const docSearch = useSelector(selectDocSearch);
+  const fdSearch = useSelector(selectFdSearch);
+  const ltSearch = useSelector(selectLtSearch);
+  const statsStatus = useSelector(selectBranchStatsStatus);
 
-  // Search filter query states
-  const [docSearch, setDocSearch] = useState('');
-  const [fdSearch, setFdSearch] = useState('');
-  const [ltSearch, setLtSearch] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const isLoading = statsStatus === 'loading';
 
-  // Common authentication headers
-  const authHeaders = useMemo(() => ({
-    'Content-Type': 'application/json',
-    role: user?.role || 'super_admin',
-    'x-user-id': user?.id || user?.userId || '',
-  }), [user]);
-
-  // 1. Fetch branches list on mount
+  // 1. Fetch branches list on mount and reset search filters on unmount
   useEffect(() => {
-    async function loadBranches() {
-      try {
-        const res = await fetch(`${API_BASE_URL}/super-admin/hospital-branches`, {
-          headers: authHeaders,
-        }).catch(() => null);
+    dispatch(fetchSuperAdminBranches());
+    return () => {
+      dispatch(resetBranchStatsFilters());
+    };
+  }, [dispatch]);
 
-        if (res?.ok) {
-          const list = await res.json();
-          if (Array.isArray(list) && list.length > 0) {
-            setBranches(list);
-            if (!selectedBranchId) setSearchParams({ branchId: list[0].id });
-            return;
-          }
-        }
-        // Fallback demo branches
-        setBranches(DEFAULT_BRANCHES);
-        if (!selectedBranchId) setSearchParams({ branchId: DEFAULT_BRANCHES[0].id });
-      } catch (err) {
-        console.warn('Error loading branches list:', err);
-        setBranches(DEFAULT_BRANCHES);
-        if (!selectedBranchId) setSearchParams({ branchId: DEFAULT_BRANCHES[0].id });
-      }
+  // Default to the first branch if no branchId query param is present
+  useEffect(() => {
+    if (!selectedBranchId && branches.length > 0) {
+      setSearchParams({ branchId: branches[0].id }, { replace: true });
     }
-
-    loadBranches();
-  }, [authHeaders, selectedBranchId, setSearchParams]);
+  }, [selectedBranchId, branches, setSearchParams]);
 
   // 2. Fetch statistics for the selected branch
   useEffect(() => {
-    if (!selectedBranchId) return;
-
-    async function loadStatistics() {
-      setIsLoading(true);
-      try {
-        const res = await fetch(
-          `${API_BASE_URL}/super-admin/hospital-branches/${encodeURIComponent(selectedBranchId)}/statistics`,
-          { headers: authHeaders }
-        ).catch(() => null);
-
-        if (res?.ok) {
-          const data = await res.json();
-          setStats({
-            branch: data.branch || branches.find((b) => b.id === selectedBranchId) || null,
-            summary: data.summary || {
-              totalDoctors: data.doctors?.length || 0,
-              totalAppointments: 0,
-              totalFrontdesks: data.frontdesk?.length || 0,
-              totalLabTechnicians: data.labTechnicians?.length || 0,
-            },
-            doctors: Array.isArray(data.doctors) ? data.doctors : [],
-            frontdesk: Array.isArray(data.frontdesk) ? data.frontdesk : [],
-            labTechnicians: Array.isArray(data.labTechnicians) ? data.labTechnicians : [],
-          });
-          setIsLoading(false);
-          return;
-        }
-
-        // Fallback default statistics when backend offline
-        const matched = branches.find((b) => b.id === selectedBranchId) || DEFAULT_BRANCHES[0];
-        setStats({
-          branch: matched,
-          summary: { totalDoctors: 4, totalAppointments: 86, totalFrontdesks: 2, totalLabTechnicians: 2 },
-          doctors: [
-            { id: 'd-1', name: 'Dr. Ria Sharma', email: 'ria.sharma@medbits.com', specialization: 'Cardiology', department: 'Cardiology', experience: 12, phone: '+91 98765 43210', gender: 'Female', qualification: 'MBBS, MD' },
-            { id: 'd-2', name: 'Dr. Arvind Swaminathan', email: 'arvind.s@medbits.com', specialization: 'Neurology', department: 'Neurology', experience: 15, phone: '+91 98450 11223', gender: 'Male', qualification: 'MBBS, DM' },
-          ],
-          frontdesk: [
-            { userId: 'fd-1', name: 'Pooja Verma', email: 'pooja.v@medbits.com', counter: 'Desk 1 - Reception', shiftStart: '08:00 AM', shiftEnd: '04:00 PM', languages: ['English', 'Hindi'], phone: '+91 91234 56780', gender: 'Female', reportingManagerId: 'admin@medbits.com' },
-          ],
-          labTechnicians: [
-            { id: 'lt-1', name: 'Suresh Kumar', email: 'suresh.k@medbits.com', branchId: selectedBranchId, createdAt: '2025-01-15T09:30:00.000Z' },
-          ],
-        });
-      } catch (err) {
-        console.warn('Error loading branch stats:', err);
-      } finally {
-        setIsLoading(false);
-      }
+    if (selectedBranchId) {
+      dispatch(fetchBranchStatistics(selectedBranchId));
     }
-
-    loadStatistics();
-  }, [selectedBranchId, authHeaders, branches]);
+  }, [dispatch, selectedBranchId]);
 
   // Handle switching branch from dropdown
   const handleBranchChange = (e) => {
@@ -334,7 +262,7 @@ export default function BranchStatistics() {
                 className="bs-search-input"
                 placeholder="Search doctors..."
                 value={docSearch}
-                onChange={(e) => setDocSearch(e.target.value)}
+                onChange={(e) => dispatch(setDocSearch(e.target.value))}
                 aria-label="Search doctors"
               />
             </div>
@@ -400,7 +328,7 @@ export default function BranchStatistics() {
                 className="bs-search-input"
                 placeholder="Search front desk..."
                 value={fdSearch}
-                onChange={(e) => setFdSearch(e.target.value)}
+                onChange={(e) => dispatch(setFdSearch(e.target.value))}
                 aria-label="Search front desk staff"
               />
             </div>
@@ -462,7 +390,7 @@ export default function BranchStatistics() {
                 className="bs-search-input"
                 placeholder="Search lab technicians..."
                 value={ltSearch}
-                onChange={(e) => setLtSearch(e.target.value)}
+                onChange={(e) => dispatch(setLtSearch(e.target.value))}
                 aria-label="Search lab technicians"
               />
             </div>
