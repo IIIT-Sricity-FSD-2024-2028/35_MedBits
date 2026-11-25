@@ -14,7 +14,6 @@ import {
   cancelEditing,
   updateEditField,
   clearProfileStatus,
-  resolveDoctorId,
   selectDoctorProfile,
   selectDoctorEditForm,
   selectDoctorIsEditing,
@@ -22,6 +21,7 @@ import {
   selectDoctorProfileSaveStatus,
   selectDoctorProfileMessage,
 } from '../../store/slices/doctor/doctorProfileSlice';
+import { resolveDoctorId } from '../../store/slices/doctor/doctorHelpers';
 import AlertBanner from '../../components/dashboard/AlertBanner';
 import '../../components/profile/UserProfile.css';
 

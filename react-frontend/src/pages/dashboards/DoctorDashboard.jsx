@@ -10,29 +10,22 @@
  * with live data — so the dashboard NEVER shows all zeros.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchDoctorDashboard,
+  selectDoctorDashboard,
+} from '../../store/slices/doctor/doctorDashboardSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
-import { API_BASE_URL } from '../../api/apiClient';
 
 
 const TODAY = new Date().toISOString().split('T')[0];
-
-// ── Empty initial states for clean multi-doctor data loading ────────────────
-const SEED_APPOINTMENTS = [];
-
-const SEED_EARNINGS = {
-  totalEarnings: 0,
-  currentMonthEarnings: 0,
-  percentageCut: 50,
-  entries: [],
-};
 
 function calcAge(dob) {
   if (!dob) return null;
@@ -42,69 +35,24 @@ function calcAge(dob) {
 }
 
 export default function DoctorDashboard() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
+  const {
+    appointments,
+    earningsSummary,
+    recordsCount,
+    pendingLabCount,
+    status,
+  } = useSelector(selectDoctorDashboard);
 
-  const doctorId = user?.doctorId || (user?.id === 'DOCTOR_001' ? 'DOC001' : user?.id) || 'DOC001';
-
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [appointments,    setAppointments]    = useState([]);
-  const [earningsSummary, setEarningsSummary] = useState(SEED_EARNINGS);
-  const [recordsCount,    setRecordsCount]    = useState(0);
-  const [pendingLabCount, setPendingLabCount] = useState(0);
-  const [loading,         setLoading]         = useState(true);
+  const loading = status === 'loading' || status === 'idle';
+  const userId = user?.id;
 
   // ── Fetch all dashboard data ──────────────────────────────────────────────
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [apptRes, earningsRes, recordsRes] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(doctorId)}`, {
-          headers: { role: 'doctor' },
-        }),
-        fetch(`${API_BASE_URL}/appointments/earnings/doctor/${encodeURIComponent(doctorId)}`, {
-          headers: { role: 'doctor' },
-        }),
-        fetch(`${API_BASE_URL}/medical-records/doctor/${encodeURIComponent(doctorId)}`, {
-          headers: { role: 'doctor' },
-        }),
-      ]);
-
-      // 1. Appointments — set actual doctor's appointments from API
-      if (apptRes.status === 'fulfilled' && apptRes.value.ok) {
-        const data = await apptRes.value.json();
-        setAppointments(Array.isArray(data) ? data : []);
-      } else {
-        setAppointments([]);
-      }
-
-      // 2. Earnings
-      if (earningsRes.status === 'fulfilled' && earningsRes.value.ok) {
-        const data = await earningsRes.value.json();
-        if (data && typeof data === 'object') {
-          setEarningsSummary(data);
-        }
-      }
-
-      // 3. Medical records
-      if (recordsRes.status === 'fulfilled' && recordsRes.value.ok) {
-        const data = await recordsRes.value.json();
-        if (Array.isArray(data)) {
-          setRecordsCount(data.length);
-          const labPending = data.filter(r => r.tests && r.type === 'treatment').length;
-          setPendingLabCount(labPending);
-        }
-      }
-    } catch {
-      setAppointments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [doctorId]);
-
   useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+    dispatch(fetchDoctorDashboard());
+  }, [dispatch, userId]);
 
   // ── Derived stats ─────────────────────────────────────────────────────────
   const todaysAppointments = appointments.filter(a => a.date === TODAY);
