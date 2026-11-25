@@ -1,8 +1,9 @@
-﻿/**
+/**
  * labtest.jsx — Patient Diagnostic Lab Tests Booking Page
  * ==========================================================
  * Location: src/pages/Patient/labtest.jsx
  *
+ * Powered by Redux Toolkit (`patientLabTestsSlice` + `authSlice`).
  * Integrates the 4 core components:
  *  1. SpecialityCard   — Category selector for health check packages
  *  2. LabTestFilters   — Select/Filter Card for branch, search, sort & fasting
@@ -10,131 +11,43 @@
  *  4. LabTestCart      — Interactive cart card with breakdown & booking confirmation
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  FALLBACK_TESTS,
+  fetchLabBranches,
+  fetchLabTests,
+  fetchDiagnosticHistory,
+  confirmLabTestBooking,
+  setSelectedBranchId,
+  setSelectedCategory,
+  setSearchQuery,
+  setSortBy,
+  setFastingFilter,
+  resetLabTestFilters,
+  setTestQuantity,
+  clearLabCart,
+  clearLabTestNotice,
+  selectLabBranches,
+  selectLabTests,
+  selectLabHistoryOrders,
+  selectSelectedLabBranchId,
+  selectSelectedLabCategory,
+  selectLabSearchQuery,
+  selectLabSortBy,
+  selectLabFastingFilter,
+  selectLabCartQuantities,
+  selectLabTestsStatus,
+  selectIsSubmittingLabBooking,
+  selectLabFeedbackNotice,
+} from '../../store/slices/patient/patientLabTestsSlice';
 import SpecialityCard from '../../components/appointments/SpecialityCard';
 import LabTestFilters from '../../components/labtests/LabTestFilters';
 import LabTestCard from '../../components/labtests/LabTestCard';
 import LabTestCart, { LabTestCartBar } from '../../components/labtests/LabTestCart';
 import StatusBadge from '../../components/common/StatusBadge';
 import './labtest.css';
-import { API_BASE_URL } from '../../api/apiClient';
-
-
-// Canonical test catalog with medical descriptions
-const FALLBACK_TESTS = [
-  {
-    id: 'LAB001',
-    name: 'Prime Full Body Checkup',
-    price: 1549,
-    category: 'Full Body Check Up',
-    description: 'Comprehensive preventive health screening package covering lipid profile, liver function, renal function, hemogram, and thyroid markers.',
-    parametersCount: '63 Tests',
-    sampleType: 'Blood & Urine',
-    fastingRequired: '10-12 hrs fasting',
-    turnaroundTime: 'Reports in 24 hrs',
-  },
-  {
-    id: 'LAB002',
-    name: 'Xpert Regular Full Body Health Checkup',
-    price: 1079,
-    category: 'Full Body Check Up',
-    description: 'Routine full body screening with essential health markers for regular annual checkups and early disease detection.',
-    parametersCount: '48 Tests',
-    sampleType: 'Blood Sample',
-    fastingRequired: '10-12 hrs fasting',
-    turnaroundTime: 'Reports in 24 hrs',
-  },
-  {
-    id: 'LAB003',
-    name: 'HbA1c Test (Glycated Hemoglobin)',
-    price: 649,
-    category: 'Diabetes',
-    description: 'Measures average blood sugar levels over the last 2 to 3 months to diagnose and manage pre-diabetes and diabetes mellitus.',
-    parametersCount: 'Gold Standard',
-    sampleType: 'Blood Sample',
-    fastingRequired: 'No fasting required',
-    turnaroundTime: 'Reports in 12 hrs',
-  },
-  {
-    id: 'LAB004',
-    name: 'Fasting Blood Sugar Test (FBS)',
-    price: 100,
-    category: 'Diabetes',
-    description: 'Checks your basal glucose level after an overnight fast for primary diabetes diagnosis and glycemic regulation evaluation.',
-    parametersCount: '1 Parameter',
-    sampleType: 'Blood Sample',
-    fastingRequired: '8-10 hrs fasting',
-    turnaroundTime: 'Reports in 6 hrs',
-  },
-  {
-    id: 'LAB005',
-    name: 'Complete Blood Count (CBC)',
-    price: 419,
-    category: 'Blood Studies',
-    description: 'Complete blood count assessing RBC, WBC, platelets, hemoglobin, and hematocrit to evaluate infections, anemia, and general wellness.',
-    parametersCount: '24 Parameters',
-    sampleType: 'Blood Sample',
-    fastingRequired: 'No fasting required',
-    turnaroundTime: 'Reports in 8 hrs',
-  },
-  {
-    id: 'LAB006',
-    name: 'Comprehensive Lipid Profile',
-    price: 829,
-    category: 'Heart',
-    description: 'Measures total cholesterol, HDL, LDL, VLDL, and triglycerides to calculate coronary risk assessment and cardiovascular health.',
-    parametersCount: '8 Parameters',
-    sampleType: 'Blood Sample',
-    fastingRequired: '12 hrs fasting',
-    turnaroundTime: 'Reports in 12 hrs',
-  },
-  {
-    id: 'LAB007',
-    name: 'Thyroid Profile Total (T3, T4, TSH)',
-    price: 550,
-    category: 'Thyroid',
-    description: 'Evaluates thyroid gland activity and metabolic hormone regulation to detect hyperthyroidism or hypothyroidism.',
-    parametersCount: '3 Hormones',
-    sampleType: 'Blood Sample',
-    fastingRequired: 'No fasting required',
-    turnaroundTime: 'Reports in 12 hrs',
-  },
-  {
-    id: 'LAB008',
-    name: 'Vitamin D (25-OH) & Vitamin B12 Duo',
-    price: 1299,
-    category: 'Vitamin',
-    description: 'Crucial screening for bone density, calcium absorption, neurological health, energy metabolism, and immunity strength.',
-    parametersCount: '2 Essential Vitamins',
-    sampleType: 'Blood Sample',
-    fastingRequired: 'No fasting required',
-    turnaroundTime: 'Reports in 24 hrs',
-  },
-  {
-    id: 'LAB009',
-    name: 'Renal / Kidney Function Test (KFT)',
-    price: 699,
-    category: 'Kidney',
-    description: 'Assesses serum creatinine, blood urea nitrogen (BUN), uric acid, and electrolytes to evaluate kidney filtration health.',
-    parametersCount: '6 Parameters',
-    sampleType: 'Blood Sample',
-    fastingRequired: 'No fasting required',
-    turnaroundTime: 'Reports in 12 hrs',
-  },
-  {
-    id: 'LAB010',
-    name: 'Liver Function Test (LFT)',
-    price: 749,
-    category: 'Liver',
-    description: 'Evaluates liver enzymes (SGOT, SGPT, ALP), bilirubin levels, and total proteins to detect hepatic infection or inflammation.',
-    parametersCount: '11 Parameters',
-    sampleType: 'Blood Sample',
-    fastingRequired: 'No fasting required',
-    turnaroundTime: 'Reports in 12 hrs',
-  },
-];
 
 const HEALTH_CATEGORIES = [
   { name: 'All Tests', icon: '📋' },
@@ -151,129 +64,38 @@ const HEALTH_CATEGORIES = [
 ];
 
 export default function PatientLabTest() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const userId = user?.id || 'PAT001';
 
-  // ── FILTER STATE ───────────────────────────────────────────────────
-  const [branches, setBranches] = useState([]);
-  const [selectedBranchId, setSelectedBranchId] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All Tests');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('default');
-  const [fastingFilter, setFastingFilter] = useState('all');
+  const branches = useSelector(selectLabBranches);
+  const selectedBranchId = useSelector(selectSelectedLabBranchId);
+  const selectedCategory = useSelector(selectSelectedLabCategory);
+  const searchQuery = useSelector(selectLabSearchQuery);
+  const sortBy = useSelector(selectLabSortBy);
+  const fastingFilter = useSelector(selectLabFastingFilter);
 
-  // ── CATALOG & CART STATE ───────────────────────────────────────────
-  const [tests, setTests] = useState([]);
-  const [cartQuantities, setCartQuantities] = useState({});
-  const [historyOrders, setHistoryOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedbackNotice, setFeedbackNotice] = useState(null);
+  const tests = useSelector(selectLabTests);
+  const cartQuantities = useSelector(selectLabCartQuantities);
+  const historyOrders = useSelector(selectLabHistoryOrders);
+  const testsStatus = useSelector(selectLabTestsStatus);
+  const isSubmitting = useSelector(selectIsSubmittingLabBooking);
+  const feedbackNotice = useSelector(selectLabFeedbackNotice);
 
-  // ── LOAD DIAGNOSTIC HISTORY ────────────────────────────────────────
-  const loadDiagnosticHistory = async (uid) => {
-    const idToUse = uid || userId;
-    let list = [];
-    try {
-      const histRes = await fetch(`${API_BASE_URL}/lab-requests/patient`, {
-        headers: { role: 'patient', 'x-user-id': idToUse },
-      });
-      if (histRes.ok) {
-        const data = await histRes.json();
-        if (Array.isArray(data)) list = data;
-      }
-    } catch (_) {}
+  const isLoading = testsStatus === 'loading';
 
-    try {
-      const bookedRes = await fetch(`${API_BASE_URL}/labtests/history/${encodeURIComponent(idToUse)}`, {
-        headers: { role: 'patient', 'x-user-id': idToUse },
-      });
-      if (bookedRes.ok) {
-        const bookedData = await bookedRes.json();
-        if (Array.isArray(bookedData)) {
-          const existingBookingIds = new Set(list.map((r) => r.sourceBookingId).filter(Boolean));
-          const extra = bookedData
-            .filter((b) => !existingBookingIds.has(b.id))
-            .map((b) => ({
-              id: b.id,
-              testName: b.labTest?.name || 'Diagnostic Health Panel',
-              requestDate: new Date().toISOString().split('T')[0],
-              doctorName: 'Central Pathology Department',
-              status: b.status === 'booked' ? 'pending' : (b.status || 'pending'),
-            }));
-          list = [...list, ...extra];
-        }
-      }
-    } catch (_) {}
-
-    setHistoryOrders(list);
-  };
-
-  // ── DATA FETCHING ──────────────────────────────────────────────────
+  // ── INITIAL LOAD & CLEANUP ─────────────────────────────────────────
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        // 1. Fetch Branches
-        try {
-          const branchRes = await fetch(`${API_BASE_URL}/hospital-branches`, {
-            headers: { role: 'patient' },
-          });
-          if (branchRes.ok) {
-            const bData = await branchRes.json();
-            if (isMounted && Array.isArray(bData) && bData.length) {
-              setBranches(bData);
-              setSelectedBranchId(bData[0].id);
-            }
-          }
-        } catch {}
-
-        // 2. Fetch Lab Tests
-        try {
-          const testRes = await fetch(`${API_BASE_URL}/labtests`, {
-            headers: { role: 'patient' },
-          });
-          if (testRes.ok) {
-            const tData = await testRes.json();
-            if (isMounted && Array.isArray(tData) && tData.length) {
-              const merged = tData.map((item) => {
-                const fb = FALLBACK_TESTS.find((f) => f.id === item.id || f.name.toLowerCase() === item.name.toLowerCase());
-                return {
-                  ...item,
-                  description: item.description || fb?.description || 'Diagnostic laboratory analysis performed under NABL accredited protocols.',
-                  parametersCount: fb?.parametersCount || 'Standard Markers',
-                  sampleType: fb?.sampleType || 'Blood Sample',
-                  fastingRequired: fb?.fastingRequired || 'Routine checkup guidelines',
-                  turnaroundTime: fb?.turnaroundTime || 'Reports in 24 hrs',
-                };
-              });
-              setTests(merged);
-            } else {
-              setTests(FALLBACK_TESTS);
-            }
-          } else {
-            setTests(FALLBACK_TESTS);
-          }
-        } catch {
-          if (isMounted) setTests(FALLBACK_TESTS);
-        }
-
-        // 3. Fetch Lab Orders History
-        await loadDiagnosticHistory(userId);
-
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    loadData();
-
+    dispatch(fetchLabBranches());
+    dispatch(fetchLabTests());
     return () => {
-      isMounted = false;
+      dispatch(clearLabTestNotice());
     };
-  }, [userId]);
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchDiagnosticHistory(userId));
+  }, [dispatch, userId]);
 
   // ── CATEGORY TEST COUNTS ───────────────────────────────────────────
   const categoryCounts = useMemo(() => {
@@ -306,7 +128,8 @@ export default function PatientLabTest() {
       // Fasting filter
       let matchFasting = true;
       if (fastingFilter === 'fasting') {
-        matchFasting = String(item.fastingRequired || '').toLowerCase().includes('fasting') &&
+        matchFasting =
+          String(item.fastingRequired || '').toLowerCase().includes('fasting') &&
           !String(item.fastingRequired || '').toLowerCase().includes('no fasting');
       } else if (fastingFilter === 'no-fasting') {
         matchFasting = String(item.fastingRequired || '').toLowerCase().includes('no fasting');
@@ -332,7 +155,8 @@ export default function PatientLabTest() {
     return Object.entries(cartQuantities)
       .filter(([, qty]) => qty > 0)
       .map(([testId, qty]) => {
-        const testObj = tests.find((t) => t.id === testId) || FALLBACK_TESTS.find((t) => t.id === testId);
+        const testObj =
+          tests.find((t) => t.id === testId) || FALLBACK_TESTS.find((t) => t.id === testId);
         return {
           test: testObj,
           quantity: qty,
@@ -345,89 +169,22 @@ export default function PatientLabTest() {
   const totalCartCount = cartItems.reduce((acc, curr) => acc + curr.quantity, 0);
   const cartSubtotal = cartItems.reduce((acc, curr) => acc + curr.totalPrice, 0);
 
-  // ── QUANTITY HANDLERS ──────────────────────────────────────────────
+  // ── QUANTITY & BOOKING HANDLERS ────────────────────────────────────
   const handleQuantityChange = (testId, newQty) => {
-    setCartQuantities((prev) => {
-      const next = { ...prev };
-      if (newQty <= 0) {
-        delete next[testId];
-      } else {
-        next[testId] = newQty;
-      }
-      return next;
-    });
+    dispatch(setTestQuantity({ testId, quantity: newQty }));
   };
 
   const handleClearCart = () => {
-    setCartQuantities({});
+    dispatch(clearLabCart());
   };
 
   const handleResetFilters = () => {
-    setSearchQuery('');
-    setSortBy('default');
-    setFastingFilter('all');
-    setSelectedCategory('All Tests');
+    dispatch(resetLabTestFilters());
   };
 
-  // ── CONFIRM BOOKING ────────────────────────────────────────────────
-  const handleConfirmBooking = async () => {
+  const handleConfirmBooking = () => {
     if (cartItems.length === 0) return;
-    setIsSubmitting(true);
-    setFeedbackNotice(null);
-
-    try {
-      const branchId = selectedBranchId || '00000000-0000-4000-8000-000000000001';
-
-      // 1. Add all cart items to backend cart
-      for (const item of cartItems) {
-        await fetch(`${API_BASE_URL}/labtests/book`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            role: 'patient',
-          },
-          body: JSON.stringify({
-            userId,
-            labTestId: item.test.id,
-            branchId,
-          }),
-        });
-      }
-
-      // 2. Confirm booking to generate orders and notify Lab Technician
-      const patientDisplayName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Patient');
-      const confirmRes = await fetch(`${API_BASE_URL}/labtests/confirm/${encodeURIComponent(userId)}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          role: 'patient',
-        },
-        body: JSON.stringify({
-          patientName: patientDisplayName,
-        }),
-      });
-
-      if (!confirmRes.ok) {
-        throw new Error('Failed to confirm booking');
-      }
-
-      setFeedbackNotice({
-        type: 'success',
-        text: `Success! ${totalCartCount} test(s) booked. You can review your tests under Diagnostic Records below.`,
-      });
-      setCartQuantities({});
-
-      // 3. Refresh diagnostic orders
-      await loadDiagnosticHistory(userId);
-    } catch (err) {
-      console.error('Failed to book lab test:', err);
-      setFeedbackNotice({
-        type: 'error',
-        text: 'Unable to complete test booking. Please check connection and retry.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    dispatch(confirmLabTestBooking());
   };
 
   const selectedBranchObj = branches.find((b) => b.id === selectedBranchId);
@@ -454,7 +211,7 @@ export default function PatientLabTest() {
             <button
               type="button"
               className="alert-dismiss"
-              onClick={() => setFeedbackNotice(null)}
+              onClick={() => dispatch(clearLabTestNotice())}
             >
               &times;
             </button>
@@ -466,13 +223,13 @@ export default function PatientLabTest() {
           <LabTestFilters
             branches={branches}
             selectedBranch={selectedBranchId}
-            onBranchChange={setSelectedBranchId}
+            onBranchChange={(branchId) => dispatch(setSelectedBranchId(branchId))}
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            onSearchChange={(query) => dispatch(setSearchQuery(query))}
             sortBy={sortBy}
-            onSortChange={setSortBy}
+            onSortChange={(sort) => dispatch(setSortBy(sort))}
             fastingFilter={fastingFilter}
-            onFastingFilterChange={setFastingFilter}
+            onFastingFilterChange={(fasting) => dispatch(setFastingFilter(fasting))}
             onReset={handleResetFilters}
             totalResults={filteredTests.length}
           />
@@ -490,7 +247,7 @@ export default function PatientLabTest() {
             <button
               type="button"
               className="btn-view-all-categories"
-              onClick={() => setSelectedCategory('All Tests')}
+              onClick={() => dispatch(setSelectedCategory('All Tests'))}
             >
               View All ({tests.length})
             </button>
@@ -508,7 +265,7 @@ export default function PatientLabTest() {
                   icon={cat.icon}
                   count={`${count} Test${count === 1 ? '' : 's'}`}
                   isSelected={isSelected}
-                  onClick={(specName) => setSelectedCategory(specName)}
+                  onClick={(specName) => dispatch(setSelectedCategory(specName))}
                   className="lab-speciality-card"
                 />
               );
