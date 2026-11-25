@@ -9,6 +9,7 @@
  *   - `slotBlocks`         — slots blocked on the selected date
  *   - `unavailableDates`   — full days off
  *   - `bookedAppointments` — upcoming appointments on the selected date
+ *   - `weeklyAvailability` — per-day slot counts for the selected date's week
  *   - `alert`              — { type: 'success' | 'error', text } | null
  *
  * API:
@@ -20,6 +21,7 @@
  *   POST   /doctors/:doctorId/unavailable-dates
  *   DELETE /doctors/:doctorId/unavailable-dates/:id
  *   GET    /appointments/doctor/:doctorId
+ *   GET    /doctors/:doctorId/weekly-availability?weekStart=
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
@@ -36,8 +38,17 @@ function createInitialState() {
     slotBlocks: [],
     unavailableDates: [],
     bookedAppointments: [],
+    weeklyAvailability: [],
     alert: null,
   };
+}
+
+/** Monday (YYYY-MM-DD) of the week containing the given YYYY-MM-DD date. */
+export function getWeekStart(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 /** Base path for the logged-in doctor's endpoints, plus the request identity. */
@@ -80,9 +91,26 @@ export const fetchSlotDateData = createAsyncThunk(
   }
 );
 
+/**
+ * Loads per-day slot counts (template size, blocked slots, full days off) for
+ * the week that contains the selected date.
+ */
+export const fetchWeeklyAvailability = createAsyncThunk(
+  'slotManagement/fetchWeeklyAvailability',
+  async (_, { getState }) => {
+    const { user, base } = doctorEndpoint(getState);
+    const weekStart = getWeekStart(getState().slotManagement.selectedDate);
+    const days = await fetchListOrNull(
+      `${base}/weekly-availability?weekStart=${encodeURIComponent(weekStart)}`,
+      user
+    );
+    return days ?? [];
+  }
+);
+
 export const blockSlot = createAsyncThunk(
   'slotManagement/blockSlot',
-  async ({ slot, reason }, { getState, rejectWithValue }) => {
+  async ({ slot, reason }, { getState, dispatch, rejectWithValue }) => {
     const { user, base } = doctorEndpoint(getState);
     const date = getState().slotManagement.selectedDate;
     try {
@@ -91,6 +119,7 @@ export const blockSlot = createAsyncThunk(
         method: 'POST',
         body: { date, slot, reason: reason.trim() || 'Unavailable' },
       });
+      dispatch(fetchWeeklyAvailability());
       return { block, slot, date };
     } catch {
       return rejectWithValue('Action failed. Please verify the backend is active.');
@@ -100,13 +129,14 @@ export const blockSlot = createAsyncThunk(
 
 export const unblockSlot = createAsyncThunk(
   'slotManagement/unblockSlot',
-  async ({ slot, blockId }, { getState, rejectWithValue }) => {
+  async ({ slot, blockId }, { getState, dispatch, rejectWithValue }) => {
     const { user, base } = doctorEndpoint(getState);
     try {
       await apiFetch(`${base}/slot-blocks/${encodeURIComponent(blockId || slot)}`, {
         user,
         method: 'DELETE',
       });
+      dispatch(fetchWeeklyAvailability());
       return { slot };
     } catch {
       return rejectWithValue('Action failed. Please verify the backend is active.');
@@ -116,7 +146,7 @@ export const unblockSlot = createAsyncThunk(
 
 export const addUnavailableDate = createAsyncThunk(
   'slotManagement/addUnavailableDate',
-  async (date, { getState, rejectWithValue }) => {
+  async (date, { getState, dispatch, rejectWithValue }) => {
     const { user, base } = doctorEndpoint(getState);
     try {
       const entry = await apiFetch(`${base}/unavailable-dates`, {
@@ -124,6 +154,7 @@ export const addUnavailableDate = createAsyncThunk(
         method: 'POST',
         body: { date },
       });
+      dispatch(fetchWeeklyAvailability());
       return { entry, date };
     } catch {
       return rejectWithValue('Failed to mark date as unavailable.');
@@ -133,13 +164,14 @@ export const addUnavailableDate = createAsyncThunk(
 
 export const removeUnavailableDate = createAsyncThunk(
   'slotManagement/removeUnavailableDate',
-  async ({ date, id }, { getState, rejectWithValue }) => {
+  async ({ date, id }, { getState, dispatch, rejectWithValue }) => {
     const { user, base } = doctorEndpoint(getState);
     try {
       await apiFetch(`${base}/unavailable-dates/${encodeURIComponent(id || date)}`, {
         user,
         method: 'DELETE',
       });
+      dispatch(fetchWeeklyAvailability());
       return { date };
     } catch {
       return rejectWithValue('Failed to restore date.');
@@ -168,6 +200,9 @@ const slotManagementSlice = createSlice({
     builder
       .addCase(fetchSlotTemplate.fulfilled, (state, action) => {
         state.allSlots = action.payload;
+      })
+      .addCase(fetchWeeklyAvailability.fulfilled, (state, action) => {
+        state.weeklyAvailability = action.payload;
       })
       .addCase(fetchSlotDateData.fulfilled, (state, action) => {
         const { slotBlocks, unavailableDates, bookedAppointments } = action.payload;

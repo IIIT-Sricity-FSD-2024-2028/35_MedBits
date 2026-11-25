@@ -21,6 +21,7 @@ import { selectCurrentUser } from '../../store/slices/authSlice';
 import {
   fetchSlotTemplate,
   fetchSlotDateData,
+  fetchWeeklyAvailability,
   blockSlot,
   unblockSlot,
   addUnavailableDate,
@@ -45,6 +46,7 @@ export default function SlotManagement() {
     slotBlocks,
     unavailableDates,
     bookedAppointments,
+    weeklyAvailability,
     alert: alertMessage,
   } = useSelector(selectSlotManagement);
 
@@ -60,7 +62,9 @@ export default function SlotManagement() {
 
   // 2. Load slot blocks, leaves & appointments for the selected date
   useEffect(() => {
-    if (selectedDate) dispatch(fetchSlotDateData(selectedDate));
+    if (!selectedDate) return;
+    dispatch(fetchSlotDateData(selectedDate));
+    dispatch(fetchWeeklyAvailability());
   }, [dispatch, userId, selectedDate]);
 
   // ── HANDLERS ──────────────────────────────────────────────────────────
@@ -129,7 +133,12 @@ export default function SlotManagement() {
         />
 
         {/* 3. 7-day schedule summary */}
-        <WeeklyOverviewCard totalSlotsCount={allSlots.length} />
+        <WeeklyOverviewCard
+          days={weeklyAvailability}
+          selectedDate={selectedDate}
+          totalSlotsCount={allSlots.length}
+          onSelectDate={(date) => dispatch(setSelectedDate(date))}
+        />
 
       </div>
   );
