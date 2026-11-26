@@ -64,11 +64,32 @@ export class QueueService {
   ) {}
 
   async createQueueToken(input: CreateQueueInput) {
-    if (!input.doctorId || !input.userId) {
+    const doctorId = input.doctorId?.trim();
+    const userId = input.userId?.trim();
+    if (!doctorId || !userId) {
       throw new BadRequestException('doctorId and userId are required');
     }
 
-    const doctor = await this.doctorsService.getDoctorById(input.doctorId);
+    // Ensure the submitted patient ID belongs to an existing registered patient
+    this.patientsService.getPatientByUserId(userId);
+
+    // Enforce one active queue token (waiting or in-consultation) per patient
+    const existingActiveToken = this.queue.find(
+      (item) =>
+        item.userId === userId &&
+        (item.status === 'waiting' || item.status === 'in-consultation'),
+    );
+    if (existingActiveToken) {
+      const statusLabel =
+        existingActiveToken.status === 'in-consultation'
+          ? 'In Consultation'
+          : 'Waiting';
+      throw new BadRequestException(
+        `Patient ${userId} already has Active Token #${existingActiveToken.tokenNumber} (${statusLabel}). Complete the current visit before issuing a new token.`,
+      );
+    }
+
+    const doctor = await this.doctorsService.getDoctorById(doctorId);
     const branchId = input.branchId?.trim() || doctor.branchId;
     const branch = await this.hospitalBranchService.findOne(branchId);
     if (doctor.branchId !== branchId) {
@@ -77,13 +98,13 @@ export class QueueService {
 
     const nextTokenNumber =
       this.queue
-        .filter((item) => item.doctorId === input.doctorId && item.branchId === branchId)
+        .filter((item) => item.doctorId === doctorId && item.branchId === branchId)
         .reduce((max, item) => Math.max(max, item.tokenNumber), 0) + 1;
 
     const queueItem: QueueItem = {
       id: `QUE${Date.now()}`,
-      doctorId: input.doctorId,
-      userId: input.userId,
+      doctorId,
+      userId,
       tokenNumber: nextTokenNumber,
       status: 'waiting',
       branchId,

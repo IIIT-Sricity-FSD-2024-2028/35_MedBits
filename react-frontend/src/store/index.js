@@ -23,6 +23,8 @@ import frontdeskProfileReducer from './slices/frontdesk/frontdeskProfileSlice';
 import frontdeskDashboardReducer from './slices/frontdesk/frontdeskDashboardSlice';
 import walkInReducer from './slices/frontdesk/walkInSlice';
 import frontdeskAppointmentsReducer from './slices/frontdesk/frontdeskAppointmentsSlice';
+import queueManagementReducer from './slices/frontdesk/queueManagementSlice';
+import followUpReferralReducer from './slices/frontdesk/followUpReferralSlice';
 
 export const store = configureStore({
   reducer: {
@@ -44,6 +46,8 @@ export const store = configureStore({
     frontdeskDashboard: frontdeskDashboardReducer,
     walkIn: walkInReducer,
     frontdeskAppointments: frontdeskAppointmentsReducer,
+    queueManagement: queueManagementReducer,
+    followUpReferral: followUpReferralReducer,
   },
 });
 
