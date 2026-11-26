@@ -1,10 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { PatientsService } from '../patients/patients.service';
 
 export type WalkIn = {
   id: string;
+  userId?: string;
+  patientId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -16,7 +18,7 @@ export type WalkIn = {
   createdAt: string;
 };
 
-export type CreateWalkInInput = Omit<WalkIn, 'id' | 'createdAt'>;
+export type CreateWalkInInput = Omit<WalkIn, 'id' | 'createdAt' | 'userId' | 'patientId'>;
 
 const WALKINS_DATA_FILE = join(
   __dirname,
@@ -34,11 +36,15 @@ const DEFAULT_WALKINS: WalkIn[] = [
 ];
 
 @Injectable()
-export class WalkInsService {
+export class WalkInsService implements OnModuleInit {
   private walkins: WalkIn[] = [...DEFAULT_WALKINS];
 
   constructor(private readonly patientsService: PatientsService) {
     this.loadPersistedWalkIns();
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.reconcileWithPatients();
   }
 
   getAllWalkIns(): WalkIn[] {
@@ -61,19 +67,34 @@ export class WalkInsService {
       throw new BadRequestException('firstName, lastName, email, phone, dob, gender and bloodGroup are required');
     }
 
-    const patient = await this.patientsService.createPatient({
+    let patient = this.patientsService.findMatchingPatient({
+      email: normalizedInput.email,
       firstName: normalizedInput.firstName,
       lastName: normalizedInput.lastName,
-      email: normalizedInput.email,
       phone: normalizedInput.phone,
-      dob: this.toIsoDate(normalizedInput.dob),
-      gender: normalizedInput.gender,
-      bloodGroup: normalizedInput.bloodGroup,
-      guardianName: normalizedInput.guardianName,
     });
 
+    if (!patient) {
+      patient = await this.patientsService.createPatient({
+        firstName: normalizedInput.firstName,
+        lastName: normalizedInput.lastName,
+        email: normalizedInput.email,
+        phone: normalizedInput.phone,
+        dob: this.toIsoDate(normalizedInput.dob),
+        gender: normalizedInput.gender,
+        bloodGroup: normalizedInput.bloodGroup,
+        guardianName: normalizedInput.guardianName,
+      });
+    }
+
     const nextId = this.generateNextId();
-    const walkin: WalkIn = { id: nextId, ...normalizedInput, createdAt: new Date().toISOString() };
+    const walkin: WalkIn = {
+      id: nextId,
+      userId: patient.userId,
+      patientId: patient.userId,
+      ...normalizedInput,
+      createdAt: new Date().toISOString(),
+    };
     this.walkins.unshift(walkin);
     this.persistWalkIns();
 
@@ -85,6 +106,44 @@ export class WalkInsService {
       registrationId: walkin.id,
       name: `${patient.firstName} ${patient.lastName}`.trim(),
     } as WalkIn;
+  }
+
+  private async reconcileWithPatients(): Promise<void> {
+    let walkinsModified = false;
+
+    for (const walkin of this.walkins) {
+      const explicitId = walkin.userId?.trim() || walkin.patientId?.trim();
+      let patient = this.patientsService.findMatchingPatient({
+        userId: explicitId,
+        email: walkin.email,
+        firstName: walkin.firstName,
+        lastName: walkin.lastName,
+        phone: walkin.phone,
+      });
+
+      if (!patient) {
+        patient = await this.patientsService.createPatient({
+          firstName: walkin.firstName,
+          lastName: walkin.lastName,
+          email: walkin.email,
+          phone: walkin.phone,
+          dob: this.toIsoDate(walkin.dob),
+          gender: walkin.gender,
+          bloodGroup: walkin.bloodGroup,
+          guardianName: walkin.guardianName ?? '',
+        });
+      }
+
+      if (walkin.userId !== patient.userId || walkin.patientId !== patient.userId) {
+        walkin.userId = patient.userId;
+        walkin.patientId = patient.userId;
+        walkinsModified = true;
+      }
+    }
+
+    if (walkinsModified) {
+      this.persistWalkIns();
+    }
   }
 
   private loadPersistedWalkIns(): void {

@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 export type PatientProfile = {
   userId: string;
@@ -18,32 +20,104 @@ export type CreatePatientProfileInput = PatientProfile;
 export type CreatePatientInput = Omit<PatientProfile, 'userId'>;
 export type UpdatePatientProfileInput = Partial<Omit<PatientProfile, 'userId'>>;
 
+export type PatientIdentityCriteria = {
+  userId?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+};
+
+const PATIENTS_DATA_FILE = join(
+  __dirname,
+  '..',
+  '..',
+  'data',
+  'patients.json',
+);
+
+const DEFAULT_PATIENTS: PatientProfile[] = [
+  { userId: 'PAT001', firstName: 'Ria', lastName: 'Sharma', dob: '1990-10-24', gender: 'Female', bloodGroup: 'A+', phone: '9473487399', email: 'ria@medbits.com', guardianName: 'Ravi Sharma' },
+  { userId: 'PAT002', firstName: 'Arun', lastName: 'Menon', dob: '1988-02-28', gender: 'Male', bloodGroup: 'O+', phone: '9123456780', email: 'arun.menon@medbits.com', guardianName: 'Lakshmi Menon' },
+  { userId: 'PAT003', firstName: 'Farah', lastName: 'Ali', dob: '2001-11-06', gender: 'Female', bloodGroup: 'A-', phone: '9988776655', email: 'farah.ali@medbits.com', guardianName: 'Imran Ali' },
+  { userId: 'PAT004', firstName: 'Dev', lastName: 'Patel', dob: '1992-07-19', gender: 'Male', bloodGroup: 'AB+', phone: '9012345678', email: 'dev.patel@medbits.com', guardianName: 'Kiran Patel' },
+];
+
 @Injectable()
 export class PatientsService {
-  private readonly patients: PatientProfile[] = [
-    { userId: 'PAT001', firstName: 'Ria', lastName: 'Sharma', dob: '1990-10-24', gender: 'Female', bloodGroup: 'A+', phone: '9473487399', email: 'ria@medbits.com', guardianName: 'Ravi Sharma' },
-    { userId: 'PAT002', firstName: 'Arun', lastName: 'Menon', dob: '1988-02-28', gender: 'Male', bloodGroup: 'O+', phone: '9123456780', email: 'arun.menon@medbits.com', guardianName: 'Lakshmi Menon' },
-    { userId: 'PAT003', firstName: 'Farah', lastName: 'Ali', dob: '2001-11-06', gender: 'Female', bloodGroup: 'A-', phone: '9988776655', email: 'farah.ali@medbits.com', guardianName: 'Imran Ali' },
-    { userId: 'PAT004', firstName: 'Dev', lastName: 'Patel', dob: '1992-07-19', gender: 'Male', bloodGroup: 'AB+', phone: '9012345678', email: 'dev.patel@medbits.com', guardianName: 'Kiran Patel' },
-  ];
+  private patients: PatientProfile[] = DEFAULT_PATIENTS.map((patient) => ({ ...patient }));
+
+  constructor() {
+    this.loadPersistedPatients();
+  }
 
   getPatientByUserId(userId: string): PatientProfile {
-    const patient = this.patients.find((item) => item.userId === userId);
+    const cleanId = userId?.trim();
+    const patient = this.patients.find((item) => item.userId === cleanId);
     if (!patient) throw new NotFoundException('Patient profile not found');
 
     return { ...patient };
   }
 
   getAllPatients(): PatientProfile[] {
-    return this.patients.map((patient) => ({ ...patient }));
+    const seen = new Set<string>();
+    const unique: PatientProfile[] = [];
+    for (const patient of this.patients) {
+      if (!patient.userId || seen.has(patient.userId)) continue;
+      seen.add(patient.userId);
+      unique.push({ ...patient });
+    }
+    return unique;
+  }
+
+  findMatchingPatient(criteria: PatientIdentityCriteria): PatientProfile | null {
+    const cleanUserId = criteria.userId?.trim();
+    if (cleanUserId) {
+      const byId = this.patients.find((item) => item.userId === cleanUserId);
+      if (byId) return { ...byId };
+    }
+
+    const cleanEmail = criteria.email?.trim().toLowerCase();
+    if (cleanEmail) {
+      const byEmail = this.patients.find(
+        (item) => item.email.trim().toLowerCase() === cleanEmail,
+      );
+      if (byEmail) return { ...byEmail };
+    }
+
+    const normalizedName = `${criteria.firstName ?? ''} ${criteria.lastName ?? ''}`
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    const normalizedPhone = (criteria.phone ?? '').replace(/\D/g, '');
+    if (normalizedName && normalizedPhone) {
+      const byNameAndPhone = this.patients.find((item) => {
+        const itemName = `${item.firstName} ${item.lastName}`
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, ' ');
+        const itemPhone = (item.phone ?? '').replace(/\D/g, '');
+        return itemName === normalizedName && itemPhone === normalizedPhone;
+      });
+      if (byNameAndPhone) return { ...byNameAndPhone };
+    }
+
+    return null;
   }
 
   async createPatientProfile(profile: CreatePatientProfileInput): Promise<PatientProfile> {
-    if (!profile.userId?.trim()) {
+    const cleanUserId = profile.userId?.trim();
+    if (!cleanUserId) {
       throw new BadRequestException('userId is required');
     }
+
+    const existing = this.patients.find((item) => item.userId === cleanUserId);
+    if (existing) {
+      return { ...existing };
+    }
+
     const patient: PatientProfile = {
-      userId: profile.userId.trim(),
+      userId: cleanUserId,
       firstName: profile.firstName.trim(),
       lastName: profile.lastName.trim(),
       dob: profile.dob.trim(),
@@ -54,6 +128,7 @@ export class PatientsService {
       guardianName: profile.guardianName.trim(),
     };
     this.patients.push({ ...patient });
+    this.persistPatients();
     return { ...patient };
   }
 
@@ -74,6 +149,7 @@ export class PatientsService {
       throw new BadRequestException('firstName, lastName, dob, gender, bloodGroup, phone and email are required');
     }
     this.patients.push(normalizedPatient);
+    this.persistPatients();
     return { ...normalizedPatient };
   }
 
@@ -95,15 +171,57 @@ export class PatientsService {
       guardianName: updates.guardianName?.trim() ?? existingPatient.guardianName,
     } as PatientProfile;
     this.patients[patientIndex] = nextPatient;
+    this.persistPatients();
     return { ...nextPatient };
   }
 
   private generateNextPatientId(): string {
     const patientIds = this.patients
-      .map((item) => Number.parseInt(item.userId.replace('PAT', ''), 10))
+      .map((item) => {
+        const match = /^PAT(\d+)$/i.exec(item.userId.trim());
+        return match ? Number.parseInt(match[1], 10) : Number.NaN;
+      })
       .filter((value) => Number.isFinite(value));
 
     const nextNumber = (patientIds.length ? Math.max(...patientIds) : 0) + 1;
-    return `PAT${nextNumber.toString().padStart(3, '0')}`;
+    let candidate = `PAT${nextNumber.toString().padStart(3, '0')}`;
+    let counter = nextNumber;
+    while (this.patients.some((item) => item.userId === candidate)) {
+      counter += 1;
+      candidate = `PAT${counter.toString().padStart(3, '0')}`;
+    }
+    return candidate;
+  }
+
+  private loadPersistedPatients(): void {
+    try {
+      if (!existsSync(PATIENTS_DATA_FILE)) {
+        this.persistPatients();
+        return;
+      }
+
+      const raw = readFileSync(PATIENTS_DATA_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const seen = new Set<string>();
+        const deduped: PatientProfile[] = [];
+        for (const item of parsed) {
+          const cleanId = item?.userId?.trim();
+          if (!cleanId || seen.has(cleanId)) continue;
+          seen.add(cleanId);
+          deduped.push({ ...item, userId: cleanId });
+        }
+        if (deduped.length > 0) {
+          this.patients = deduped;
+        }
+      }
+    } catch (_) {}
+  }
+
+  private persistPatients(): void {
+    try {
+      mkdirSync(dirname(PATIENTS_DATA_FILE), { recursive: true });
+      writeFileSync(PATIENTS_DATA_FILE, JSON.stringify(this.patients, null, 2));
+    } catch (_) {}
   }
 }

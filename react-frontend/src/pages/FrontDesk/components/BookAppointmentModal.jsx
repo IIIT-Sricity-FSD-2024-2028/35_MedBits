@@ -1,190 +1,83 @@
 ﻿/**
  * BookAppointmentModal.jsx — Front Desk Schedule New Appointment Dialog
  * =========================================================================
+ * Powered by Redux Toolkit (`frontdeskAppointmentsSlice`).
  * Full booking modal allowing front desk staff to:
  *   1. Search and select an existing patient (with fallback link to Walk-in Registration).
  *   2. Select hospital branch and doctor (filtered by branch/specialty).
  *   3. Pick consultation date and select from live doctor time slots.
  *   4. Submit the booking to POST /appointments with frontdesk credentials.
- *
- * PROPS:
- *  @param {boolean} isOpen     - Whether the modal is open
- *  @param {function} onClose   - Dismiss modal handler
- *  @param {function} onSuccess - Callback invoked on successful appointment creation
- *  @param {string} apiBaseUrl  - Backend API base URL
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../store/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchBookingLookups,
+  fetchDoctorsByBranch,
+  fetchDoctorAvailableSlots,
+  bookFrontdeskAppointment,
+  clearAvailableSlots,
+  setBookingError,
+  selectFrontdeskAppointmentsState,
+} from '../../../store/slices/frontdesk/frontdeskAppointmentsSlice';
+import { todayLocalISO } from '../../../store/slices/frontdesk/frontdeskHelpers';
 import Modal from '../../../components/common/Modal';
 import FormField from '../../../components/common/FormField';
 import AlertBanner from '../../../components/dashboard/AlertBanner';
-import { API_BASE_URL } from '../../../api/apiClient';
 
-const todayIso = () => new Date().toISOString().split('T')[0];
-
-export default function BookAppointmentModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  apiBaseUrl = API_BASE_URL,
-}) {
-  const user = useSelector(selectCurrentUser);
+export default function BookAppointmentModal({ isOpen, onClose }) {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const {
+    patients,
+    branches,
+    doctors,
+    availableSlots: slots,
+    lookupsStatus,
+    doctorsStatus,
+    slotsStatus,
+    isBooking: isSubmitting,
+    bookingError: submitError,
+  } = useSelector(selectFrontdeskAppointmentsState);
 
-  // Data sources
-  const [patients, setPatients] = useState([]);
-  const [branches, setBranches] = useState([]);
-  const [doctors, setDoctors] = useState([]);
-  const [slots, setSlots] = useState([]);
-
-  // Selection state
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedBranchId, setSelectedBranchId] = useState('');
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
-  const [selectedDate, setSelectedDate] = useState(todayIso());
+  const [selectedDate, setSelectedDate] = useState(todayLocalISO);
   const [selectedSlot, setSelectedSlot] = useState('');
 
-  // UI state
-  const [isLoadingPatients, setIsLoadingPatients] = useState(false);
-  const [isLoadingDoctors, setIsLoadingDoctors] = useState(false);
-  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
+  const isLoadingPatients = lookupsStatus === 'loading';
+  const isLoadingDoctors = doctorsStatus === 'loading';
+  const isLoadingSlots = slotsStatus === 'loading';
+  const effectiveBranchId = selectedBranchId || (branches.length > 0 ? branches[0].id : '');
 
-  // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setPatientSearchQuery('');
-      setSelectedPatient(null);
-      setSelectedDoctorId('');
-      setSelectedDate(todayIso());
-      setSelectedSlot('');
-      setSubmitError(null);
-      setSlots([]);
+      dispatch(fetchBookingLookups());
     }
-  }, [isOpen]);
-
-  // Load patients and branches on modal mount
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const loadInitialData = async () => {
-      setIsLoadingPatients(true);
-      try {
-        const headers = {
-          'Content-Type': 'application/json',
-          role: user?.role || 'frontdesk',
-        };
-
-        const [patientsRes, branchesRes] = await Promise.all([
-          fetch(`${apiBaseUrl}/patients`, { headers }),
-          fetch(`${apiBaseUrl}/hospital-branches`, { headers }).catch(() => null),
-        ]);
-
-        if (patientsRes.ok) {
-          const patientsData = await patientsRes.json();
-          setPatients(Array.isArray(patientsData) ? patientsData : []);
-        }
-
-        if (branchesRes && branchesRes.ok) {
-          const branchesData = await branchesRes.json();
-          const branchList = Array.isArray(branchesData) ? branchesData : [];
-          setBranches(branchList);
-          if (branchList.length > 0 && !selectedBranchId) {
-            setSelectedBranchId(branchList[0].id);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load initial booking data:', err);
-      } finally {
-        setIsLoadingPatients(false);
-      }
-    };
-
-    loadInitialData();
-  }, [isOpen, apiBaseUrl, user, selectedBranchId]);
-
-  // Load doctors filtered by selected branch
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const loadDoctors = async () => {
-      setIsLoadingDoctors(true);
-      try {
-        const url = selectedBranchId
-          ? `${apiBaseUrl}/doctors?branchId=${encodeURIComponent(selectedBranchId)}`
-          : `${apiBaseUrl}/doctors`;
-
-        const res = await fetch(url, {
-          headers: {
-            'Content-Type': 'application/json',
-            role: user?.role || 'frontdesk',
-          },
-        });
-
-        if (res.ok) {
-          const docsData = await res.json();
-          setDoctors(Array.isArray(docsData) ? docsData : []);
-        }
-      } catch (err) {
-        console.error('Failed to load doctors:', err);
-      } finally {
-        setIsLoadingDoctors(false);
-      }
-    };
-
-    loadDoctors();
-  }, [isOpen, selectedBranchId, apiBaseUrl, user]);
-
-  // Load available doctor slots when doctor and date are chosen
-  const loadSlots = useCallback(
-    async (doctorId, date) => {
-      if (!doctorId || !date) {
-        setSlots([]);
-        return;
-      }
-
-      setIsLoadingSlots(true);
-      try {
-        const res = await fetch(
-          `${apiBaseUrl}/doctors/${encodeURIComponent(doctorId)}/slots?date=${encodeURIComponent(date)}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              role: user?.role || 'frontdesk',
-            },
-          },
-        );
-
-        if (res.ok) {
-          const slotsData = await res.json();
-          setSlots(Array.isArray(slotsData) ? slotsData : []);
-        } else {
-          setSlots([]);
-        }
-      } catch (err) {
-        console.error('Failed to load doctor slots:', err);
-        setSlots([]);
-      } finally {
-        setIsLoadingSlots(false);
-      }
-    },
-    [apiBaseUrl, user],
-  );
+  }, [isOpen, dispatch]);
 
   useEffect(() => {
-    if (selectedDoctorId && selectedDate) {
-      loadSlots(selectedDoctorId, selectedDate);
+    if (isOpen) {
+      dispatch(fetchDoctorsByBranch(effectiveBranchId));
+    }
+  }, [isOpen, effectiveBranchId, dispatch]);
+
+  useEffect(() => {
+    if (isOpen && selectedDoctorId && selectedDate) {
+      dispatch(
+        fetchDoctorAvailableSlots({
+          doctorId: selectedDoctorId,
+          date: selectedDate,
+        })
+      );
     } else {
-      setSlots([]);
+      dispatch(clearAvailableSlots());
     }
-  }, [selectedDoctorId, selectedDate, loadSlots]);
+  }, [isOpen, selectedDoctorId, selectedDate, dispatch]);
 
-  // Filtered patients for search auto-suggest
   const filteredPatients = patients.filter((pat) => {
     if (!patientSearchQuery.trim()) return false;
     const q = patientSearchQuery.toLowerCase();
@@ -196,69 +89,36 @@ export default function BookAppointmentModal({
 
   const selectedDoctor = doctors.find((doc) => (doc.userId || doc.id) === selectedDoctorId);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmitError(null);
+    dispatch(setBookingError(null));
 
     if (!selectedPatient) {
-      setSubmitError('Please select a patient before booking.');
+      dispatch(setBookingError('Please select a patient before booking.'));
       return;
     }
     if (!selectedDoctorId) {
-      setSubmitError('Please select an attending doctor.');
+      dispatch(setBookingError('Please select an attending doctor.'));
       return;
     }
     if (!selectedDate) {
-      setSubmitError('Please select an appointment date.');
+      dispatch(setBookingError('Please select an appointment date.'));
       return;
     }
     if (!selectedSlot) {
-      setSubmitError('Please choose an available time slot.');
+      dispatch(setBookingError('Please choose an available time slot.'));
       return;
     }
 
-    const effectiveBranchId =
-      selectedDoctor?.branchId ||
-      selectedBranchId ||
-      branches[0]?.id ||
-      '00000000-0000-4000-8000-000000000001';
-
-    const staffId = user?.id || user?.userId || 'frontdesk';
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(`${apiBaseUrl}/appointments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          role: user?.role || 'frontdesk',
-          'x-user-id': staffId,
-        },
-        body: JSON.stringify({
-          userId: selectedPatient.userId || selectedPatient.id,
-          doctorId: selectedDoctorId,
-          branchId: effectiveBranchId,
-          date: selectedDate,
-          slot: selectedSlot,
-          source: 'frontdesk',
-          bookedBy: staffId,
-          frontdeskId: staffId,
-        }),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(data?.message || 'Failed to book appointment. Please verify details.');
-      }
-
-      onSuccess(data);
-      onClose();
-    } catch (err) {
-      setSubmitError(err.message || 'An error occurred while booking the appointment.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    dispatch(
+      bookFrontdeskAppointment({
+        patientId: selectedPatient.userId || selectedPatient.id,
+        doctorId: selectedDoctorId,
+        branchId: effectiveBranchId,
+        date: selectedDate,
+        slot: selectedSlot,
+      })
+    );
   };
 
   const modalFooter = (
@@ -292,8 +152,12 @@ export default function BookAppointmentModal({
           border: 'none',
           backgroundColor: '#0284c7',
           color: '#ffffff',
-          cursor: isSubmitting || !selectedPatient || !selectedDoctorId || !selectedSlot ? 'not-allowed' : 'pointer',
-          opacity: isSubmitting || !selectedPatient || !selectedDoctorId || !selectedSlot ? 0.6 : 1,
+          cursor:
+            isSubmitting || !selectedPatient || !selectedDoctorId || !selectedSlot
+              ? 'not-allowed'
+              : 'pointer',
+          opacity:
+            isSubmitting || !selectedPatient || !selectedDoctorId || !selectedSlot ? 0.6 : 1,
           display: 'inline-flex',
           alignItems: 'center',
           gap: '8px',
@@ -313,7 +177,14 @@ export default function BookAppointmentModal({
       footer={modalFooter}
       maxWidth="620px"
     >
-      {submitError && <AlertBanner message={submitError} type="error" style={{ marginBottom: '18px' }} />}
+      {submitError && (
+        <AlertBanner
+          message={submitError}
+          type="error"
+          onDismiss={() => dispatch(setBookingError(null))}
+          style={{ marginBottom: '18px' }}
+        />
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* ── STEP 1: PATIENT SELECTION ── */}
@@ -331,7 +202,6 @@ export default function BookAppointmentModal({
           </label>
 
           {selectedPatient ? (
-            /* Selected Patient Card */
             <div
               style={{
                 display: 'flex',
@@ -348,7 +218,8 @@ export default function BookAppointmentModal({
                   {selectedPatient.firstName} {selectedPatient.lastName}
                 </strong>
                 <span style={{ color: '#15803d', fontSize: '12px' }}>
-                  ID: {selectedPatient.userId || selectedPatient.id} | Phone: {selectedPatient.phone || '—'}
+                  ID: {selectedPatient.userId || selectedPatient.id} | Phone:{' '}
+                  {selectedPatient.phone || '—'}
                 </span>
               </div>
               <button
@@ -372,11 +243,14 @@ export default function BookAppointmentModal({
               </button>
             </div>
           ) : (
-            /* Patient Search Input & Auto-suggest Dropdown */
             <div style={{ position: 'relative' }}>
               <input
                 type="text"
-                placeholder={isLoadingPatients ? 'Loading patient list...' : 'Search by patient name, phone, or ID...'}
+                placeholder={
+                  isLoadingPatients
+                    ? 'Loading patient list...'
+                    : 'Search by patient name, phone, or ID...'
+                }
                 value={patientSearchQuery}
                 onChange={(e) => setPatientSearchQuery(e.target.value)}
                 disabled={isLoadingPatients || isSubmitting}
@@ -392,7 +266,6 @@ export default function BookAppointmentModal({
                 }}
               />
 
-              {/* Suggestions Dropdown */}
               {patientSearchQuery.trim() && (
                 <div
                   style={{
@@ -443,7 +316,6 @@ export default function BookAppointmentModal({
                 </div>
               )}
 
-              {/* Helpful fallback trigger for new patients */}
               <div style={{ marginTop: '6px', fontSize: '12.5px', color: '#64748b' }}>
                 First-time patient?{' '}
                 <button
@@ -483,7 +355,7 @@ export default function BookAppointmentModal({
               label="Hospital Branch"
               name="branchId"
               type="select"
-              value={selectedBranchId}
+              value={effectiveBranchId}
               onChange={(e) => {
                 setSelectedBranchId(e.target.value);
                 setSelectedDoctorId('');
@@ -520,7 +392,7 @@ export default function BookAppointmentModal({
             name="appointmentDate"
             type="date"
             value={selectedDate}
-            min={todayIso()}
+            min={todayLocalISO()}
             onChange={(e) => {
               setSelectedDate(e.target.value);
               setSelectedSlot('');
@@ -573,7 +445,8 @@ export default function BookAppointmentModal({
                 fontSize: '13px',
               }}
             >
-              No available slots found for Dr. {selectedDoctor?.name} on {selectedDate}. Please select another date.
+              No available slots found for Dr. {selectedDoctor?.name} on {selectedDate}. Please
+              select another date.
             </div>
           ) : (
             <div

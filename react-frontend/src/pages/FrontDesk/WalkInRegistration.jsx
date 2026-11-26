@@ -1,56 +1,54 @@
 ﻿/**
  * WalkInRegistration.jsx — Front Desk Walk-in Registration Page
  * ====================================================================
+ * Powered by Redux Toolkit (`walkInSlice` + `authSlice`).
  * Connects with the MedBits NestJS backend API:
  *   - POST /walkins → Registers a new walk-in patient and generates Patient/Walk-in IDs
  *   - GET /walkins  → Lists all recent walk-in registrations
  *
- * Utilizes core reusable components: AppShell, ContentCard, and DataTable.
+ * Utilizes core reusable components: ContentCard, DataTable, AlertBanner,
+ * WalkInRegistrationForm, and RegistrationSuccessCard.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchWalkIns,
+  registerWalkIn,
+  updateWalkInField,
+  setWalkInFormErrors,
+  resetWalkInForm,
+  clearWalkInSuccess,
+  clearWalkInSubmitError,
+  selectWalkInState,
+} from '../../store/slices/frontdesk/walkInSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import AlertBanner from '../../components/dashboard/AlertBanner';
 import WalkInRegistrationForm from './components/WalkInRegistrationForm';
 import RegistrationSuccessCard from './components/RegistrationSuccessCard';
-import { API_BASE_URL } from '../../api/apiClient';
-
-// Backend API URL (defaults to http://localhost:3000 if not specified in .env)
-
-const INITIAL_FORM_STATE = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  dob: '',
-  gender: '',
-  bloodGroup: '',
-  guardianName: '',
-};
 
 export default function WalkInRegistration() {
-  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector(selectCurrentUser);
+  const {
+    walkins,
+    formData,
+    formErrors,
+    listStatus,
+    listError,
+    submitStatus,
+    submitError,
+    successInfo,
+  } = useSelector(selectWalkInState);
 
-  // Form input state
-  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
-  const [formErrors, setFormErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [successInfo, setSuccessInfo] = useState(null);
+  const isLoadingList = listStatus === 'loading';
+  const isSubmitting = submitStatus === 'loading';
+  const userId = user?.id;
 
-  // Recent registrations list state
-  const [walkinsList, setWalkinsList] = useState([]);
-  const [isLoadingList, setIsLoadingList] = useState(true);
-  const [listError, setListError] = useState(null);
-
-  /**
-   * Helper: Calculates age in years from a date of birth string
-   */
   const calculateAge = useCallback((dobStr) => {
     if (!dobStr) return '';
     let birthDate;
@@ -72,9 +70,6 @@ export default function WalkInRegistration() {
     return age >= 0 ? `${age} yrs` : '';
   }, []);
 
-  /**
-   * Helper: Formats ISO date or DD-MM-YYYY for display in table
-   */
   const formatDisplayDate = useCallback((dateStr) => {
     if (!dateStr) return '—';
     try {
@@ -94,31 +89,23 @@ export default function WalkInRegistration() {
     }
   }, []);
 
-  /**
-   * Fetch recent walk-in registrations from GET /walkins
-   */
-  const loadWalkIns = useCallback(async () => {
-    setIsLoadingList(true);
-    setListError(null);
+  const loadWalkIns = useCallback(() => {
+    dispatch(fetchWalkIns());
+  }, [dispatch]);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/walkins`, {
-        headers: {
-          'Content-Type': 'application/json',
-          role: user?.role || 'frontdesk',
-        },
-      });
+  useEffect(() => {
+    loadWalkIns();
+    return () => {
+      dispatch(clearWalkInSubmitError());
+      dispatch(clearWalkInSuccess());
+    };
+  }, [loadWalkIns, dispatch, userId]);
 
-      if (!response.ok) {
-        throw new Error(`Failed to load walk-ins (HTTP ${response.status})`);
-      }
-
-      const data = await response.json();
-      const list = Array.isArray(data) ? data : [];
-
-      // Map raw backend walk-in objects to DataTable rows
-      const mappedRows = list.map((item, index) => {
-        const fullName = `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Unknown Patient';
+  const walkinsList = useMemo(
+    () =>
+      walkins.map((item, index) => {
+        const fullName =
+          `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Unknown Patient';
         const age = calculateAge(item.dob);
 
         return {
@@ -134,42 +121,15 @@ export default function WalkInRegistration() {
           createdAtFormatted: formatDisplayDate(item.createdAt),
           rawCreatedAt: item.createdAt,
         };
-      });
+      }),
+    [walkins, calculateAge, formatDisplayDate]
+  );
 
-      setWalkinsList(mappedRows);
-    } catch (err) {
-      console.error('Error loading walk-ins list:', err);
-      setListError(err.message || 'Unable to connect to backend server on port 3000.');
-    } finally {
-      setIsLoadingList(false);
-    }
-  }, [user?.role, calculateAge, formatDisplayDate]);
-
-  // Load walk-ins on mount
-  useEffect(() => {
-    loadWalkIns();
-  }, [loadWalkIns]);
-
-  /**
-   * Form input change handler
-   */
   function handleInputChange(e) {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Clear specific field error as user types
-    if (formErrors[name]) {
-      setFormErrors((prev) => {
-        const next = { ...prev };
-        delete next[name];
-        return next;
-      });
-    }
+    dispatch(updateWalkInField({ name, value }));
   }
 
-  /**
-   * Form validation function
-   */
   function validateForm() {
     const errors = {};
 
@@ -210,88 +170,20 @@ export default function WalkInRegistration() {
     return errors;
   }
 
-  /**
-   * Convert YYYY-MM-DD from <input type="date"> to DD-MM-YYYY
-   * as expected by backend's WalkInsService.toIsoDate()
-   */
-  function formatDobForBackend(dobInput) {
-    const trimmed = dobInput.trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      const [year, month, day] = trimmed.split('-');
-      return `${day}-${month}-${year}`;
-    }
-    return trimmed;
-  }
-
-  /**
-   * Form submission handler
-   */
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
-    setSubmitError(null);
-    setSuccessInfo(null);
+    dispatch(clearWalkInSubmitError());
+    dispatch(clearWalkInSuccess());
 
-    // Validate inputs
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
+      dispatch(setWalkInFormErrors(errors));
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim().replace(/\D/g, ''),
-        dob: formatDobForBackend(formData.dob),
-        gender: formData.gender,
-        bloodGroup: formData.bloodGroup,
-        guardianName: formData.guardianName.trim() || undefined,
-      };
-
-      const response = await fetch(`${API_BASE_URL}/walkins`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          role: user?.role || 'frontdesk',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(result?.message || `Registration failed (HTTP ${response.status})`);
-      }
-
-      // Success: display registered patient details
-      setSuccessInfo({
-        name: result.name || `${payload.firstName} ${payload.lastName}`,
-        registrationId: result.registrationId || result.id || 'Registered',
-        patientId: result.userId || result.patientId || result.id,
-        phone: payload.phone,
-        bloodGroup: payload.bloodGroup,
-        gender: payload.gender,
-      });
-
-      // Reset form
-      setFormData(INITIAL_FORM_STATE);
-      setFormErrors({});
-
-      // Refresh recent registrations list
-      await loadWalkIns();
-    } catch (err) {
-      console.error('Walk-in registration error:', err);
-      setSubmitError(err.message || 'Failed to complete walk-in registration. Please check the backend connection.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    dispatch(registerWalkIn(formData));
   }
 
-  // DataTable column definitions for recent registrations
   const columns = [
     {
       key: 'registrationId',
@@ -367,80 +259,77 @@ export default function WalkInRegistration() {
   ];
 
   return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
-        {/* ── 1. SUCCESS NOTIFICATION BANNER ──────────────────────── */}
-        <RegistrationSuccessCard
-          successInfo={successInfo}
-          onDismiss={() => setSuccessInfo(null)}
-          onRegisterAnother={() => setSuccessInfo(null)}
-          onReturnToDashboard={() => navigate('/front-desk/dashboard')}
+      {/* ── 1. SUCCESS NOTIFICATION BANNER ──────────────────────── */}
+      <RegistrationSuccessCard
+        successInfo={successInfo}
+        onDismiss={() => dispatch(clearWalkInSuccess())}
+        onRegisterAnother={() => dispatch(clearWalkInSuccess())}
+        onReturnToDashboard={() => navigate('/front-desk/dashboard')}
+      />
+
+      {/* ── 2. SUBMIT ERROR BANNER ──────────────────────────────── */}
+      {submitError && (
+        <AlertBanner
+          type="error"
+          title="Registration Request Failed"
+          message={submitError}
+          onDismiss={() => dispatch(clearWalkInSubmitError())}
         />
+      )}
 
-        {/* ── 2. SUBMIT ERROR BANNER ──────────────────────────────── */}
-        {submitError && (
+      {/* ── 3. PATIENT REGISTRATION FORM ─────────────────────────── */}
+      <WalkInRegistrationForm
+        formData={formData}
+        formErrors={formErrors}
+        isSubmitting={isSubmitting}
+        onChange={handleInputChange}
+        onSubmit={handleSubmit}
+        onClear={() => dispatch(resetWalkInForm())}
+      />
+
+      {/* ── 4. RECENT WALK-IN REGISTRATIONS TABLE ───────────────── */}
+      <ContentCard
+        title="Recent Walk-in Registrations"
+        subtitle="All walk-in patients registered in the hospital system"
+        action={
+          <button
+            type="button"
+            className="btn-card-refresh"
+            onClick={loadWalkIns}
+            disabled={isLoadingList}
+            title="Refresh registrations from server"
+          >
+            <span>{isLoadingList ? '⏳' : '🔄'}</span>
+            <span>{isLoadingList ? 'Refreshing...' : 'Refresh List'}</span>
+          </button>
+        }
+      >
+        {listError && (
           <AlertBanner
             type="error"
-            title="Registration Request Failed"
-            message={submitError}
-            onDismiss={() => setSubmitError(null)}
+            message={listError}
+            onRetry={loadWalkIns}
+            isRetrying={isLoadingList}
+            style={{ marginBottom: '16px' }}
           />
         )}
 
-        {/* ── 3. PATIENT REGISTRATION FORM ─────────────────────────── */}
-        <WalkInRegistrationForm
-          formData={formData}
-          formErrors={formErrors}
-          isSubmitting={isSubmitting}
-          onChange={handleInputChange}
-          onSubmit={handleSubmit}
-          onClear={() => {
-            setFormData(INITIAL_FORM_STATE);
-            setFormErrors({});
-            setSubmitError(null);
-          }}
-        />
-
-
-        {/* ── 4. RECENT WALK-IN REGISTRATIONS TABLE ───────────────── */}
-        <ContentCard
-          title="Recent Walk-in Registrations"
-          subtitle="All walk-in patients registered in the hospital system"
-          action={
-            <button
-              type="button"
-              className="btn-card-refresh"
-              onClick={loadWalkIns}
-              disabled={isLoadingList}
-              title="Refresh registrations from server"
-            >
-              <span>{isLoadingList ? '⏳' : '🔄'}</span>
-              <span>{isLoadingList ? 'Refreshing...' : 'Refresh List'}</span>
-            </button>
+        <DataTable
+          columns={columns}
+          data={walkinsList}
+          searchPlaceholder="Search by name, ID, phone, or blood group..."
+          emptyMessage={
+            isLoadingList
+              ? 'Loading walk-in registrations from server...'
+              : listError
+              ? 'Unable to load registrations.'
+              : 'No walk-in registrations found.'
           }
-        >
-          {listError && (
-            <AlertBanner
-              type="error"
-              message={listError}
-              style={{ marginBottom: '16px' }}
-            />
-          )}
+        />
+      </ContentCard>
 
-          <DataTable
-            columns={columns}
-            data={walkinsList}
-            searchPlaceholder="Search by name, ID, phone, or blood group..."
-            emptyMessage={
-              isLoadingList
-                ? 'Loading walk-in registrations from server...'
-                : listError
-                ? 'Unable to load registrations.'
-                : 'No walk-in registrations found.'
-            }
-          />
-        </ContentCard>
-
-      </div>
+    </div>
   );
 }

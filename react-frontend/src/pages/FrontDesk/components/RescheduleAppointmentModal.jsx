@@ -1,106 +1,56 @@
 /**
  * RescheduleAppointmentModal.jsx — Front Desk Reschedule Appointment Dialog
  * =========================================================================
+ * Powered by Redux Toolkit (`frontdeskAppointmentsSlice`).
  * Displays patient & doctor summary, provides a date picker (min = today),
  * fetches real-time doctor available slots, and submits the updated date & slot.
- *
- * PROPS:
- *  @param {boolean} isOpen         - Whether the modal is open
- *  @param {object} appointment     - The appointment to reschedule
- *  @param {boolean} isRescheduling - Whether update API request is in progress
- *  @param {string} error           - Error message from API
- *  @param {string} apiBaseUrl      - Backend API base URL
- *  @param {function} onClose       - Dismiss modal handler
- *  @param {function} onReschedule  - Submit reschedule handler ({ appointmentId, date, slot })
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchDoctorAvailableSlots,
+  rescheduleFrontdeskAppointment,
+  selectFrontdeskAppointmentsState,
+} from '../../../store/slices/frontdesk/frontdeskAppointmentsSlice';
+import {
+  getPatientDisplayName,
+  todayLocalISO,
+} from '../../../store/slices/frontdesk/frontdeskHelpers';
 import Modal from '../../../components/common/Modal';
 import FormField from '../../../components/common/FormField';
 import AlertBanner from '../../../components/dashboard/AlertBanner';
-import { API_BASE_URL } from '../../../api/apiClient';
 
-const todayIso = () => new Date().toISOString().split('T')[0];
+export default function RescheduleAppointmentModal({ isOpen, appointment, onClose }) {
+  const dispatch = useDispatch();
+  const {
+    availableSlots,
+    slotsStatus,
+    slotsError,
+    isRescheduling,
+    rescheduleError: error,
+  } = useSelector(selectFrontdeskAppointmentsState);
 
-export default function RescheduleAppointmentModal({
-  isOpen,
-  appointment,
-  isRescheduling,
-  error,
-  apiBaseUrl = API_BASE_URL,
-  onClose,
-  onReschedule,
-}) {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedSlot, setSelectedSlot] = useState('');
-  const [availableSlots, setAvailableSlots] = useState([]);
-  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
-  const [slotsError, setSlotsError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(appointment?.date || todayLocalISO());
+  const [selectedSlot, setSelectedSlot] = useState(appointment?.slot || '');
 
-  // Sync state when modal opens or appointment changes
-  useEffect(() => {
-    if (appointment && isOpen) {
-      setSelectedDate(appointment.date || todayIso());
-      setSelectedSlot(appointment.slot || '');
-      setSlotsError(null);
-    }
-  }, [appointment, isOpen]);
-
-  // Load available doctor slots whenever date or appointment changes
-  const fetchDoctorSlots = useCallback(
-    async (doctorId, date) => {
-      if (!doctorId || !date) return;
-      setIsLoadingSlots(true);
-      setSlotsError(null);
-
-      try {
-        const response = await fetch(
-          `${apiBaseUrl}/doctors/${encodeURIComponent(doctorId)}/slots?date=${encodeURIComponent(date)}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              role: 'frontdesk',
-            },
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error('Unable to retrieve available doctor slots for this date.');
-        }
-
-        const data = await response.json();
-        const slotsList = Array.isArray(data) ? [...data] : [];
-
-        // If the date is the same as the original appointment date, make sure original slot is selectable
-        if (appointment && date === appointment.date && appointment.slot && !slotsList.includes(appointment.slot)) {
-          slotsList.unshift(appointment.slot);
-        }
-
-        setAvailableSlots(slotsList);
-      } catch (err) {
-        setSlotsError(err.message || 'Failed to load time slots.');
-        setAvailableSlots([]);
-      } finally {
-        setIsLoadingSlots(false);
-      }
-    },
-    [apiBaseUrl, appointment],
-  );
+  const isLoadingSlots = slotsStatus === 'loading';
 
   useEffect(() => {
     if (isOpen && appointment?.doctorId && selectedDate) {
-      fetchDoctorSlots(appointment.doctorId, selectedDate);
+      dispatch(
+        fetchDoctorAvailableSlots({
+          doctorId: appointment.doctorId,
+          date: selectedDate,
+          currentAppointment: appointment,
+        })
+      );
     }
-  }, [isOpen, appointment?.doctorId, selectedDate, fetchDoctorSlots]);
+  }, [isOpen, appointment, selectedDate, dispatch]);
 
   if (!appointment) return null;
 
-  const patientName =
-    appointment.patient?.name ||
-    (appointment.patient?.firstName
-      ? `${appointment.patient.firstName} ${appointment.patient.lastName || ''}`.trim()
-      : appointment.userId || 'Patient');
-
+  const patientName = getPatientDisplayName(appointment);
   const doctorName = appointment.doctor?.name || appointment.doctorId || 'Assigned Doctor';
   const doctorSpec = appointment.doctor?.specialization || '';
 
@@ -108,11 +58,13 @@ export default function RescheduleAppointmentModal({
     e.preventDefault();
     if (!selectedDate || !selectedSlot) return;
 
-    onReschedule({
-      appointmentId: appointment.id,
-      date: selectedDate,
-      slot: selectedSlot,
-    });
+    dispatch(
+      rescheduleFrontdeskAppointment({
+        appointmentId: appointment.id,
+        date: selectedDate,
+        slot: selectedSlot,
+      })
+    );
   };
 
   const modalFooter = (
@@ -168,7 +120,9 @@ export default function RescheduleAppointmentModal({
       maxWidth="560px"
     >
       {error && <AlertBanner message={error} type="error" style={{ marginBottom: '16px' }} />}
-      {slotsError && <AlertBanner message={slotsError} type="warning" style={{ marginBottom: '16px' }} />}
+      {slotsError && (
+        <AlertBanner message={slotsError} type="warning" style={{ marginBottom: '16px' }} />
+      )}
 
       {/* Appointment Summary Card */}
       <div
@@ -195,7 +149,9 @@ export default function RescheduleAppointmentModal({
           </span>
         </div>
         <div>
-          <span style={{ color: '#64748b', fontSize: '12px', display: 'block' }}>Current Date & Slot</span>
+          <span style={{ color: '#64748b', fontSize: '12px', display: 'block' }}>
+            Current Date &amp; Slot
+          </span>
           <span style={{ color: '#0284c7', fontWeight: 600 }}>
             {appointment.date} at {appointment.slot}
           </span>
@@ -210,7 +166,7 @@ export default function RescheduleAppointmentModal({
             name="rescheduleDate"
             type="date"
             value={selectedDate}
-            min={todayIso()}
+            min={todayLocalISO()}
             onChange={(e) => {
               setSelectedDate(e.target.value);
               setSelectedSlot('');

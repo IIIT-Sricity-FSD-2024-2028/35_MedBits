@@ -45,7 +45,7 @@ export default function RegistrationSuccessCard({
               Walk-in Patient Successfully Registered!
             </h3>
             <p style={{ margin: '2px 0 0', color: '#15803d', fontSize: '13px' }}>
-              Patient record created and walk-in token generated in the system.
+              Patient record and walk-in registration created in the system.
             </p>
           </div>
         </div>

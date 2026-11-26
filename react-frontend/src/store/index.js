@@ -21,6 +21,8 @@ import branchStatisticsReducer from './slices/superAdmin/branchStatisticsSlice';
 import superAdminDashboardReducer from './slices/superAdmin/superAdminDashboardSlice';
 import frontdeskProfileReducer from './slices/frontdesk/frontdeskProfileSlice';
 import frontdeskDashboardReducer from './slices/frontdesk/frontdeskDashboardSlice';
+import walkInReducer from './slices/frontdesk/walkInSlice';
+import frontdeskAppointmentsReducer from './slices/frontdesk/frontdeskAppointmentsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -40,6 +42,8 @@ export const store = configureStore({
     superAdminDashboard: superAdminDashboardReducer,
     frontdeskProfile: frontdeskProfileReducer,
     frontdeskDashboard: frontdeskDashboardReducer,
+    walkIn: walkInReducer,
+    frontdeskAppointments: frontdeskAppointmentsReducer,
   },
 });
 
