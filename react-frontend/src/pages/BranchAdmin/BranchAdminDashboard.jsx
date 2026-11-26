@@ -1,7 +1,7 @@
 ﻿/**
  * BranchAdminDashboard.jsx — Hospital Branch Admin Dashboard Page
  * =========================================================================
- * Dynamic dashboard connected to the MedBits backend:
+ * Powered by Redux Toolkit (`branchAdminDashboardSlice` + `authSlice`).
  *  - Doctors, Front Desk, and Lab Technicians counts fetched from backend
  *  - Real Branch Revenue and completed consultations from earnings endpoint
  *  - Real Hospital Branch metadata (name, address, city, contact info)
@@ -9,95 +9,42 @@
  *  - Quick Actions navigating to respective branch management sections
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchBranchAdminDashboard,
+  selectBranchAdminInfo,
+  selectBranchDoctors,
+  selectBranchFrontdeskStaff,
+  selectBranchLabTechs,
+  selectBranchEarnings,
+  selectBranchAdminDashboardStatus,
+} from '../../store/slices/branchAdmin/branchAdminDashboardSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
-import { API_BASE_URL, getAuthHeaders } from '../../components/branch-admin/staffHelpers';
 
 export default function BranchAdminDashboard() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
-  // Backend Data State
-  const [branchInfo, setBranchInfo] = useState(null);
-  const [doctors, setDoctors] = useState([]);
-  const [frontdeskStaff, setFrontdeskStaff] = useState([]);
-  const [labTechs, setLabTechs] = useState([]);
-  const [earnings, setEarnings] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const branchInfo = useSelector(selectBranchAdminInfo);
+  const doctors = useSelector(selectBranchDoctors);
+  const frontdeskStaff = useSelector(selectBranchFrontdeskStaff);
+  const labTechs = useSelector(selectBranchLabTechs);
+  const earnings = useSelector(selectBranchEarnings);
+  const status = useSelector(selectBranchAdminDashboardStatus);
+  const isLoading = status === 'idle' || status === 'loading';
 
-  // Fetch all branch data dynamically on mount
+  // Fetch all branch data dynamically via Redux thunk
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadDashboard() {
-      const headers = getAuthHeaders(user);
-      const branchParam = user?.branchId ? `?branchId=${encodeURIComponent(user.branchId)}` : '';
-
-      try {
-        const [docsRes, fdRes, ltRes, earnRes, branchesRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/doctors${branchParam}`, { headers })
-            .then((r) => (r.ok ? r.json() : []))
-            .catch(() => []),
-          fetch(`${API_BASE_URL}/frontdesk`, { headers })
-            .then((r) => (r.ok ? r.json() : []))
-            .catch(() => []),
-          fetch(`${API_BASE_URL}/lab-technicians`, { headers })
-            .then((r) => (r.ok ? r.json() : []))
-            .catch(() => []),
-          fetch(`${API_BASE_URL}/appointments/earnings/branch`, { headers })
-            .then((r) => (r.ok ? r.json() : null))
-            .catch(() => null),
-          fetch(`${API_BASE_URL}/hospital-branches`, { headers })
-            .then((r) => (r.ok ? r.json() : []))
-            .catch(() => []),
-        ]);
-
-        if (!isMounted) return;
-
-        // Set branch doctors
-        const docsList = Array.isArray(docsRes) ? docsRes : [];
-        setDoctors(docsList);
-
-        // Filter frontdesk by branch if applicable
-        const fdList = Array.isArray(fdRes) ? fdRes : [];
-        setFrontdeskStaff(
-          user?.branchId ? fdList.filter((f) => f.branchId === user.branchId) : fdList
-        );
-
-        // Filter lab technicians by branch if applicable
-        const ltList = Array.isArray(ltRes) ? ltRes : [];
-        setLabTechs(
-          user?.branchId ? ltList.filter((t) => t.branchId === user.branchId) : ltList
-        );
-
-        // Branch earnings summary
-        setEarnings(earnRes);
-
-        // Find current branch metadata
-        const branches = Array.isArray(branchesRes) ? branchesRes : [];
-        const currentBranch = user?.branchId
-          ? branches.find((b) => b.id === user.branchId) || null
-          : branches[0] || null;
-        setBranchInfo(currentBranch);
-      } catch {
-        // Fallbacks remain empty arrays
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    loadDashboard();
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
+    dispatch(fetchBranchAdminDashboard());
+  }, [dispatch, user?.id, user?.branchId]);
 
   // ── QUICK ACTIONS DEFINITION ──────────────────────────────────────────────
   const branchActions = [
