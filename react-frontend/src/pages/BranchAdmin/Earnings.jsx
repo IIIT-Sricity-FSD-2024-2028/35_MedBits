@@ -1,6 +1,7 @@
 ﻿/**
  * Earnings.jsx — Hospital Branch Admin Earnings Page
  * =========================================================================
+ * Powered by Redux Toolkit (`branchEarningsSlice` + `authSlice`).
  * Real-time financial insights for Branch Administrators:
  *  - Live revenue data fetched from GET /appointments/earnings/branch
  *  - Month-based filtering with dynamic default to current active period
@@ -10,10 +11,22 @@
  *  - Searchable appointment transaction revenue ledger
  */
 
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
-import { API_BASE_URL, getAuthHeaders } from '../../components/branch-admin/staffHelpers';
+import {
+  fetchBranchEarnings,
+  setSelectedMonthKey,
+  setEarningsSearchQuery,
+  getMonthKeyFromDate,
+  getCurrentMonthKey,
+  getAvailableMonthKeys,
+  selectBranchEarningsData,
+  selectBranchEarningsSelectedMonthKey,
+  selectBranchEarningsSearchQuery,
+  selectBranchEarningsStatus,
+  selectBranchEarningsError,
+} from '../../store/slices/branchAdmin/branchEarningsSlice';
 import './Earnings.css';
 
 const MONTHS_LONG = [
@@ -37,19 +50,6 @@ function fmtDate(dateStr) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function getMonthKeyFromDate(dateStr) {
-  if (!dateStr) return '';
-  const raw = String(dateStr);
-  const d = new Date(raw.length === 10 ? `${raw}T00:00:00` : raw);
-  if (isNaN(d.getTime())) return '';
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function getCurrentMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
 function getMonthLabel(monthKey) {
   if (!monthKey) {
     const now = new Date();
@@ -65,80 +65,26 @@ function getMonthLabel(monthKey) {
   return `${MONTHS_LONG[month - 1]} ${year}`;
 }
 
-function getAvailableMonthKeys(data) {
-  const keys = new Set();
-  const currentKey = getCurrentMonthKey();
-  const entries = Array.isArray(data?.entries) ? data.entries : [];
-  const labEntries = Array.isArray(data?.labEntries) ? data.labEntries : [];
-
-  entries.forEach((e) => {
-    const k = getMonthKeyFromDate(e.date);
-    if (k && k <= currentKey) keys.add(k);
-  });
-
-  labEntries.forEach((l) => {
-    const k = getMonthKeyFromDate(l.date);
-    if (k && k <= currentKey) keys.add(k);
-  });
-
-  keys.add(currentKey);
-  return [...keys].sort((a, b) => b.localeCompare(a));
-}
-
 function calcPct(part, total) {
   if (!total || total <= 0) return 0;
   return Math.min(Math.max(Math.round((part / total) * 100), 2), 100);
 }
 
 export default function Earnings() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
 
-  const [data, setData] = useState(null);
-  const [selectedMonthKey, setSelectedMonthKey] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const data = useSelector(selectBranchEarningsData);
+  const selectedMonthKey = useSelector(selectBranchEarningsSelectedMonthKey);
+  const searchQuery = useSelector(selectBranchEarningsSearchQuery);
+  const status = useSelector(selectBranchEarningsStatus);
+  const error = useSelector(selectBranchEarningsError);
+  const isLoading = status === 'idle' || status === 'loading';
 
-  // Fetch branch earnings on mount or auth change
+  // Fetch branch earnings via Redux thunk
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchEarnings() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const headers = getAuthHeaders(user);
-        const res = await fetch(`${API_BASE_URL}/appointments/earnings/branch`, { headers });
-
-        if (!res.ok) {
-          throw new Error(`Failed to load earnings (HTTP ${res.status})`);
-        }
-
-        const json = await res.json();
-        if (!isMounted) return;
-
-        setData(json);
-
-        // Determine default month
-        const available = getAvailableMonthKeys(json);
-        const cur = getCurrentMonthKey();
-        const def = available.includes(cur) ? cur : available[0] || cur;
-        setSelectedMonthKey(def);
-      } catch (err) {
-        if (!isMounted) return;
-        setError(err.message || 'Error fetching earnings data');
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    fetchEarnings();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
+    dispatch(fetchBranchEarnings());
+  }, [dispatch, user?.id, user?.branchId]);
 
   // Derived computations (no useMemo per user preference)
   const monthKeys = data ? getAvailableMonthKeys(data) : [getCurrentMonthKey()];
@@ -250,7 +196,7 @@ export default function Earnings() {
                   id="branchMonthSelect"
                   className="earnings-month-select"
                   value={activeMonthKey}
-                  onChange={(e) => setSelectedMonthKey(e.target.value)}
+                  onChange={(e) => dispatch(setSelectedMonthKey(e.target.value))}
                 >
                   {monthKeys.map((key) => (
                     <option key={key} value={key}>
@@ -442,7 +388,7 @@ export default function Earnings() {
                 className="earnings-search-input"
                 placeholder="Search patient, doctor, ID..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => dispatch(setEarningsSearchQuery(e.target.value))}
                 aria-label="Filter ledger entries"
               />
             </div>
