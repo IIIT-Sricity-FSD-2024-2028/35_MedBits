@@ -1,118 +1,61 @@
 ﻿/**
  * LeaveManagement.jsx — Branch Admin Leave Requests Management Page
  * =========================================================================
+ * Powered by Redux Toolkit (`branchLeaveManagementSlice` + `authSlice`).
  * Enables Branch Admins to inspect, approve, or reject leave requests submitted
  * by doctors and lab technicians assigned to their hospital branch.
- *
- * KEY FEATURES:
- *  1. Live Data Loading: Connects to GET /leave-requests with branch-scoped headers.
- *  2. Real-Time KPIs: Total requests, Pending review, Approved, and Rejected metrics.
- *  3. Search & Filter: Filter by status (All, Pending, Approved, Rejected) and search
- *     across staff names, departments, reasons, and dates via DataTable.
- *  4. Decision Safeguards: Confirm modal with conflict error handling (e.g., booked
- *     doctor appointments prevent leave approval and display the backend's message).
- *  5. Reusable Components: AppShell, ContentCard, StatCard, DataTable, StatusBadge,
- *     Modal, and AlertBanner.
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useCallback, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchLeaveRequests,
+  decideLeaveRequest,
+  setLeaveStatusFilter,
+  openLeaveConfirmModal,
+  closeLeaveConfirmModal,
+  openLeaveDetailsModal,
+  closeLeaveDetailsModal,
+  clearLeaveAlert,
+  selectLeaveRequests,
+  selectLeaveRequestsStatus,
+  selectLeaveAlert,
+  selectLeaveStatusFilter,
+  selectLeaveConfirmModal,
+  selectIsActioningLeave,
+  selectLeaveDetailsModal,
+} from '../../store/slices/branchAdmin/branchLeaveManagementSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import DataTable from '../../components/dashboard/DataTable';
 import StatusBadge from '../../components/common/StatusBadge';
 import Modal from '../../components/common/Modal';
 import AlertBanner from '../../components/dashboard/AlertBanner';
-import { API_BASE_URL, getAuthHeaders, formatDate, getInitials } from './utils/staffHelpers';
+import { formatDate, getInitials } from './utils/staffHelpers';
 import './LeaveManagement.css';
 
 export default function LeaveManagement() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
 
-  // State
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [alert, setAlert] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('');
-
-  // Confirmation Decision Modal State
-  const [confirmModal, setConfirmModal] = useState({
-    isOpen: false,
-    request: null,
-    action: null, // 'approved' | 'rejected'
-  });
-  const [isActioning, setIsActioning] = useState(false);
-
-  // Request Details Modal State
-  const [detailsModal, setDetailsModal] = useState({
-    isOpen: false,
-    request: null,
-  });
+  const leaveRequests = useSelector(selectLeaveRequests);
+  const status = useSelector(selectLeaveRequestsStatus);
+  const alert = useSelector(selectLeaveAlert);
+  const statusFilter = useSelector(selectLeaveStatusFilter);
+  const confirmModal = useSelector(selectLeaveConfirmModal);
+  const isActioning = useSelector(selectIsActioningLeave);
+  const detailsModal = useSelector(selectLeaveDetailsModal);
+  const isLoading = (status === 'idle' || status === 'loading') && leaveRequests.length === 0;
 
   // ── 1. FETCH LEAVE REQUESTS FROM BACKEND ─────────────────────────────────
-  const loadRequests = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/leave-requests`, {
-        headers: getAuthHeaders(user),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to load leave requests (HTTP ${res.status})`);
-      }
-
-      const data = await res.json();
-      setLeaveRequests(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setAlert({
-        type: 'error',
-        title: 'Unable to Load Leave Requests',
-        message: err.message || 'Error connecting to backend server on port 3000.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
+  const loadRequests = useCallback(() => {
+    dispatch(fetchLeaveRequests());
+  }, [dispatch]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function initialFetch() {
-      try {
-        const res = await fetch(`${API_BASE_URL}/leave-requests`, {
-          headers: getAuthHeaders(user),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) {
-            setLeaveRequests(Array.isArray(data) ? data : []);
-          }
-        } else {
-          throw new Error(`Failed to load leave requests (HTTP ${res.status})`);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setAlert({
-            type: 'error',
-            title: 'Unable to Load Leave Requests',
-            message: err.message || 'Error connecting to backend server on port 3000.',
-          });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    initialFetch();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
+    dispatch(fetchLeaveRequests());
+  }, [dispatch, user?.id, user?.branchId]);
 
   // ── 2. DERIVED METRICS FOR KPI CARDS ─────────────────────────────────────
   const totalRequests = leaveRequests.length;
@@ -137,59 +80,13 @@ export default function LeaveManagement() {
 
   // ── 4. HANDLE APPROVE / REJECT DECISION ──────────────────────────────────
   const handleOpenConfirm = (request, action) => {
-    setConfirmModal({
-      isOpen: true,
-      request,
-      action,
-    });
+    dispatch(openLeaveConfirmModal({ request, decision: action }));
   };
 
-  const handleConfirmDecision = async () => {
+  const handleConfirmDecision = () => {
     const { request, action } = confirmModal;
     if (!request || !action) return;
-
-    setIsActioning(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/leave-requests/${request.id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(user),
-        body: JSON.stringify({ status: action }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        // Capture backend error (e.g. Doctor appointment conflict or validation failure)
-        const errorMsg = data.message || `Failed to update leave request (HTTP ${res.status})`;
-        throw new Error(errorMsg);
-      }
-
-      setAlert({
-        type: 'success',
-        title: action === 'approved' ? 'Leave Request Approved' : 'Leave Request Rejected',
-        message: `Leave request for ${request.name || 'staff member'} on ${
-          request.dateRange || formatDate(request.date)
-        } has been ${action} successfully.`,
-      });
-
-      setConfirmModal({ isOpen: false, request: null, action: null });
-      // Close details modal if it was open for this request
-      if (detailsModal.isOpen && detailsModal.request?.id === request.id) {
-        setDetailsModal({ isOpen: false, request: null });
-      }
-      // Refresh list to update table and KPIs
-      await loadRequests();
-    } catch (err) {
-      // Display the actual backend error message to the Branch Admin
-      setAlert({
-        type: 'error',
-        title: action === 'approved' ? 'Approval Prevented' : 'Rejection Failed',
-        message: err.message,
-      });
-      setConfirmModal({ isOpen: false, request: null, action: null });
-    } finally {
-      setIsActioning(false);
-    }
+    dispatch(decideLeaveRequest({ request, action }));
   };
 
   // ── 5. DATA TABLE COLUMNS DEFINITION ─────────────────────────────────────
@@ -200,7 +97,7 @@ export default function LeaveManagement() {
       render: (_, r) => (
         <div
           className="lm-staff-cell"
-          onClick={() => setDetailsModal({ isOpen: true, request: r })}
+          onClick={() => dispatch(openLeaveDetailsModal(r))}
           title="Click to view full leave request details"
         >
           <div className="lm-avatar" aria-hidden="true">
@@ -245,7 +142,7 @@ export default function LeaveManagement() {
         <span
           className="lm-reason-text"
           title={val}
-          onClick={() => setDetailsModal({ isOpen: true, request: r })}
+          onClick={() => dispatch(openLeaveDetailsModal(r))}
         >
           {val || '—'}
         </span>
@@ -307,7 +204,7 @@ export default function LeaveManagement() {
             type={alert.type}
             title={alert.title}
             message={alert.message}
-            onDismiss={() => setAlert(null)}
+            onDismiss={() => dispatch(clearLeaveAlert())}
           />
         )}
 
@@ -377,7 +274,7 @@ export default function LeaveManagement() {
             <select
               className="lm-filter-select"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => dispatch(setLeaveStatusFilter(e.target.value))}
               aria-label="Filter by leave status"
             >
               <option value="">All Statuses</option>
@@ -407,7 +304,7 @@ export default function LeaveManagement() {
         {confirmModal.isOpen && confirmModal.request && (
           <Modal
             isOpen={confirmModal.isOpen}
-            onClose={() => !isActioning && setConfirmModal({ isOpen: false, request: null, action: null })}
+            onClose={() => !isActioning && dispatch(closeLeaveConfirmModal())}
             title={confirmModal.action === 'approved' ? 'Approve Leave Request' : 'Reject Leave Request'}
             subtitle={
               confirmModal.action === 'approved'
@@ -420,7 +317,7 @@ export default function LeaveManagement() {
                 <button
                   type="button"
                   className="lm-footer-btn lm-footer-btn-outline"
-                  onClick={() => setConfirmModal({ isOpen: false, request: null, action: null })}
+                  onClick={() => dispatch(closeLeaveConfirmModal())}
                   disabled={isActioning}
                 >
                   Cancel
@@ -487,7 +384,7 @@ export default function LeaveManagement() {
         {detailsModal.isOpen && detailsModal.request && (
           <Modal
             isOpen={detailsModal.isOpen}
-            onClose={() => setDetailsModal({ isOpen: false, request: null })}
+            onClose={() => dispatch(closeLeaveDetailsModal())}
             title="Leave Request Details"
             subtitle={`Reference ID: ${detailsModal.request.id}`}
             maxWidth="520px"
@@ -500,7 +397,7 @@ export default function LeaveManagement() {
                       className="lm-footer-btn lm-confirm-approve-btn"
                       onClick={() => {
                         const target = detailsModal.request;
-                        setDetailsModal({ isOpen: false, request: null });
+                        dispatch(closeLeaveDetailsModal());
                         handleOpenConfirm(target, 'approved');
                       }}
                     >
@@ -511,7 +408,7 @@ export default function LeaveManagement() {
                       className="lm-footer-btn lm-confirm-reject-btn"
                       onClick={() => {
                         const target = detailsModal.request;
-                        setDetailsModal({ isOpen: false, request: null });
+                        dispatch(closeLeaveDetailsModal());
                         handleOpenConfirm(target, 'rejected');
                       }}
                     >
@@ -522,7 +419,7 @@ export default function LeaveManagement() {
                 <button
                   type="button"
                   className="lm-footer-btn lm-footer-btn-outline"
-                  onClick={() => setDetailsModal({ isOpen: false, request: null })}
+                  onClick={() => dispatch(closeLeaveDetailsModal())}
                 >
                   Close
                 </button>
