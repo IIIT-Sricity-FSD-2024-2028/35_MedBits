@@ -19,6 +19,8 @@ import slotManagementReducer from './slices/doctor/slotManagementSlice';
 import internalReferralReducer from './slices/doctor/internalReferralSlice';
 import branchStatisticsReducer from './slices/superAdmin/branchStatisticsSlice';
 import superAdminDashboardReducer from './slices/superAdmin/superAdminDashboardSlice';
+import frontdeskProfileReducer from './slices/frontdesk/frontdeskProfileSlice';
+import frontdeskDashboardReducer from './slices/frontdesk/frontdeskDashboardSlice';
 
 export const store = configureStore({
   reducer: {
@@ -36,6 +38,8 @@ export const store = configureStore({
     internalReferral: internalReferralReducer,
     branchStatistics: branchStatisticsReducer,
     superAdminDashboard: superAdminDashboardReducer,
+    frontdeskProfile: frontdeskProfileReducer,
+    frontdeskDashboard: frontdeskDashboardReducer,
   },
 });
 
