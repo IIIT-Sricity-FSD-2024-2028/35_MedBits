@@ -3,209 +3,91 @@
  * =========================================================================
  * Location: src/pages/FrontDesk/AppointmentManagement.jsx
  *
+ * Powered by Redux Toolkit (`frontdeskAppointmentsSlice` + `authSlice`).
  * Connects with the MedBits NestJS backend API:
- *   - GET /appointments             → Lists all scheduled appointments with doctor & patient profiles
- *   - POST /appointments            → Schedules new appointment (via BookAppointmentModal)
- *   - PUT /appointments/:id         → Reschedules date & time slot (via RescheduleAppointmentModal)
- *   - DELETE /appointments/:id      → Cancels an appointment (via CancelAppointmentModal)
+ *   - GET /appointments               → Lists all scheduled appointments with doctor & patient profiles
+ *   - POST /appointments              → Schedules new appointment (via BookAppointmentModal)
+ *   - PUT /appointments/:id           → Reschedules date & time slot (via RescheduleAppointmentModal)
+ *   - DELETE /appointments/:id        → Cancels an appointment (via CancelAppointmentModal)
  *   - POST /appointments/:id/complete → Marks appointment as completed
  *
  * Utilizes core reusable components:
- *   - AppShell, ContentCard, DataTable, StatCard, StatGrid, AlertBanner
+ *   - ContentCard, DataTable, StatCard, StatGrid, AlertBanner
  *   - Extracted subcomponents: BookAppointmentModal, RescheduleAppointmentModal,
- *     CancelAppointmentModal, AppointmentStatusBadge
+ *     CancelAppointmentModal, AppointmentStatusBadge, AppointmentActionButtons
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchFrontdeskAppointments,
+  cancelFrontdeskAppointment,
+  completeFrontdeskAppointment,
+  setAppointmentStatusFilter,
+  openBookAppointmentModal,
+  closeBookAppointmentModal,
+  openRescheduleModal,
+  closeRescheduleModal,
+  openCancelModal,
+  closeCancelModal,
+  clearAppointmentMessages,
+  selectFrontdeskAppointmentsState,
+} from '../../store/slices/frontdesk/frontdeskAppointmentsSlice';
+import {
+  getPatientDisplayName,
+  todayLocalISO,
+} from '../../store/slices/frontdesk/frontdeskHelpers';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import AlertBanner from '../../components/dashboard/AlertBanner';
-
-// Feature Subcomponents
 import BookAppointmentModal from './components/BookAppointmentModal';
 import RescheduleAppointmentModal from './components/RescheduleAppointmentModal';
 import CancelAppointmentModal from './components/CancelAppointmentModal';
 import AppointmentStatusBadge from './components/AppointmentStatusBadge';
 import AppointmentActionButtons from './components/AppointmentActionButtons';
 import './AppointmentManagement.css';
-import { API_BASE_URL } from '../../api/apiClient';
-
-// Backend API URL (defaults to http://localhost:3000 if not specified in .env)
-
-const todayIso = () => new Date().toISOString().split('T')[0];
 
 export default function AppointmentManagement() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
+  const {
+    appointments,
+    statusFilter,
+    status,
+    errorMessage,
+    successMessage,
+    isBookModalOpen,
+    rescheduleTarget,
+    cancelTarget,
+    isCancelling,
+    cancelError,
+    actionInProgressId,
+  } = useSelector(selectFrontdeskAppointmentsState);
 
-  // Data state
-  const [appointments, setAppointments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const isLoading = status === 'loading';
+  const userId = user?.id;
 
-  // Filter state
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  // Modal dialog states
-  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
-
-  // Reschedule state
-  const [rescheduleTarget, setRescheduleTarget] = useState(null);
-  const [isRescheduling, setIsRescheduling] = useState(false);
-  const [rescheduleError, setRescheduleError] = useState(null);
-
-  // Cancel state
-  const [cancelTarget, setCancelTarget] = useState(null);
-  const [isCancelling, setIsCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState(null);
-
-  // Action in-flight state (for 1-click completion)
-  const [actionInProgressId, setActionInProgressId] = useState(null);
-
-  /**
-   * Fetch all appointments from the backend with frontdesk credentials
-   */
-  const loadAppointments = useCallback(async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/appointments`, {
-        headers: {
-          'Content-Type': 'application/json',
-          role: user?.role || 'frontdesk',
-        },
-        cache: 'no-store',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load appointments from the server.');
-      }
-
-      const data = await response.json();
-      setAppointments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Frontdesk loadAppointments error:', err);
-      setErrorMessage(err.message || 'Unable to load appointments.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
+  const loadAppointments = useCallback(() => {
+    dispatch(fetchFrontdeskAppointments());
+  }, [dispatch]);
 
   useEffect(() => {
     loadAppointments();
-  }, [loadAppointments]);
+    return () => {
+      dispatch(clearAppointmentMessages());
+    };
+  }, [loadAppointments, dispatch, userId]);
 
-  /**
-   * Handler: Reschedule Appointment Submission (PUT /appointments/:id)
-   */
-  const handleRescheduleSubmit = async ({ appointmentId, date, slot }) => {
-    setIsRescheduling(true);
-    setRescheduleError(null);
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/appointments/${encodeURIComponent(appointmentId)}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            role: user?.role || 'frontdesk',
-          },
-          body: JSON.stringify({ date, slot }),
-        },
-      );
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(payload?.message || 'Failed to reschedule appointment.');
-      }
-
-      // Close modal and refresh appointments list
-      setRescheduleTarget(null);
-      setSuccessMessage('Appointment rescheduled successfully.');
-      await loadAppointments();
-    } catch (err) {
-      setRescheduleError(err.message || 'Error rescheduling appointment.');
-    } finally {
-      setIsRescheduling(false);
-    }
+  const handleCancelSubmit = (appointmentId) => {
+    dispatch(cancelFrontdeskAppointment(appointmentId));
   };
 
-  /**
-   * Handler: Cancel Appointment Submission (DELETE /appointments/:id)
-   */
-  const handleCancelSubmit = async (appointmentId) => {
-    setIsCancelling(true);
-    setCancelError(null);
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/appointments/${encodeURIComponent(appointmentId)}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            role: user?.role || 'frontdesk',
-          },
-        },
-      );
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(payload?.message || 'Failed to cancel appointment.');
-      }
-
-      setCancelTarget(null);
-      setSuccessMessage('Appointment cancelled successfully.');
-      await loadAppointments();
-    } catch (err) {
-      setCancelError(err.message || 'Error cancelling appointment.');
-    } finally {
-      setIsCancelling(false);
-    }
+  const handleCompleteAppointment = (appointmentId) => {
+    dispatch(completeFrontdeskAppointment(appointmentId));
   };
 
-  /**
-   * Handler: Mark Appointment as Completed (POST /appointments/:id/complete)
-   */
-  const handleCompleteAppointment = async (appointmentId) => {
-    setActionInProgressId(appointmentId);
-    setErrorMessage(null);
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/appointments/${encodeURIComponent(appointmentId)}/complete`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            role: user?.role || 'frontdesk',
-          },
-        },
-      );
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(payload?.message || 'Failed to mark appointment as completed.');
-      }
-
-      setSuccessMessage('Appointment marked as completed.');
-      await loadAppointments();
-    } catch (err) {
-      setErrorMessage(err.message || 'Error updating appointment status.');
-    } finally {
-      setActionInProgressId(null);
-    }
-  };
-
-  // Helper: Format ISO date string into readable date (e.g. 12 Oct 2026)
   const formatDisplayDate = (dateStr) => {
     if (!dateStr) return '—';
     try {
@@ -221,20 +103,41 @@ export default function AppointmentManagement() {
     }
   };
 
-  // Compute summary stats from actual appointment data
-  const todayStr = todayIso();
+  const todayStr = todayLocalISO();
   const totalAppointments = appointments.length;
   const todayAppointments = appointments.filter((apt) => apt.date === todayStr).length;
   const upcomingAppointments = appointments.filter((apt) => apt.status === 'upcoming').length;
   const completedAppointments = appointments.filter((apt) => apt.status === 'completed').length;
+  const cancelledAppointments = appointments.filter(
+    (apt) => (apt.status || '').toLowerCase() === 'cancelled'
+  ).length;
 
-  // Filter appointments for the DataTable based on the selected status tab
   const filteredAppointments = appointments.filter((apt) => {
     if (statusFilter === 'all') return true;
     return (apt.status || '').toLowerCase() === statusFilter;
   });
 
-  // Table column configuration for DataTable component
+  // Flatten searchable string fields so DataTable's search matches patient name,
+  // phone, doctor name, department, and appointment ID without modifying DataTable.jsx
+  const searchableAppointments = filteredAppointments.map((apt) => {
+    const patientName = getPatientDisplayName(apt);
+    const rawDoctorName = apt.doctor?.name || apt.doctorId || 'Assigned Doctor';
+    const doctorDisplay =
+      rawDoctorName === apt.doctorId
+        ? rawDoctorName
+        : `Dr. ${rawDoctorName.replace(/^Dr\.?\s+/i, '')}`;
+    const doctorSpec = apt.doctor?.specialization || apt.doctor?.department || '';
+
+    return {
+      ...apt,
+      patientName,
+      patientPhone: apt.patient?.phone || '',
+      doctorDisplay,
+      doctorSpec,
+      formattedDate: formatDisplayDate(apt.date),
+    };
+  });
+
   const columns = [
     {
       key: 'id',
@@ -246,46 +149,35 @@ export default function AppointmentManagement() {
       ),
     },
     {
-      key: 'patient',
+      key: 'patientName',
       header: 'Patient Details',
-      render: (_, row) => {
-        const patientName =
-          row.patient?.name ||
-          (row.patient?.firstName
-            ? `${row.patient.firstName} ${row.patient.lastName || ''}`.trim()
-            : row.userId || 'Patient');
-
-        return (
-          <div>
-            <div style={{ fontWeight: 600, color: '#0f172a' }}>{patientName}</div>
-            <div style={{ fontSize: '12px', color: '#64748b' }}>
-              {row.patient?.phone ? `📞 ${row.patient.phone}` : `ID: ${row.userId}`}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      key: 'doctor',
-      header: 'Doctor & Department',
-      render: (_, row) => {
-        const doctorName = row.doctor?.name || row.doctorId || 'Assigned Doctor';
-        const spec = row.doctor?.specialization || row.doctor?.department || '';
-
-        return (
-          <div>
-            <div style={{ fontWeight: 600, color: '#0f172a' }}>Dr. {doctorName}</div>
-            {spec && <div style={{ fontSize: '12px', color: '#64748b' }}>{spec}</div>}
-          </div>
-        );
-      },
-    },
-    {
-      key: 'schedule',
-      header: 'Date & Time',
-      render: (_, row) => (
+      render: (val, row) => (
         <div>
-          <div style={{ fontWeight: 600, color: '#0f172a' }}>{formatDisplayDate(row.date)}</div>
+          <div style={{ fontWeight: 600, color: '#0f172a' }}>{val}</div>
+          <div style={{ fontSize: '12px', color: '#64748b' }}>
+            {row.patientPhone ? `📞 ${row.patientPhone}` : `ID: ${row.userId}`}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'doctorDisplay',
+      header: 'Doctor & Department',
+      render: (val, row) => (
+        <div>
+          <div style={{ fontWeight: 600, color: '#0f172a' }}>{val}</div>
+          {row.doctorSpec && (
+            <div style={{ fontSize: '12px', color: '#64748b' }}>{row.doctorSpec}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'formattedDate',
+      header: 'Date & Time',
+      render: (val, row) => (
+        <div>
+          <div style={{ fontWeight: 600, color: '#0f172a' }}>{val}</div>
           <div style={{ fontSize: '12px', color: '#0284c7', fontWeight: 500 }}>
             ⏰ {row.slot || '—'}
           </div>
@@ -304,15 +196,9 @@ export default function AppointmentManagement() {
         <AppointmentActionButtons
           appointment={row}
           isLoading={actionInProgressId === row.id}
-          onReschedule={(appt) => {
-            setRescheduleError(null);
-            setRescheduleTarget(appt);
-          }}
+          onReschedule={(appt) => dispatch(openRescheduleModal(appt))}
           onComplete={handleCompleteAppointment}
-          onCancel={(appt) => {
-            setCancelError(null);
-            setCancelTarget(appt);
-          }}
+          onCancel={(appt) => dispatch(openCancelModal(appt))}
         />
       ),
     },
@@ -320,20 +206,22 @@ export default function AppointmentManagement() {
 
   return (
     <>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Error and Success Notifications */}
         {errorMessage && (
           <AlertBanner
             message={errorMessage}
             type="error"
-            onDismiss={() => setErrorMessage(null)}
+            onRetry={loadAppointments}
+            isRetrying={isLoading}
+            onDismiss={() => dispatch(clearAppointmentMessages())}
           />
         )}
         {successMessage && (
           <AlertBanner
             message={successMessage}
             type="success"
-            onDismiss={() => setSuccessMessage(null)}
+            onDismiss={() => dispatch(clearAppointmentMessages())}
           />
         )}
 
@@ -375,22 +263,20 @@ export default function AppointmentManagement() {
           subtitle="View and manage all patient outpatient consultations"
           action={
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              {/* Status Filter Dropdown */}
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => dispatch(setAppointmentStatusFilter(e.target.value))}
                 className="appointment-status-select"
               >
                 <option value="all">All Statuses ({appointments.length})</option>
                 <option value="upcoming">Upcoming ({upcomingAppointments})</option>
                 <option value="completed">Completed ({completedAppointments})</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="cancelled">Cancelled ({cancelledAppointments})</option>
               </select>
 
-              {/* Primary Book New Appointment Button */}
               <button
                 type="button"
-                onClick={() => setIsBookModalOpen(true)}
+                onClick={() => dispatch(openBookAppointmentModal())}
                 className="btn-book-appointment"
               >
                 <span style={{ fontSize: '16px', lineHeight: 1 }}>+</span> Book Appointment
@@ -405,7 +291,7 @@ export default function AppointmentManagement() {
           ) : (
             <DataTable
               columns={columns}
-              data={filteredAppointments}
+              data={searchableAppointments}
               searchable={true}
               searchPlaceholder="Search by patient, phone, doctor, or ID..."
               emptyMessage={
@@ -421,29 +307,22 @@ export default function AppointmentManagement() {
       {/* ── MODALS ── */}
 
       {/* 1. Book New Appointment Modal */}
-      <BookAppointmentModal
-        isOpen={isBookModalOpen}
-        onClose={() => setIsBookModalOpen(false)}
-        apiBaseUrl={API_BASE_URL}
-        onSuccess={() => {
-          setSuccessMessage('New appointment successfully booked!');
-          loadAppointments();
-        }}
-      />
+      {isBookModalOpen && (
+        <BookAppointmentModal
+          isOpen={isBookModalOpen}
+          onClose={() => dispatch(closeBookAppointmentModal())}
+        />
+      )}
 
       {/* 2. Reschedule Appointment Modal */}
-      <RescheduleAppointmentModal
-        isOpen={Boolean(rescheduleTarget)}
-        appointment={rescheduleTarget}
-        isRescheduling={isRescheduling}
-        error={rescheduleError}
-        apiBaseUrl={API_BASE_URL}
-        onClose={() => {
-          setRescheduleTarget(null);
-          setRescheduleError(null);
-        }}
-        onReschedule={handleRescheduleSubmit}
-      />
+      {rescheduleTarget && (
+        <RescheduleAppointmentModal
+          key={rescheduleTarget.id}
+          isOpen={Boolean(rescheduleTarget)}
+          appointment={rescheduleTarget}
+          onClose={() => dispatch(closeRescheduleModal())}
+        />
+      )}
 
       {/* 3. Cancel Appointment Modal */}
       <CancelAppointmentModal
@@ -451,10 +330,7 @@ export default function AppointmentManagement() {
         appointment={cancelTarget}
         isCancelling={isCancelling}
         error={cancelError}
-        onClose={() => {
-          setCancelTarget(null);
-          setCancelError(null);
-        }}
+        onClose={() => dispatch(closeCancelModal())}
         onConfirm={handleCancelSubmit}
       />
     </>

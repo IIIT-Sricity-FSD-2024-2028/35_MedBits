@@ -484,10 +484,15 @@ export class UsersService implements OnModuleInit {
   }
 
   private generateNextPatientId(): string {
-    const patientIds = this.users
+    const userPatientIds = this.users
       .filter((item) => item.role === 'patient')
       .map((item) => Number.parseInt(item.id.replace('PAT', ''), 10))
       .filter((value) => Number.isFinite(value));
+    const persistedPatientIds = this.patientsService
+      .getAllPatients()
+      .map((item) => Number.parseInt(item.userId.replace('PAT', ''), 10))
+      .filter((value) => Number.isFinite(value));
+    const patientIds = [...userPatientIds, ...persistedPatientIds];
     const nextNumber = (patientIds.length ? Math.max(...patientIds) : 0) + 1;
     return `PAT${nextNumber.toString().padStart(3, '0')}`;
   }

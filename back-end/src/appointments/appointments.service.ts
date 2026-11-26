@@ -8,7 +8,7 @@ import { LabRequestsService } from '../lab-requests/lab-requests.service';
 import { LabTestsService, LabTest } from '../labtests/labtests.service';
 import { PatientsService } from '../patients/patients.service';
 
-export type AppointmentStatus = 'upcoming' | 'completed';
+export type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled';
 
 export type Appointment = {
   id: string;
@@ -153,7 +153,7 @@ const APPOINTMENTS_DATA_FILE = join(
 
 @Injectable()
 export class AppointmentsService {
-  private appointments: Appointment[] = []; 
+  private appointments: Appointment[] = [];
 
   constructor(
     private readonly doctorsService: DoctorsService,
@@ -176,12 +176,14 @@ export class AppointmentsService {
 
     const doctor = await this.doctorsService.getDoctorById(doctorId);
 
-    // Collect slots already booked by patients
+    // Collect slots already booked by patients (ignoring cancelled appointments)
     const bookedSlots = new Set(
       this.appointments
         .filter(
           (appointment) =>
-            appointment.doctorId === doctorId && appointment.date === date,
+            appointment.doctorId === doctorId &&
+            appointment.date === date &&
+            appointment.status !== 'cancelled',
         )
         .map((appointment) => appointment.slot),
     );
@@ -240,7 +242,8 @@ export class AppointmentsService {
       (appointment) =>
         appointment.doctorId === input.doctorId &&
         appointment.date === input.date &&
-        appointment.slot === input.slot,
+        appointment.slot === input.slot &&
+        appointment.status !== 'cancelled',
     );
     if (isAlreadyBooked) {
       throw new BadRequestException('This slot is already booked');
@@ -277,7 +280,9 @@ export class AppointmentsService {
   async listAppointments(input: ListAppointmentsInput = {}) {
     this.loadPersistedAppointments();
     const normalizedStatus =
-      input.status === 'upcoming' || input.status === 'completed'
+      input.status === 'upcoming' ||
+      input.status === 'completed' ||
+      input.status === 'cancelled'
         ? input.status
         : undefined;
     const normalizedUserId = input.userId?.trim();
@@ -306,7 +311,9 @@ export class AppointmentsService {
 
   async getAppointmentsByUserId(userId: string, status?: string) {
     const normalizedStatus =
-      status === 'upcoming' || status === 'completed' ? status : undefined;
+      status === 'upcoming' || status === 'completed' || status === 'cancelled'
+        ? status
+        : undefined;
 
     return Promise.all(
       this.appointments
@@ -405,7 +412,8 @@ export class AppointmentsService {
         item.id !== appointmentId &&
         item.doctorId === appointment.doctorId &&
         item.date === nextDate &&
-        item.slot === nextSlot,
+        item.slot === nextSlot &&
+        item.status !== 'cancelled',
     );
     if (isAlreadyBooked) {
       throw new BadRequestException('This slot is already booked');
@@ -419,21 +427,20 @@ export class AppointmentsService {
   }
 
   async cancelAppointment(appointmentId: string) {
-    const appointmentIndex = this.appointments.findIndex(
+    const appointment = this.appointments.find(
       (item) => item.id === appointmentId,
     );
-    if (appointmentIndex === -1) {
+    if (!appointment) {
       throw new BadRequestException('Appointment not found');
     }
 
-    const appointment = this.appointments[appointmentIndex];
     if (appointment.status !== 'upcoming') {
       throw new BadRequestException('Only upcoming appointments can be cancelled');
     }
 
-    const [cancelledAppointment] = this.appointments.splice(appointmentIndex, 1);
+    appointment.status = 'cancelled';
     this.persistAppointments();
-    return this.toAppointmentDetails(cancelledAppointment);
+    return this.toAppointmentDetails(appointment);
   }
 
   private loadPersistedAppointments() {

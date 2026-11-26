@@ -55,7 +55,7 @@ export default function DoctorDashboard() {
   }, [dispatch, userId]);
 
   // ── Derived stats ─────────────────────────────────────────────────────────
-  const todaysAppointments = appointments.filter(a => a.date === TODAY);
+  const todaysAppointments = appointments.filter(a => a.date === TODAY && a.status !== 'cancelled');
   const upcomingToday      = todaysAppointments.filter(a => a.status === 'upcoming').length;
   const completedToday     = todaysAppointments.filter(a => a.status === 'completed').length;
   const completedTotal     = appointments.filter(a => a.status === 'completed').length;
