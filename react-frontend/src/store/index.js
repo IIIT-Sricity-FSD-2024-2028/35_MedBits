@@ -27,6 +27,7 @@ import queueManagementReducer from './slices/frontdesk/queueManagementSlice';
 import followUpReferralReducer from './slices/frontdesk/followUpReferralSlice';
 import branchAdminDashboardReducer from './slices/branchAdmin/branchAdminDashboardSlice';
 import branchLeaveManagementReducer from './slices/branchAdmin/branchLeaveManagementSlice';
+import branchEarningsReducer from './slices/branchAdmin/branchEarningsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -52,6 +53,7 @@ export const store = configureStore({
     followUpReferral: followUpReferralReducer,
     branchAdminDashboard: branchAdminDashboardReducer,
     branchLeaveManagement: branchLeaveManagementReducer,
+    branchEarnings: branchEarningsReducer,
   },
 });
 
