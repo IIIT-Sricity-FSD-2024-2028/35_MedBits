@@ -9,11 +9,34 @@
  *  - View technician diagnostic credentials and assignment via LabTechDetailsModal
  *  - Safe removal with confirmation dialog via StaffDeleteModal
  *  - Accessible feedback and alert notices with AlertBanner
+ *
+ * Powered by Redux Toolkit (`branchLabTechniciansSlice` + `authSlice`).
  */
 
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchLabTechnicians,
+  deleteLabTechnician,
+  setLabTechGenderFilter,
+  openLabTechForm,
+  closeLabTechForm,
+  openLabTechView,
+  closeLabTechView,
+  openLabTechDelete,
+  closeLabTechDelete,
+  setLabTechAlert,
+  clearLabTechAlert,
+  selectLabTechnicians,
+  selectLabTechniciansStatus,
+  selectLabTechAlert,
+  selectLabTechGenderFilter,
+  selectLabTechFormModal,
+  selectViewLabTech,
+  selectLabTechToDelete,
+  selectIsDeletingLabTech,
+} from '../../store/slices/branchAdmin/branchLabTechniciansSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import DataTable from '../../components/dashboard/DataTable';
@@ -24,119 +47,36 @@ import {
   StaffActionButtons,
   StaffDeleteModal,
 } from './components';
-import {
-  API_BASE_URL,
-  getAuthHeaders,
-  getInitials,
-  formatDate,
-} from './utils/staffHelpers';
+import { getInitials, formatDate } from './utils/staffHelpers';
 import './ManageLabTechnicians.css';
 
 export default function ManageLabTechnicians() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
 
-  // Data State
-  const [techList, setTechList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [alert, setAlert] = useState(null);
+  // Data & Filter State (Redux)
+  const techList = useSelector(selectLabTechnicians);
+  const status = useSelector(selectLabTechniciansStatus);
+  const alert = useSelector(selectLabTechAlert);
+  const selectedGender = useSelector(selectLabTechGenderFilter);
+  const isLoading = status === 'idle' || status === 'loading';
 
-  // Filter State
-  const [selectedGender, setSelectedGender] = useState('');
+  // Modal State (Redux)
+  const formModal = useSelector(selectLabTechFormModal);
+  const editingTech = formModal.tech;
+  const viewTech = useSelector(selectViewLabTech);
+  const techToDelete = useSelector(selectLabTechToDelete);
+  const isDeleting = useSelector(selectIsDeletingLabTech);
 
-  // Modal State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTech, setEditingTech] = useState(null);
-  const [viewTech, setViewTech] = useState(null);
-  const [techToDelete, setTechToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // 1. Fetch lab technicians on mount & user change
+  // 1. Fetch lab technicians on mount & when the logged-in user changes
   useEffect(() => {
-    let isMounted = true;
+    dispatch(fetchLabTechnicians());
+  }, [dispatch, user?.id, user?.branchId]);
 
-    async function loadTechs() {
-      setIsLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/lab-technicians`, {
-          headers: getAuthHeaders(user),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) {
-            setTechList(Array.isArray(data) ? data : []);
-          }
-        } else {
-          throw new Error(`Failed to load lab technicians (HTTP ${res.status})`);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setAlert({
-            type: 'error',
-            message: err.message || 'Failed to connect to backend server.',
-          });
-          setTechList([]);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    loadTechs();
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
-  // 2. Reload lab technicians helper after mutations
-  const reloadTechs = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/lab-technicians`, {
-        headers: getAuthHeaders(user),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setTechList(Array.isArray(data) ? data : []);
-      }
-    } catch {
-      // Keep existing list on transient failure
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 3. Handle removal of a lab technician
-  const handleDeleteTech = async () => {
+  // 2. Handle removal of a lab technician
+  const handleDeleteTech = () => {
     if (!techToDelete) return;
-    setIsDeleting(true);
-
-    try {
-      const techId = techToDelete.id || techToDelete.userId;
-      const res = await fetch(`${API_BASE_URL}/lab-technicians/${encodeURIComponent(techId)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(user),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(errJson?.message || 'Failed to remove lab technician.');
-      }
-
-      setAlert({
-        type: 'success',
-        message: `${techToDelete.name || 'Lab technician'} removed successfully.`,
-      });
-      setTechToDelete(null);
-      await reloadTechs();
-    } catch (err) {
-      setAlert({
-        type: 'error',
-        message: err.message || 'Failed to remove lab technician.',
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+    dispatch(deleteLabTechnician(techToDelete));
   };
 
   // ── DERIVED METRICS ───────────────────────────────────────────────────────
@@ -164,7 +104,7 @@ export default function ManageLabTechnicians() {
       render: (_, tech) => (
         <div
           className="lt-name-cell"
-          onClick={() => setViewTech(tech)}
+          onClick={() => dispatch(openLabTechView(tech))}
           title="Click to view full technician profile"
         >
           <div className="lt-avatar">{getInitials(tech.name)}</div>
@@ -215,13 +155,9 @@ export default function ManageLabTechnicians() {
       render: (_, tech) => (
         <StaffActionButtons
           staff={tech}
-          onView={() => setViewTech(tech)}
-          onEdit={(staff) => {
-            const target = staff || tech;
-            setEditingTech(target);
-            setIsFormOpen(true);
-          }}
-          onDelete={() => setTechToDelete(tech)}
+          onView={() => dispatch(openLabTechView(tech))}
+          onEdit={(staff) => dispatch(openLabTechForm(staff || tech))}
+          onDelete={() => dispatch(openLabTechDelete(tech))}
         />
       ),
     },
@@ -235,7 +171,7 @@ export default function ManageLabTechnicians() {
           <AlertBanner
             type={alert.type}
             message={alert.message}
-            onDismiss={() => setAlert(null)}
+            onDismiss={() => dispatch(clearLabTechAlert())}
           />
         )}
 
@@ -250,10 +186,7 @@ export default function ManageLabTechnicians() {
           <button
             type="button"
             className="lt-add-btn"
-            onClick={() => {
-              setEditingTech(null);
-              setIsFormOpen(true);
-            }}
+            onClick={() => dispatch(openLabTechForm(null))}
           >
             <span>＋</span>
             <span>Add Lab Technician</span>
@@ -293,7 +226,7 @@ export default function ManageLabTechnicians() {
             <select
               className="lt-filter-select"
               value={selectedGender}
-              onChange={(e) => setSelectedGender(e.target.value)}
+              onChange={(e) => dispatch(setLabTechGenderFilter(e.target.value))}
               aria-label="Filter by gender"
             >
               <option value="">All Genders</option>
@@ -324,38 +257,33 @@ export default function ManageLabTechnicians() {
 
         {/* ── 4. CREATE / EDIT MODAL ───────────────────────────────────────── */}
         <LabTechFormModal
-          isOpen={isFormOpen}
-          onClose={() => {
-            setIsFormOpen(false);
-            setEditingTech(null);
-          }}
+          isOpen={formModal.isOpen}
+          onClose={() => dispatch(closeLabTechForm())}
           initialData={editingTech}
           branchId={user?.branchId}
           onSuccess={(saved) => {
-            setAlert({
-              type: 'success',
-              message: `${saved?.name || editingTech?.name || 'Lab technician'} saved successfully!`,
-            });
-            reloadTechs();
+            dispatch(
+              setLabTechAlert({
+                type: 'success',
+                message: `${saved?.name || editingTech?.name || 'Lab technician'} saved successfully!`,
+              })
+            );
+            dispatch(fetchLabTechnicians());
           }}
         />
 
         {/* ── 5. VIEW DETAILS MODAL ────────────────────────────────────────── */}
         <LabTechDetailsModal
           isOpen={Boolean(viewTech)}
-          onClose={() => setViewTech(null)}
+          onClose={() => dispatch(closeLabTechView())}
           technician={viewTech}
-          onEdit={(tech) => {
-            setViewTech(null);
-            setEditingTech(tech);
-            setIsFormOpen(true);
-          }}
+          onEdit={(tech) => dispatch(openLabTechForm(tech))}
         />
 
         {/* ── 6. DELETE CONFIRMATION MODAL ─────────────────────────────────── */}
         <StaffDeleteModal
           isOpen={Boolean(techToDelete)}
-          onClose={() => setTechToDelete(null)}
+          onClose={() => !isDeleting && dispatch(closeLabTechDelete())}
           onConfirm={handleDeleteTech}
           staffName={techToDelete?.name}
           roleLabel="lab technician"
