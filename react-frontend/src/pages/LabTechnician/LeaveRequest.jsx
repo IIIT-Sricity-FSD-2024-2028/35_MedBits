@@ -1,4 +1,4 @@
-﻿/**
+/**
  * LeaveRequest.jsx — Lab Technician Leave Request & History Page
  * ==============================================================================
  * A concise, clean React component providing complete leave management:
@@ -8,12 +8,23 @@
  * ==============================================================================
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchLabTechLeaveRequests,
+  submitLabTechLeaveRequest,
+  setStatusFilter,
+  updateLeaveFormField,
+  clearLeaveFeedback,
+  selectLabTechLeaveRequests,
+  selectLabTechLeaveStatusFilter,
+  selectLabTechLeaveFormData,
+  selectLabTechLeaveLoading,
+  selectLabTechLeaveSubmitting,
+  selectLabTechLeaveFeedback,
+} from '../../store/slices/labTech/labTechLeaveRequestSlice';
 import './LeaveRequest.css';
-import { API_BASE_URL } from '../../api/apiClient';
-
 
 // Status badge styling and label mapping
 const STATUS_MAP = {
@@ -22,95 +33,33 @@ const STATUS_MAP = {
   rejected: { label: 'Rejected', cls: 'lvr-badge--rejected' },
 };
 
-// Initial form state
-const INITIAL_FORM = {
-  date: '',
-  type: 'Casual',
-  reason: '',
-};
-
 export default function LeaveRequest() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
-  const techId = user?.userId || user?.id || 'LABTECH_001';
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [formData, setFormData] = useState(INITIAL_FORM);
-  const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
+  // ── Redux State ────────────────────────────────────────────────────────────
+  const requests = useSelector(selectLabTechLeaveRequests);
+  const statusFilter = useSelector(selectLabTechLeaveStatusFilter);
+  const formData = useSelector(selectLabTechLeaveFormData);
+  const loading = useSelector(selectLabTechLeaveLoading);
+  const submitting = useSelector(selectLabTechLeaveSubmitting);
+  const feedback = useSelector(selectLabTechLeaveFeedback);
 
   // Today's date string (YYYY-MM-DD) for min date validation
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   // ── 1. Fetch Leave Requests from Backend ───────────────────────────────────
-  const loadRequests = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/leave-requests`, {
-        headers: { role: 'labtech', 'x-user-id': techId },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        // Filter requests specifically belonging to this technician
-        const myRequests = (Array.isArray(data) ? data : []).filter(
-          (r) => r.doctorId === techId
-        );
-        // Sort newest first
-        myRequests.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
-        setRequests(myRequests);
-      }
-    } catch (_) {
-      setFeedback({ type: 'error', message: 'Failed to load leave requests.' });
-    }
-    setLoading(false);
-  }, [techId]);
-
   useEffect(() => {
-    loadRequests();
-  }, [loadRequests]);
+    dispatch(fetchLabTechLeaveRequests());
+  }, [dispatch, user?.userId, user?.id]);
 
   // ── 2. Handle Leave Application Submit ─────────────────────────────────────
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.date || !formData.reason.trim()) {
-      setFeedback({ type: 'error', message: 'Please fill in all required fields.' });
       return;
     }
-
-    setSubmitting(true);
-    setFeedback(null);
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/leave-requests`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          role: 'labtech',
-          'x-user-id': techId,
-        },
-        body: JSON.stringify({
-          doctorId: techId,
-          date: formData.date,
-          type: formData.type,
-          reason: formData.reason.trim(),
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.message || 'Failed to submit leave request');
-      }
-
-      setFeedback({ type: 'success', message: 'Leave request submitted successfully!' });
-      setFormData(INITIAL_FORM);
-      await loadRequests();
-    } catch (err) {
-      setFeedback({ type: 'error', message: err.message || 'Error submitting leave request.' });
-    } finally {
-      setSubmitting(false);
-    }
+    dispatch(submitLabTechLeaveRequest(formData));
   };
 
   // ── 3. Filtered Requests & Counts ──────────────────────────────────────────
@@ -133,7 +82,7 @@ export default function LeaveRequest() {
         {feedback && (
           <div className={`lvr-alert lvr-alert--${feedback.type}`}>
             <span>{feedback.type === 'success' ? '✓' : '⚠️'} {feedback.message}</span>
-            <button className="lvr-alert-close" onClick={() => setFeedback(null)}>✕</button>
+            <button className="lvr-alert-close" onClick={() => dispatch(clearLeaveFeedback())}>✕</button>
           </div>
         )}
 
@@ -153,7 +102,7 @@ export default function LeaveRequest() {
                   className="lvr-input"
                   min={todayStr}
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) => dispatch(updateLeaveFormField({ field: 'date', value: e.target.value }))}
                   required
                 />
               </div>
@@ -164,7 +113,7 @@ export default function LeaveRequest() {
                   id="lvrType"
                   className="lvr-select"
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  onChange={(e) => dispatch(updateLeaveFormField({ field: 'type', value: e.target.value }))}
                   required
                 >
                   <option value="Casual">Casual Leave</option>
@@ -182,7 +131,7 @@ export default function LeaveRequest() {
                   rows={4}
                   placeholder="Specify reason for leave..."
                   value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                  onChange={(e) => dispatch(updateLeaveFormField({ field: 'reason', value: e.target.value }))}
                   required
                 />
               </div>
@@ -209,7 +158,7 @@ export default function LeaveRequest() {
                   <button
                     key={tab}
                     className={`lvr-tab ${statusFilter === tab ? 'lvr-tab--active' : ''}`}
-                    onClick={() => setStatusFilter(tab)}
+                    onClick={() => dispatch(setStatusFilter(tab))}
                   >
                     {tab.charAt(0).toUpperCase() + tab.slice(1)} ({counts[tab] || 0})
                   </button>
