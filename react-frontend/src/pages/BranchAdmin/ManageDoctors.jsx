@@ -8,159 +8,81 @@
  *  - Create & Edit Doctor via DoctorFormModal
  *  - Doctor Profile & Appointments view modal
  *  - Doctor soft-delete with confirmation modal
+ *
+ * Powered by Redux Toolkit (`branchDoctorsSlice` + `authSlice`).
  */
 
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchBranchDoctors,
+  fetchDoctorAppointments,
+  deleteBranchDoctor,
+  setDoctorSearchQuery,
+  setDoctorDeptFilter,
+  openDoctorForm,
+  closeDoctorForm,
+  openDoctorView,
+  closeDoctorView,
+  openDoctorDelete,
+  closeDoctorDelete,
+  setDoctorAlert,
+  clearDoctorAlert,
+  selectBranchDoctors,
+  selectBranchDoctorsStatus,
+  selectDoctorAlert,
+  selectDoctorSearchQuery,
+  selectDoctorDeptFilter,
+  selectDoctorFormModal,
+  selectViewDoctor,
+  selectDoctorAppointments,
+  selectDoctorAppointmentsStatus,
+  selectDoctorToDelete,
+  selectIsDeletingDoctor,
+} from '../../store/slices/branchAdmin/branchDoctorsSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import Modal from '../../components/common/Modal';
 import DoctorFormModal from '../../components/branch-admin/DoctorFormModal';
-import { API_BASE_URL, getAuthHeaders } from '../../components/branch-admin/staffHelpers';
+import { getInitials, formatDate } from './utils/staffHelpers';
 import './ManageDoctors.css';
 
-function getInitials(name = '') {
-  if (!name) return '?';
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((p) => p[0].toUpperCase())
-    .slice(0, 2)
-    .join('');
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    const d = new Date(dateStr);
-    return isNaN(d.getTime())
-      ? dateStr
-      : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch {
-    return dateStr;
-  }
-}
-
 export default function ManageDoctors() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
 
-  // Data & Filter State
-  const [doctors, setDoctors] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [alert, setAlert] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDept, setSelectedDept] = useState('');
+  // Data & Filter State (Redux)
+  const doctors = useSelector(selectBranchDoctors);
+  const status = useSelector(selectBranchDoctorsStatus);
+  const alert = useSelector(selectDoctorAlert);
+  const searchQuery = useSelector(selectDoctorSearchQuery);
+  const selectedDept = useSelector(selectDoctorDeptFilter);
+  const isLoading = status === 'idle' || status === 'loading';
 
-  // Modals State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDoctor, setEditingDoctor] = useState(null);
-  const [viewDoctor, setViewDoctor] = useState(null);
-  const [doctorAppts, setDoctorAppts] = useState([]);
-  const [isLoadingAppts, setIsLoadingAppts] = useState(false);
-  const [doctorToDelete, setDoctorToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // Modals State (Redux)
+  const formModal = useSelector(selectDoctorFormModal);
+  const editingDoctor = formModal.doctor;
+  const viewDoctor = useSelector(selectViewDoctor);
+  const doctorAppts = useSelector(selectDoctorAppointments);
+  const isLoadingAppts = useSelector(selectDoctorAppointmentsStatus) === 'loading';
+  const doctorToDelete = useSelector(selectDoctorToDelete);
+  const isDeleting = useSelector(selectIsDeletingDoctor);
 
-  // 1. Fetch doctors on mount
+  // 1. Fetch doctors on mount & when the logged-in user changes
   useEffect(() => {
-    let isMounted = true;
+    dispatch(fetchBranchDoctors());
+  }, [dispatch, user?.id, user?.branchId]);
 
-    async function load() {
-      try {
-        const branchParam = user?.branchId ? `?branchId=${encodeURIComponent(user.branchId)}` : '';
-        const res = await fetch(`${API_BASE_URL}/doctors${branchParam}`, {
-          headers: getAuthHeaders(user),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) setDoctors(Array.isArray(data) ? data : []);
-        } else {
-          throw new Error(`HTTP ${res.status}`);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setAlert({ type: 'error', message: err.message || 'Failed to load doctors.' });
-          setDoctors([]);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
-  // 2. Reload doctors after create, edit, or delete
-  const reloadDoctors = async () => {
-    setIsLoading(true);
-    try {
-      const branchParam = user?.branchId ? `?branchId=${encodeURIComponent(user.branchId)}` : '';
-      const res = await fetch(`${API_BASE_URL}/doctors${branchParam}`, {
-        headers: getAuthHeaders(user),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDoctors(Array.isArray(data) ? data : []);
-      }
-    } catch {
-      // Keep existing list on error
-    } finally {
-      setIsLoading(false);
-    }
+  // 2. Open view modal and load appointments for selected doctor
+  const handleOpenViewModal = (doc) => {
+    dispatch(openDoctorView(doc));
+    dispatch(fetchDoctorAppointments(doc));
   };
 
-  // 3. Open view modal and load appointments for selected doctor
-  const handleOpenViewModal = async (doc) => {
-    setViewDoctor(doc);
-    setDoctorAppts([]);
-    setIsLoadingAppts(true);
-
-    try {
-      const docId = doc.userId || doc.id;
-      const res = await fetch(`${API_BASE_URL}/appointments/doctor/${encodeURIComponent(docId)}`, {
-        headers: getAuthHeaders(user),
-      });
-
-      if (res.ok) {
-        const appts = await res.json();
-        setDoctorAppts(Array.isArray(appts) ? appts : []);
-      }
-    } catch {
-      setDoctorAppts([]);
-    } finally {
-      setIsLoadingAppts(false);
-    }
-  };
-
-  // 4. Handle doctor delete
-  const handleDeleteDoctor = async () => {
+  // 3. Handle doctor delete
+  const handleDeleteDoctor = () => {
     if (!doctorToDelete) return;
-    setIsDeleting(true);
-
-    try {
-      const docId = doctorToDelete.userId || doctorToDelete.id;
-      const res = await fetch(`${API_BASE_URL}/doctors/${encodeURIComponent(docId)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(user),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(errJson?.message || 'Failed to remove doctor');
-      }
-
-      setAlert({ type: 'success', message: `${doctorToDelete.name || 'Doctor'} removed successfully.` });
-      setDoctorToDelete(null);
-      await reloadDoctors();
-    } catch (err) {
-      setAlert({ type: 'error', message: err.message || 'Failed to delete doctor.' });
-    } finally {
-      setIsDeleting(false);
-    }
+    dispatch(deleteBranchDoctor(doctorToDelete));
   };
 
   // ── SIMPLE DERIVED DATA (No useMemo needed for lightweight computations) ──
@@ -207,7 +129,7 @@ export default function ManageDoctors() {
             </div>
             <button
               type="button"
-              onClick={() => setAlert(null)}
+              onClick={() => dispatch(clearDoctorAlert())}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'inherit' }}
             >
               ×
@@ -224,10 +146,7 @@ export default function ManageDoctors() {
           <button
             type="button"
             className="doc-add-btn"
-            onClick={() => {
-              setEditingDoctor(null);
-              setIsFormOpen(true);
-            }}
+            onClick={() => dispatch(openDoctorForm(null))}
           >
             <span>＋</span>
             <span>Add Doctor</span>
@@ -243,14 +162,14 @@ export default function ManageDoctors() {
               className="doc-search-input"
               placeholder="Search by name or specialization…"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => dispatch(setDoctorSearchQuery(e.target.value))}
             />
           </div>
 
           <select
             className="doc-dept-select"
             value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
+            onChange={(e) => dispatch(setDoctorDeptFilter(e.target.value))}
           >
             <option value="">All Departments</option>
             {departments.map((dept) => (
@@ -355,10 +274,7 @@ export default function ManageDoctors() {
                             <button
                               type="button"
                               className="doc-btn-icon"
-                              onClick={() => {
-                                setEditingDoctor(doc);
-                                setIsFormOpen(true);
-                              }}
+                              onClick={() => dispatch(openDoctorForm(doc))}
                               title="Edit Doctor"
                             >
                               ✏️
@@ -366,7 +282,7 @@ export default function ManageDoctors() {
                             <button
                               type="button"
                               className="doc-btn-icon delete"
-                              onClick={() => setDoctorToDelete(doc)}
+                              onClick={() => dispatch(openDoctorDelete(doc))}
                               title="Remove Doctor"
                             >
                               🗑️
@@ -384,18 +300,17 @@ export default function ManageDoctors() {
 
         {/* ── 5. REUSABLE CREATE / EDIT DOCTOR MODAL ───────────────────────── */}
         <DoctorFormModal
-          isOpen={isFormOpen}
-          onClose={() => {
-            setIsFormOpen(false);
-            setEditingDoctor(null);
-          }}
+          isOpen={formModal.isOpen}
+          onClose={() => dispatch(closeDoctorForm())}
           initialData={editingDoctor}
           onSuccess={(savedDoc) => {
-            setAlert({
-              type: 'success',
-              message: `${savedDoc?.name || editingDoctor?.name || 'Doctor'} saved successfully!`,
-            });
-            reloadDoctors();
+            dispatch(
+              setDoctorAlert({
+                type: 'success',
+                message: `${savedDoc?.name || editingDoctor?.name || 'Doctor'} saved successfully!`,
+              })
+            );
+            dispatch(fetchBranchDoctors());
           }}
         />
 
@@ -403,7 +318,7 @@ export default function ManageDoctors() {
         {viewDoctor && (
           <Modal
             isOpen={Boolean(viewDoctor)}
-            onClose={() => setViewDoctor(null)}
+            onClose={() => dispatch(closeDoctorView())}
             title="🩺 Doctor Profile & Appointments"
             subtitle="Detailed consultation history, doctor credentials, and schedule"
             maxWidth="680px"
@@ -412,19 +327,14 @@ export default function ManageDoctors() {
                 <button
                   type="button"
                   className="staff-footer-btn staff-footer-btn-outline"
-                  onClick={() => setViewDoctor(null)}
+                  onClick={() => dispatch(closeDoctorView())}
                 >
                   Close
                 </button>
                 <button
                   type="button"
                   className="staff-footer-btn staff-footer-btn-primary"
-                  onClick={() => {
-                    const doc = viewDoctor;
-                    setViewDoctor(null);
-                    setEditingDoctor(doc);
-                    setIsFormOpen(true);
-                  }}
+                  onClick={() => dispatch(openDoctorForm(viewDoctor))}
                 >
                   ✏️ Edit Doctor
                 </button>
@@ -600,7 +510,7 @@ export default function ManageDoctors() {
         {doctorToDelete && (
           <Modal
             isOpen={Boolean(doctorToDelete)}
-            onClose={() => setDoctorToDelete(null)}
+            onClose={() => !isDeleting && dispatch(closeDoctorDelete())}
             title="Remove Doctor"
             subtitle="Confirm doctor profile removal from this branch"
             maxWidth="480px"
@@ -609,7 +519,7 @@ export default function ManageDoctors() {
                 <button
                   type="button"
                   className="staff-footer-btn staff-footer-btn-outline"
-                  onClick={() => setDoctorToDelete(null)}
+                  onClick={() => dispatch(closeDoctorDelete())}
                   disabled={isDeleting}
                 >
                   Cancel
