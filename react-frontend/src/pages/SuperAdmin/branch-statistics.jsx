@@ -17,11 +17,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchSuperAdminBranches,
   fetchBranchStatistics,
+  setSelectedBranchId,
   setDocSearch,
   setFdSearch,
   setLtSearch,
   resetBranchStatsFilters,
   selectSuperAdminBranches,
+  selectSelectedBranchId,
   selectBranchStatistics,
   selectDocSearch,
   selectFdSearch,
@@ -35,10 +37,9 @@ export default function BranchStatistics() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Active branch ID from URL search parameters (?branchId=...)
-  const selectedBranchId = searchParams.get('branchId') || '';
-
+  const urlBranchId = searchParams.get('branchId') || '';
   const branches = useSelector(selectSuperAdminBranches);
+  const selectedBranchId = useSelector(selectSelectedBranchId);
   const stats = useSelector(selectBranchStatistics);
   const docSearch = useSelector(selectDocSearch);
   const fdSearch = useSelector(selectFdSearch);
@@ -55,23 +56,28 @@ export default function BranchStatistics() {
     };
   }, [dispatch]);
 
-  // Default to the first branch if no branchId query param is present
+  // Hydrate Redux selectedBranchId when navigated with ?branchId=...
   useEffect(() => {
-    if (!selectedBranchId && branches.length > 0) {
-      setSearchParams({ branchId: branches[0].id }, { replace: true });
+    if (urlBranchId) {
+      dispatch(setSelectedBranchId(urlBranchId));
     }
-  }, [selectedBranchId, branches, setSearchParams]);
+  }, [urlBranchId, dispatch]);
 
-  // 2. Fetch statistics for the selected branch
+  // 2. Fetch statistics for the Redux-selected branch and keep URL param aligned
   useEffect(() => {
     if (selectedBranchId) {
       dispatch(fetchBranchStatistics(selectedBranchId));
+      if (urlBranchId !== selectedBranchId) {
+        setSearchParams({ branchId: selectedBranchId }, { replace: true });
+      }
     }
-  }, [dispatch, selectedBranchId]);
+  }, [dispatch, selectedBranchId, urlBranchId, setSearchParams]);
 
-  // Handle switching branch from dropdown
+  // Handle switching branch from dropdown via Redux
   const handleBranchChange = (e) => {
-    setSearchParams({ branchId: e.target.value });
+    const nextBranchId = e.target.value;
+    dispatch(setSelectedBranchId(nextBranchId));
+    setSearchParams({ branchId: nextBranchId });
   };
 
   // Filtered lists based on search queries
