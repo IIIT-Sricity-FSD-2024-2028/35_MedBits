@@ -9,11 +9,34 @@
  *  - View staff credentials and assignments via FrontDeskDetailsModal
  *  - Safe removal with confirmation via StaffDeleteModal
  *  - Accessible feedback and alert notices with AlertBanner
+ *
+ * Powered by Redux Toolkit (`branchFrontDeskSlice` + `authSlice`).
  */
 
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchFrontDeskStaff,
+  deleteFrontDeskStaff,
+  setFrontDeskGenderFilter,
+  openFrontDeskForm,
+  closeFrontDeskForm,
+  openFrontDeskView,
+  closeFrontDeskView,
+  openFrontDeskDelete,
+  closeFrontDeskDelete,
+  setFrontDeskAlert,
+  clearFrontDeskAlert,
+  selectFrontDeskStaff,
+  selectFrontDeskStatus,
+  selectFrontDeskAlert,
+  selectFrontDeskGenderFilter,
+  selectFrontDeskFormModal,
+  selectViewFrontDeskStaff,
+  selectFrontDeskStaffToDelete,
+  selectIsDeletingFrontDesk,
+} from '../../store/slices/branchAdmin/branchFrontDeskSlice';
 import ContentCard from '../../components/dashboard/ContentCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import DataTable from '../../components/dashboard/DataTable';
@@ -24,119 +47,36 @@ import {
   StaffActionButtons,
   StaffDeleteModal,
 } from './components';
-import {
-  API_BASE_URL,
-  getAuthHeaders,
-  getInitials,
-  formatShift,
-} from './utils/staffHelpers';
+import { getInitials, formatShift } from './utils/staffHelpers';
 import './ManageFrontDesk.css';
 
 export default function ManageFrontDesk() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
 
-  // Data State
-  const [staffList, setStaffList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [alert, setAlert] = useState(null);
+  // Data & Filter State (Redux)
+  const staffList = useSelector(selectFrontDeskStaff);
+  const status = useSelector(selectFrontDeskStatus);
+  const alert = useSelector(selectFrontDeskAlert);
+  const selectedGender = useSelector(selectFrontDeskGenderFilter);
+  const isLoading = status === 'idle' || status === 'loading';
 
-  // Filter State
-  const [selectedGender, setSelectedGender] = useState('');
+  // Modal State (Redux)
+  const formModal = useSelector(selectFrontDeskFormModal);
+  const editingStaff = formModal.staff;
+  const viewStaff = useSelector(selectViewFrontDeskStaff);
+  const staffToDelete = useSelector(selectFrontDeskStaffToDelete);
+  const isDeleting = useSelector(selectIsDeletingFrontDesk);
 
-  // Modal State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState(null);
-  const [viewStaff, setViewStaff] = useState(null);
-  const [staffToDelete, setStaffToDelete] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // 1. Fetch front desk staff on mount & user change
+  // 1. Fetch front desk staff on mount & when the logged-in user changes
   useEffect(() => {
-    let isMounted = true;
+    dispatch(fetchFrontDeskStaff());
+  }, [dispatch, user?.id, user?.branchId]);
 
-    async function loadStaff() {
-      setIsLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/frontdesk`, {
-          headers: getAuthHeaders(user),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) {
-            setStaffList(Array.isArray(data) ? data : []);
-          }
-        } else {
-          throw new Error(`Failed to load front desk staff (HTTP ${res.status})`);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setAlert({
-            type: 'error',
-            message: err.message || 'Failed to connect to backend server.',
-          });
-          setStaffList([]);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    loadStaff();
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
-  // 2. Reload staff helper after mutations
-  const reloadStaff = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/frontdesk`, {
-        headers: getAuthHeaders(user),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStaffList(Array.isArray(data) ? data : []);
-      }
-    } catch {
-      // Keep existing list on transient failure
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 3. Handle soft delete of a front desk staff member
-  const handleDeleteStaff = async () => {
+  // 2. Handle soft delete of a front desk staff member
+  const handleDeleteStaff = () => {
     if (!staffToDelete) return;
-    setIsDeleting(true);
-
-    try {
-      const fdId = staffToDelete.userId || staffToDelete.id;
-      const res = await fetch(`${API_BASE_URL}/frontdesk/${encodeURIComponent(fdId)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(user),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(errJson?.message || 'Failed to remove staff member.');
-      }
-
-      setAlert({
-        type: 'success',
-        message: `${staffToDelete.name || 'Staff member'} removed successfully.`,
-      });
-      setStaffToDelete(null);
-      await reloadStaff();
-    } catch (err) {
-      setAlert({
-        type: 'error',
-        message: err.message || 'Failed to remove staff member.',
-      });
-    } finally {
-      setIsDeleting(false);
-    }
+    dispatch(deleteFrontDeskStaff(staffToDelete));
   };
 
   // ── DERIVED METRICS ───────────────────────────────────────────────────────
@@ -159,7 +99,7 @@ export default function ManageFrontDesk() {
       render: (_, staff) => (
         <div
           className="fd-name-cell"
-          onClick={() => setViewStaff(staff)}
+          onClick={() => dispatch(openFrontDeskView(staff))}
           title="Click to view full staff details"
         >
           <div className="fd-avatar">{getInitials(staff.name)}</div>
@@ -226,12 +166,9 @@ export default function ManageFrontDesk() {
       render: (_, staff) => (
         <StaffActionButtons
           staff={staff}
-          onView={() => setViewStaff(staff)}
-          onEdit={() => {
-            setEditingStaff(staff);
-            setIsFormOpen(true);
-          }}
-          onDelete={() => setStaffToDelete(staff)}
+          onView={() => dispatch(openFrontDeskView(staff))}
+          onEdit={() => dispatch(openFrontDeskForm(staff))}
+          onDelete={() => dispatch(openFrontDeskDelete(staff))}
         />
       ),
     },
@@ -245,7 +182,7 @@ export default function ManageFrontDesk() {
           <AlertBanner
             type={alert.type}
             message={alert.message}
-            onDismiss={() => setAlert(null)}
+            onDismiss={() => dispatch(clearFrontDeskAlert())}
           />
         )}
 
@@ -260,10 +197,7 @@ export default function ManageFrontDesk() {
           <button
             type="button"
             className="fd-add-btn"
-            onClick={() => {
-              setEditingStaff(null);
-              setIsFormOpen(true);
-            }}
+            onClick={() => dispatch(openFrontDeskForm(null))}
           >
             <span>＋</span>
             <span>Add Front Desk Staff</span>
@@ -303,7 +237,7 @@ export default function ManageFrontDesk() {
             <select
               className="fd-filter-select"
               value={selectedGender}
-              onChange={(e) => setSelectedGender(e.target.value)}
+              onChange={(e) => dispatch(setFrontDeskGenderFilter(e.target.value))}
               aria-label="Filter by gender"
             >
               <option value="">All Genders</option>
@@ -333,37 +267,33 @@ export default function ManageFrontDesk() {
 
         {/* ── 4. CREATE / EDIT MODAL ───────────────────────────────────────── */}
         <FrontDeskFormModal
-          isOpen={isFormOpen}
-          onClose={() => {
-            setIsFormOpen(false);
-            setEditingStaff(null);
-          }}
+          isOpen={formModal.isOpen}
+          onClose={() => dispatch(closeFrontDeskForm())}
           initialData={editingStaff}
           branchId={user?.branchId}
           onSuccess={(saved) => {
-            setAlert({
-              type: 'success',
-              message: `${saved?.name || editingStaff?.name || 'Front desk staff'} saved successfully!`,
-            });
-            reloadStaff();
+            dispatch(
+              setFrontDeskAlert({
+                type: 'success',
+                message: `${saved?.name || editingStaff?.name || 'Front desk staff'} saved successfully!`,
+              })
+            );
+            dispatch(fetchFrontDeskStaff());
           }}
         />
 
         {/* ── 5. VIEW DETAILS MODAL ────────────────────────────────────────── */}
         <FrontDeskDetailsModal
           isOpen={Boolean(viewStaff)}
-          onClose={() => setViewStaff(null)}
+          onClose={() => dispatch(closeFrontDeskView())}
           staff={viewStaff}
-          onEdit={(staff) => {
-            setEditingStaff(staff);
-            setIsFormOpen(true);
-          }}
+          onEdit={(staff) => dispatch(openFrontDeskForm(staff))}
         />
 
         {/* ── 6. DELETE CONFIRMATION MODAL ─────────────────────────────────── */}
         <StaffDeleteModal
           isOpen={Boolean(staffToDelete)}
-          onClose={() => setStaffToDelete(null)}
+          onClose={() => !isDeleting && dispatch(closeFrontDeskDelete())}
           onConfirm={handleDeleteStaff}
           staffName={staffToDelete?.name}
           roleLabel="front desk receptionist"
