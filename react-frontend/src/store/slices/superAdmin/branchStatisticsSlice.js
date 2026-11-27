@@ -4,7 +4,7 @@
  * Location: src/store/slices/superAdmin/branchStatisticsSlice.js
  *
  * Manages state for the Super Admin Branch Statistics page:
- *   - Data: `branches`, `stats` (`branch`, `summary`, `doctors`, `frontdesk`, `labTechnicians`)
+ *   - Data: `branches`, `selectedBranchId`, `stats` (`branch`, `summary`, `doctors`, `frontdesk`, `labTechnicians`)
  *   - Search filters: `docSearch`, `fdSearch`, `ltSearch`
  *   - Async state: `branchesStatus`, `statsStatus`
  */
@@ -68,6 +68,7 @@ const EMPTY_STATS = {
 
 const initialState = {
   branches: [],
+  selectedBranchId: '',
   stats: EMPTY_STATS,
   docSearch: '',
   fdSearch: '',
@@ -191,6 +192,9 @@ const branchStatisticsSlice = createSlice({
   name: 'branchStatistics',
   initialState,
   reducers: {
+    setSelectedBranchId(state, action) {
+      state.selectedBranchId = action.payload || '';
+    },
     setDocSearch(state, action) {
       state.docSearch = action.payload;
     },
@@ -214,10 +218,16 @@ const branchStatisticsSlice = createSlice({
       .addCase(fetchSuperAdminBranches.fulfilled, (state, action) => {
         state.branchesStatus = 'succeeded';
         state.branches = action.payload;
+        if (!state.selectedBranchId && action.payload.length > 0) {
+          state.selectedBranchId = action.payload[0].id;
+        }
       })
       .addCase(fetchSuperAdminBranches.rejected, (state) => {
         state.branchesStatus = 'failed';
         state.branches = DEFAULT_BRANCHES;
+        if (!state.selectedBranchId && DEFAULT_BRANCHES.length > 0) {
+          state.selectedBranchId = DEFAULT_BRANCHES[0].id;
+        }
       })
       .addCase(fetchBranchStatistics.pending, (state) => {
         state.statsStatus = 'loading';
@@ -234,6 +244,7 @@ const branchStatisticsSlice = createSlice({
 });
 
 export const {
+  setSelectedBranchId,
   setDocSearch,
   setFdSearch,
   setLtSearch,
@@ -241,6 +252,7 @@ export const {
 } = branchStatisticsSlice.actions;
 
 export const selectSuperAdminBranches = (state) => state.branchStatistics.branches;
+export const selectSelectedBranchId = (state) => state.branchStatistics.selectedBranchId;
 export const selectBranchStatistics = (state) => state.branchStatistics.stats;
 export const selectDocSearch = (state) => state.branchStatistics.docSearch;
 export const selectFdSearch = (state) => state.branchStatistics.fdSearch;

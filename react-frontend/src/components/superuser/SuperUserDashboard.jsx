@@ -31,6 +31,7 @@ import {
   selectIsAssigningAdmin,
   selectDashboardToast,
 } from '../../store/slices/superAdmin/superAdminDashboardSlice';
+import { setSelectedBranchId } from '../../store/slices/superAdmin/branchStatisticsSlice';
 import './SuperUserDashboard.css';
 
 export default function SuperUserDashboard() {
@@ -77,6 +78,11 @@ export default function SuperUserDashboard() {
       return;
     }
     dispatch(assignBranchAdmin(adminForm));
+  };
+
+  const handleViewBranchStats = (branchId) => {
+    dispatch(setSelectedBranchId(branchId));
+    navigate(`/superuser/branch-statistics?branchId=${encodeURIComponent(branchId)}`);
   };
 
   // ── 5. Filtered Data & Unassigned Branches ────────────────────────────
@@ -414,7 +420,7 @@ export default function SuperUserDashboard() {
                         <button
                           type="button"
                           className="sud-view-btn"
-                          onClick={() => navigate(`/superuser/branch-statistics?branchId=${encodeURIComponent(branch.id)}`)}
+                          onClick={() => handleViewBranchStats(branch.id)}
                         >
                           View Stats
                         </button>

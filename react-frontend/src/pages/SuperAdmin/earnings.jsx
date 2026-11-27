@@ -1,6 +1,7 @@
-﻿/**
+/**
  * earnings.jsx — Super Admin Financial Earnings
  * =========================================================================
+ * Powered by Redux Toolkit (`superAdminEarningsSlice` + `authSlice`).
  * Clean, readable React port of the Super Admin earnings portal:
  *  - Network-wide platform overview (Revenue, Consultations, Active Branches)
  *  - Branch selector for facility-level financial drill-down
@@ -10,13 +11,23 @@
  *  - Doctor payout leaderboard & performance insights
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchSuperAdminEarningsOverviewAndBranches,
+  fetchSuperAdminBranchEarnings,
+  setSelectedEarningsBranchId,
+  setSelectedEarningsMonth,
+  getCurrentMonthKey,
+  getMonthKeyFromDate,
+  selectPlatformOverview,
+  selectEarningsBranches,
+  selectEarningsSelectedBranchId,
+  selectBranchEarningsDetail,
+  selectSelectedEarningsMonth,
+} from '../../store/slices/superAdmin/superAdminEarningsSlice';
 import './earnings.css';
-import { API_BASE_URL } from '../../api/apiClient';
-
-const STORAGE_KEY = 'superadmin-selected-branch-id';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -34,14 +45,6 @@ function formatNumber(val) {
   return Number(val || 0).toLocaleString('en-IN');
 }
 
-// Helper: Extract YYYY-MM from a date string
-function getMonthKey(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(String(dateStr).length === 10 ? `${dateStr}T00:00:00` : dateStr);
-  if (isNaN(d.getTime())) return '';
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
 // Helper: "2026-10" -> "October 2026"
 function getMonthLabel(key) {
   if (!key) return '';
@@ -51,103 +54,39 @@ function getMonthLabel(key) {
 }
 
 export default function Earnings() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
 
-  // State: Platform-wide overview & branch list
-  const [overview, setOverview] = useState(null);
-  const [branches, setBranches] = useState([]);
-  const [selectedBranchId, setSelectedBranchId] = useState(
-    () => localStorage.getItem(STORAGE_KEY) || ''
-  );
+  const overview = useSelector(selectPlatformOverview);
+  const branches = useSelector(selectEarningsBranches);
+  const selectedBranchId = useSelector(selectEarningsSelectedBranchId);
+  const branchData = useSelector(selectBranchEarningsDetail);
+  const selectedMonth = useSelector(selectSelectedEarningsMonth);
 
-  // State: Detailed earnings for selected branch & active month filter
-  const [branchData, setBranchData] = useState(null);
-  const [selectedMonth, setSelectedMonth] = useState('');
-
-  // Common request headers with authentication role
-  const authHeaders = useMemo(() => ({
-    'Content-Type': 'application/json',
-    role: user?.role || 'super_admin',
-    'x-user-id': user?.id || user?.userId || '',
-  }), [user]);
-
-  // 1. Fetch platform overview & branches list on mount
+  // 1. Fetch platform overview & branches list on mount (and when user changes)
   useEffect(() => {
-    async function loadInitialData() {
-      try {
-        // Fetch platform overview
-        const ovRes = await fetch(`${API_BASE_URL}/super-admin/hospital-branches/earnings`, {
-          headers: authHeaders,
-        }).catch(() => null);
-        if (ovRes?.ok) {
-          setOverview(await ovRes.json());
-        }
-
-        // Fetch hospital branches list
-        const brRes = await fetch(`${API_BASE_URL}/super-admin/hospital-branches`, {
-          headers: authHeaders,
-        }).catch(() => null);
-        if (brRes?.ok) {
-          const list = await brRes.json();
-          if (Array.isArray(list) && list.length > 0) {
-            setBranches(list);
-            // Default to first branch if none currently selected
-            setSelectedBranchId((prev) => {
-              const valid = list.some((b) => b.id === prev);
-              const nextId = valid ? prev : list[0].id;
-              localStorage.setItem(STORAGE_KEY, nextId);
-              return nextId;
-            });
-          }
-        }
-      } catch (err) {
-        console.warn('Failed to load super admin data:', err);
-      }
-    }
-
-    loadInitialData();
-  }, [authHeaders]);
+    dispatch(fetchSuperAdminEarningsOverviewAndBranches());
+  }, [dispatch, user?.id]);
 
   // 2. Fetch specific branch earnings when selected branch changes
   useEffect(() => {
     if (!selectedBranchId) return;
-
-    async function loadBranchEarnings() {
-      try {
-        const res = await fetch(
-          `${API_BASE_URL}/super-admin/hospital-branches/${encodeURIComponent(selectedBranchId)}/earnings`,
-          { headers: authHeaders }
-        ).catch(() => null);
-
-        if (res?.ok) {
-          const data = await res.json();
-          setBranchData(data);
-
-          // Determine available months from entries and default to current month
-          const currentKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-          setSelectedMonth(currentKey);
-        }
-      } catch (err) {
-        console.warn('Failed to load branch earnings:', err);
-      }
-    }
-
-    loadBranchEarnings();
-  }, [selectedBranchId, authHeaders]);
+    dispatch(fetchSuperAdminBranchEarnings(selectedBranchId));
+  }, [dispatch, selectedBranchId, user?.id]);
 
   // Available months list extracted from appointment & lab records
   const availableMonths = useMemo(() => {
     const keys = new Set();
-    const currentKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const currentKey = getCurrentMonthKey();
     keys.add(currentKey);
 
     (branchData?.entries || []).forEach((e) => {
-      const k = getMonthKey(e.date);
+      const k = getMonthKeyFromDate(e.date);
       if (k && k <= currentKey) keys.add(k);
     });
 
     (branchData?.labEntries || []).forEach((l) => {
-      const k = getMonthKey(l.date);
+      const k = getMonthKeyFromDate(l.date);
       if (k && k <= currentKey) keys.add(k);
     });
 
@@ -169,11 +108,11 @@ export default function Earnings() {
 
   // Filter records for the selected month
   const monthAppointments = useMemo(() => {
-    return (branchData?.entries || []).filter((e) => getMonthKey(e.date) === activeMonth);
+    return (branchData?.entries || []).filter((e) => getMonthKeyFromDate(e.date) === activeMonth);
   }, [branchData, activeMonth]);
 
   const monthLabTests = useMemo(() => {
-    return (branchData?.labEntries || []).filter((l) => getMonthKey(l.date) === activeMonth);
+    return (branchData?.labEntries || []).filter((l) => getMonthKeyFromDate(l.date) === activeMonth);
   }, [branchData, activeMonth]);
 
   // Calculate monthly financial figures
@@ -220,9 +159,7 @@ export default function Earnings() {
 
   // Handle switching branch
   const handleBranchChange = (e) => {
-    const id = e.target.value;
-    setSelectedBranchId(id);
-    localStorage.setItem(STORAGE_KEY, id);
+    dispatch(setSelectedEarningsBranchId(e.target.value));
   };
 
   // Helper for progress bar widths (2% to 100%)
@@ -350,8 +287,8 @@ export default function Earnings() {
                 <label className="sa-month-filter-label">Month</label>
                 <select
                   className="sa-month-select"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  value={activeMonth}
+                  onChange={(e) => dispatch(setSelectedEarningsMonth(e.target.value))}
                 >
                   {availableMonths.map((key) => (
                     <option key={key} value={key}>

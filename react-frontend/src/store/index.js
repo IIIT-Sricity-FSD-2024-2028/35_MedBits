@@ -21,6 +21,7 @@ import slotManagementReducer from './slices/doctor/slotManagementSlice';
 import internalReferralReducer from './slices/doctor/internalReferralSlice';
 import branchStatisticsReducer from './slices/superAdmin/branchStatisticsSlice';
 import superAdminDashboardReducer from './slices/superAdmin/superAdminDashboardSlice';
+import superAdminEarningsReducer from './slices/superAdmin/superAdminEarningsSlice';
 import frontdeskProfileReducer from './slices/frontdesk/frontdeskProfileSlice';
 import frontdeskDashboardReducer from './slices/frontdesk/frontdeskDashboardSlice';
 import walkInReducer from './slices/frontdesk/walkInSlice';
@@ -54,6 +55,7 @@ export const store = configureStore({
     internalReferral: internalReferralReducer,
     branchStatistics: branchStatisticsReducer,
     superAdminDashboard: superAdminDashboardReducer,
+    superAdminEarnings: superAdminEarningsReducer,
     frontdeskProfile: frontdeskProfileReducer,
     frontdeskDashboard: frontdeskDashboardReducer,
     walkIn: walkInReducer,
