@@ -77,28 +77,50 @@ export default function ConsultationNoteEditor({
   };
 
   // Lab test adder & remover
+  const handleLabTestSelectChange = (value) => {
+    const trimmed = value?.trim();
+    if (!trimmed) {
+      setSelectedLabTest('');
+      return;
+    }
+    if (!labTests.includes(trimmed)) {
+      setLabTests((prev) => [...prev, trimmed]);
+    }
+    setSelectedLabTest('');
+  };
+
   const handleAddLabTest = () => {
-    if (selectedLabTest && !labTests.includes(selectedLabTest)) {
-      setLabTests([...labTests, selectedLabTest]);
+    const trimmed = selectedLabTest?.trim();
+    if (trimmed && !labTests.includes(trimmed)) {
+      setLabTests((prev) => [...prev, trimmed]);
       setSelectedLabTest('');
     }
   };
 
   const handleRemoveLabTest = (testToRemove) => {
-    setLabTests(labTests.filter((t) => t !== testToRemove));
+    setLabTests((prev) => prev.filter((t) => t !== testToRemove));
   };
 
   // Form submission handler
   const handleSubmit = (e) => {
     e.preventDefault();
+    const pendingMed = newMed.trim();
+    const finalMedicines = pendingMed && !medicines.includes(pendingMed)
+      ? [...medicines, pendingMed]
+      : medicines;
+    const pendingTest = selectedLabTest.trim();
+    const finalLabTests = pendingTest && !labTests.includes(pendingTest)
+      ? [...labTests, pendingTest]
+      : labTests;
+
     onSave({
       id: initialRecord?.id,
       appointmentId: initialRecord?.appointmentId || patient?.appointmentId,
       patientId: patient?.userId || patient?.id || initialRecord?.patientId || 'PAT001',
       patientName: patient?.name || (patient?.firstName ? `${patient.firstName} ${patient.lastName || ''}`.trim() : null) || initialRecord?.patientName || 'Patient',
       consultationNote: notes.trim(),
-      medicines: medicines.join('|'),
-      tests: labTests.join('|'),
+      medicines: finalMedicines.join('|'),
+      tests: finalLabTests.join('|'),
       labTestDate,
       followUpDate,
     });
@@ -312,7 +334,7 @@ export default function ConsultationNoteEditor({
               <select
                 className="cn-select"
                 value={selectedLabTest}
-                onChange={(e) => setSelectedLabTest(e.target.value)}
+                onChange={(e) => handleLabTestSelectChange(e.target.value)}
               >
                 <option value="">-- Choose diagnostic test from catalog --</option>
                 {labCatalog.map((t) => (

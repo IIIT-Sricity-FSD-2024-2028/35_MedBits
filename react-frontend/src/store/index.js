@@ -33,6 +33,8 @@ import branchEarningsReducer from './slices/branchAdmin/branchEarningsSlice';
 import branchDoctorsReducer from './slices/branchAdmin/branchDoctorsSlice';
 import branchFrontDeskReducer from './slices/branchAdmin/branchFrontDeskSlice';
 import branchLabTechniciansReducer from './slices/branchAdmin/branchLabTechniciansSlice';
+import testRequestsReducer from './slices/labTech/testRequestsSlice';
+import labReportsReducer from './slices/labTech/labReportsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -64,6 +66,8 @@ export const store = configureStore({
     branchDoctors: branchDoctorsReducer,
     branchFrontDesk: branchFrontDeskReducer,
     branchLabTechnicians: branchLabTechniciansReducer,
+    labTechTestRequests: testRequestsReducer,
+    labTechReports: labReportsReducer,
   },
 });
 

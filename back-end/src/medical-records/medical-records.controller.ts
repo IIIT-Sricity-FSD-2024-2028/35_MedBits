@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Headers, Param, Post, Put, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiBody, ApiParam } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -31,7 +31,21 @@ export class MedicalRecordsController {
   @Get(':patientId')
   @ApiOperation({ summary: 'Get medical records by patient ID' })
   @ApiResponse({ status: 200, description: 'List of patient medical records' })
-  getRecordsByPatientId(@Param('patientId') patientId: string) {
+  getRecordsByPatientId(
+    @Param('patientId') patientId: string,
+    @Headers('role') role?: string,
+    @Headers('x-user-id') requesterId?: string,
+  ) {
+    const normalizedRole = (role || '').trim().toLowerCase();
+    if (normalizedRole === 'patient') {
+      const cleanRequester = requesterId?.trim();
+      if (!cleanRequester) {
+        throw new UnauthorizedException('x-user-id header is missing');
+      }
+      if (cleanRequester.toLowerCase() !== patientId.trim().toLowerCase()) {
+        throw new ForbiddenException('You can only access your own medical records');
+      }
+    }
     this.patientsService.getPatientByUserId(patientId);
     return this.medicalRecordsService.getRecordsByPatientId(patientId);
   }
