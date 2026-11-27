@@ -451,7 +451,11 @@ export class LabRequestsService {
       throw new ForbiddenException('Access denied for this hospital branch');
     }
 
-    const report = this.labReports.find((r) => r.labRequestId === requestId);
+    const report = this.labReports.find(
+      (r) =>
+        r.labRequestId === requestId ||
+        (Boolean(request.reportId) && r.id === request.reportId),
+    );
     return report ? { ...report } : null;
   }
 
@@ -747,11 +751,15 @@ export class LabRequestsService {
   }
 
   findReportsForPatient(patientId: string): LabReport[] {
-    const cleanPatientId = patientId?.trim();
+    const cleanPatientId = patientId?.trim().toLowerCase();
     if (!cleanPatientId) throw new BadRequestException('Patient ID is required');
 
     return this.labReports
-      .filter((r) => r.patientId === cleanPatientId && r.status === 'submitted')
+      .filter(
+        (r) =>
+          r.patientId?.trim().toLowerCase() === cleanPatientId &&
+          r.status === 'submitted',
+      )
       .map((r) => ({ ...r }));
   }
 
@@ -782,7 +790,7 @@ export class LabRequestsService {
     }
 
     if (role === 'patient') {
-      if (report.patientId !== userId) {
+      if (report.patientId?.trim().toLowerCase() !== userId.trim().toLowerCase()) {
         throw new ForbiddenException('You do not have permission to view this lab report');
       }
       if (report.status !== 'submitted') {

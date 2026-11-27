@@ -33,6 +33,27 @@ export type MedicalRecord = {
   labResult?: string;
   labFindings?: string;
   labRemarks?: string;
+  labRequestId?: string;
+  reportId?: string | null;
+  medicalRecordId?: string | null;
+  testName?: string;
+  recommendationDate?: string;
+  requestDate?: string;
+  status?: string;
+  acceptedAt?: string | null;
+  completedAt?: string | null;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
+  sourceType?: string;
+  hasReport?: boolean;
+  reportStatus?: string;
+  submittedAt?: string | null;
+  technicianId?: string;
+  technicianName?: string;
+  result?: string;
+  findings?: string;
+  remarks?: string;
+  fileAttachment?: any;
 };
 
 export type CreateMedicalRecordInput = {
@@ -122,33 +143,93 @@ export class MedicalRecordsService {
   getRecordsByPatientId(patientId: string) {
     const cleanId = patientId?.trim();
     if (!cleanId) return [];
+    const cleanIdLower = cleanId.toLowerCase();
 
-    const directRecords = this.medicalRecords.filter((record) => record.patientId === cleanId);
+    const directRecords = this.medicalRecords.filter(
+      (record) => record.patientId?.trim().toLowerCase() === cleanIdLower,
+    );
 
+    let labRequests: any[] = [];
     let labReports: any[] = [];
+    try {
+      labRequests = this.labRequestsService.findForPatient(cleanId);
+    } catch (_) {}
     try {
       labReports = this.labRequestsService.findReportsForPatient(cleanId);
     } catch (_) {}
 
-    const labRecordsFromReports: MedicalRecord[] = (labReports || [])
-      .filter((report) => !directRecords.some((dr) => dr.id === report.id || dr.id === report.labRequestId))
-      .map((report) => ({
-        id: report.id,
-        doctorId: report.doctorId,
-        patientId: report.patientId,
-        patientName: report.patientName,
-        type: 'lab',
-        doctorName: report.doctorName,
-        specialization: 'Diagnostic Laboratory',
-        date: report.submittedAt
-          ? report.submittedAt.split('T')[0]
-          : (report.createdAt ? report.createdAt.split('T')[0] : new Date().toISOString().split('T')[0]),
-        tests: report.testName,
-        consultationNote: report.result ? `Diagnostic Result: ${report.result}` : undefined,
-        appointmentId: report.appointmentId,
-      }));
+    const matchedReportIds = new Set<string>();
 
-    return [...directRecords, ...labRecordsFromReports];
+    const mapLabRecord = (req: any, submittedReport: any): MedicalRecord => {
+      if (submittedReport?.id) {
+        matchedReportIds.add(submittedReport.id);
+      }
+      const scheduledDate =
+        req?.labTestDate || req?.recommendationDate || req?.requestDate || '';
+      const submittedDate = submittedReport?.submittedAt
+        ? submittedReport.submittedAt.split('T')[0]
+        : '';
+
+      return {
+        id: submittedReport?.id || req?.id,
+        labRequestId: req?.id || submittedReport?.labRequestId,
+        reportId: submittedReport?.id || req?.reportId || null,
+        medicalRecordId:
+          req?.medicalRecordId || submittedReport?.medicalRecordId || null,
+        appointmentId: req?.appointmentId || submittedReport?.appointmentId || '',
+        doctorId: req?.doctorId || submittedReport?.doctorId || '',
+        patientId: req?.patientId || submittedReport?.patientId || cleanId,
+        patientName: req?.patientName || submittedReport?.patientName,
+        type: 'lab',
+        doctorName: req?.doctorName || submittedReport?.doctorName || 'Assigned Physician',
+        specialization: submittedReport ? 'Diagnostic Laboratory' : 'Diagnostic Recommendation',
+        date: submittedDate || scheduledDate || req?.createdAt?.split('T')[0] || '',
+        tests: req?.testName || submittedReport?.testName,
+        testName: req?.testName || submittedReport?.testName,
+        recommendationDate: req?.recommendationDate || req?.requestDate,
+        requestDate: req?.requestDate,
+        labTestDate: scheduledDate || undefined,
+        status: submittedReport ? 'completed' : req?.status,
+        acceptedAt: req?.acceptedAt || null,
+        completedAt: req?.completedAt || submittedReport?.submittedAt || null,
+        rejectedAt: req?.rejectedAt || null,
+        rejectionReason: req?.rejectionReason || null,
+        sourceType: req?.sourceType || submittedReport?.sourceType,
+        consultationNote:
+          req?.consultationNote ||
+          (submittedReport?.result ? `Diagnostic Result: ${submittedReport.result}` : undefined),
+        hasReport: Boolean(submittedReport),
+        reportStatus: submittedReport ? 'submitted' : undefined,
+        submittedAt: submittedReport?.submittedAt || null,
+        technicianId: submittedReport?.technicianId,
+        technicianName: submittedReport?.technicianName,
+        result: submittedReport?.result,
+        findings: submittedReport?.findings,
+        remarks: submittedReport?.remarks,
+        fileAttachment: submittedReport?.fileAttachment || null,
+        labReport: submittedReport ? { ...submittedReport } : undefined,
+        labReportStatus: submittedReport ? 'submitted' : undefined,
+        labResult: submittedReport?.result,
+        labFindings: submittedReport?.findings,
+        labRemarks: submittedReport?.remarks,
+      };
+    };
+
+    const recordsFromRequests: MedicalRecord[] = (labRequests || []).map((req) => {
+      const submittedReport =
+        (labReports || []).find(
+          (rep) =>
+            (req.reportId && rep.id === req.reportId) ||
+            rep.labRequestId === req.id,
+        ) || null;
+      return mapLabRecord(req, submittedReport);
+    });
+
+    const unlinkedReports: MedicalRecord[] = (labReports || [])
+      .filter((report) => !matchedReportIds.has(report.id))
+      .map((report) => mapLabRecord(null, report));
+
+    return [...directRecords, ...recordsFromRequests, ...unlinkedReports];
   }
 
   getRecordsByDoctorId(doctorId: string) {

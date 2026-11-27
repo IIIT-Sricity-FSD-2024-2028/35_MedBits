@@ -10,12 +10,37 @@
  * ==============================================================================
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchTestRequests,
+  acceptTestRequest,
+  rejectTestRequest,
+  fetchTestRequestReport,
+  clearTestRequestsError,
+  clearTestRequestsActionMessage,
+  clearSelectedTestRequestReport,
+  selectTestRequests,
+  selectTestRequestsLoading,
+  selectTestRequestActionLoadingId,
+  selectTestRequestsError,
+  selectTestRequestsActionMessage,
+  selectSelectedTestRequestReportRequest,
+  selectSelectedTestRequestReport,
+  selectTestRequestReportLoading,
+  selectTestRequestReportError,
+} from '../../store/slices/labTech/testRequestsSlice';
+import {
+  getScheduledDate,
+  getRequestStatusDate,
+  formatLabDate,
+  compareByScheduledDateDesc,
+  compareByCompletedDateDesc,
+} from '../../store/slices/labTech/labTechHelpers';
+import LabReportDetailModal from './components/LabReportDetailModal';
 import './TestRequests.css';
-import { API_BASE_URL } from '../../api/apiClient';
 
 
 // Status badge styling and label mapping
@@ -29,70 +54,68 @@ const STATUS_MAP = {
 };
 
 export default function TestRequests() {
-  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const techId = user?.userId || user?.id || 'LABTECH_001';
+  const user = useSelector(selectCurrentUser);
+  const requests = useSelector(selectTestRequests);
+  const loading = useSelector(selectTestRequestsLoading);
+  const actionLoadingId = useSelector(selectTestRequestActionLoadingId);
+  const error = useSelector(selectTestRequestsError);
+  const actionMessage = useSelector(selectTestRequestsActionMessage);
+  const selectedReportRequest = useSelector(
+    selectSelectedTestRequestReportRequest
+  );
+  const selectedReport = useSelector(selectSelectedTestRequestReport);
+  const reportLoading = useSelector(selectTestRequestReportLoading);
+  const reportError = useSelector(selectTestRequestReportError);
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // ── Local UI State ─────────────────────────────────────────────────────────
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [detailItem, setDetailItem] = useState(null);
   const [rejectItem, setRejectItem] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  // ── 1. Fetch Requests from Backend ─────────────────────────────────────────
-  const loadRequests = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/lab-requests`, {
-        headers: { role: 'labtech', 'x-user-id': techId },
-      });
-      if (res.ok) setRequests(await res.json());
-    } catch (_) {}
-    setLoading(false);
-  }, [techId]);
-
+  // ── 1. Fetch Requests via Redux ────────────────────────────────────────────
   useEffect(() => {
-    loadRequests();
-  }, [loadRequests]);
+    dispatch(fetchTestRequests());
+    return () => {
+      dispatch(clearSelectedTestRequestReport());
+    };
+  }, [dispatch, user?.id, user?.userId]);
 
   // ── 2. Accept Test Action ──────────────────────────────────────────────────
   const handleAccept = async (id) => {
-    const res = await fetch(`${API_BASE_URL}/lab-requests/${id}/accept`, {
-      method: 'PATCH',
-      headers: { role: 'labtech', 'x-user-id': techId },
-    });
-    if (res.ok) {
-      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'in_progress' } : r)));
+    try {
+      await dispatch(acceptTestRequest(id)).unwrap();
       setDetailItem(null);
+    } catch {
+      // Error surfaced via Redux error state
     }
   };
 
   // ── 3. Reject Test Action ──────────────────────────────────────────────────
   const handleReject = async () => {
     if (!rejectItem) return;
-    const res = await fetch(`${API_BASE_URL}/lab-requests/${rejectItem.id}/reject`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', role: 'labtech', 'x-user-id': techId },
-      body: JSON.stringify({ reason: rejectReason || 'Declined by lab tech' }),
-    });
-    if (res.ok) {
-      setRequests((prev) =>
-        prev.map((r) =>
-          r.id === rejectItem.id ? { ...r, status: 'rejected', rejectionReason: rejectReason || 'Declined by lab tech' } : r
-        )
-      );
+    try {
+      await dispatch(
+        rejectTestRequest({
+          id: rejectItem.id,
+          reason: rejectReason,
+        })
+      ).unwrap();
       setRejectItem(null);
+      setRejectReason('');
       setDetailItem(null);
+    } catch {
+      // Error surfaced via Redux error state
     }
   };
 
-  // ── 4. Search and Filter Logic ─────────────────────────────────────────────
+  // ── 4. Search, Filter, and Date Ordering ───────────────────────────────────
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return requests.filter((r) => {
+    const list = requests.filter((r) => {
       if (statusFilter !== 'all') {
         if (statusFilter === 'in_progress') {
           if (r.status !== 'in_progress' && r.status !== 'accepted' && r.status !== 'draft_report') return false;
@@ -103,7 +126,27 @@ export default function TestRequests() {
       if (q && !`${r.id} ${r.patientName} ${r.testName} ${r.doctorName}`.toLowerCase().includes(q)) return false;
       return true;
     });
+    const comparator =
+      statusFilter === 'completed'
+        ? compareByCompletedDateDesc
+        : compareByScheduledDateDesc;
+    return [...list].sort(comparator);
   }, [requests, search, statusFilter]);
+
+  const dateColumnHeader = useMemo(() => {
+    switch (statusFilter) {
+      case 'pending':
+        return 'Scheduled Date';
+      case 'in_progress':
+        return 'Accepted Date';
+      case 'rejected':
+        return 'Rejected Date';
+      case 'completed':
+        return 'Completed Date';
+      default:
+        return 'Date';
+    }
+  }, [statusFilter]);
 
   // Dynamic counts for status tabs
   const getTabCount = (tab) => {
@@ -116,6 +159,32 @@ export default function TestRequests() {
 
   return (
       <div className="tr-page-container">
+
+        {/* ── Error / Action Feedback Banner ───────────────────────────────── */}
+        {error && (
+          <div className="tr-alert-banner tr-alert-banner--error">
+            <span>⚠️ {error}</span>
+            <button
+              type="button"
+              className="tr-alert-close"
+              onClick={() => dispatch(clearTestRequestsError())}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        {!error && actionMessage && (
+          <div className="tr-alert-banner tr-alert-banner--success">
+            <span>✓ {actionMessage}</span>
+            <button
+              type="button"
+              className="tr-alert-close"
+              onClick={() => dispatch(clearTestRequestsActionMessage())}
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* ── Search Bar & Filter Tabs Strip ──────────────────────────────── */}
         <div className="tr-card">
@@ -163,7 +232,7 @@ export default function TestRequests() {
                   <th>Patient</th>
                   <th>Test Name</th>
                   <th>Prescribed By</th>
-                  <th>Scheduled Date</th>
+                  <th>{dateColumnHeader}</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
@@ -182,7 +251,14 @@ export default function TestRequests() {
                       </td>
                       <td style={{ color: '#0d9488', fontWeight: 600 }}>{r.testName}</td>
                       <td>{r.doctorName ? `Dr. ${r.doctorName.replace(/^Dr\.\s*/i, '')}` : 'Attending Physician'}</td>
-                      <td>{r.labTestDate || r.recommendationDate || '—'}</td>
+                      <td>
+                        <div>{formatLabDate(getRequestStatusDate(r))}</div>
+                        {r.status === 'completed' && (
+                          <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
+                            Scheduled: {formatLabDate(getScheduledDate(r))}
+                          </div>
+                        )}
+                      </td>
                       <td>
                         <span className={`tr-badge ${STATUS_MAP[r.status]?.cls || ''}`}>
                           {STATUS_MAP[r.status]?.label || r.status}
@@ -191,9 +267,29 @@ export default function TestRequests() {
                       <td className="tr-actions-cell">
                         {r.status === 'pending' && (
                           <>
-                            <button className="tr-btn tr-btn--accept" onClick={() => handleAccept(r.id)}>Accept</button>
-                            <button className="tr-btn tr-btn--reject" onClick={() => { setRejectItem(r); setRejectReason(''); }}>Reject</button>
+                            <button
+                              className="tr-btn tr-btn--accept"
+                              disabled={actionLoadingId === r.id}
+                              onClick={() => handleAccept(r.id)}
+                            >
+                              {actionLoadingId === r.id ? 'Processing…' : 'Accept'}
+                            </button>
+                            <button
+                              className="tr-btn tr-btn--reject"
+                              disabled={actionLoadingId === r.id}
+                              onClick={() => { setRejectItem(r); setRejectReason(''); }}
+                            >
+                              Reject
+                            </button>
                           </>
+                        )}
+                        {r.status === 'completed' && (
+                          <button
+                            className="tr-btn tr-btn--accept"
+                            onClick={() => dispatch(fetchTestRequestReport(r))}
+                          >
+                            View Report
+                          </button>
                         )}
                         <button className="tr-btn tr-btn--detail" onClick={() => setDetailItem(r)}>Details</button>
                       </td>
@@ -220,7 +316,10 @@ export default function TestRequests() {
                     ['Patient', `${detailItem.patientName || detailItem.patientId} (${detailItem.patientId})`],
                     ['Doctor', `Dr. ${detailItem.doctorName || 'Doctor'}`],
                     ['Test', detailItem.testName],
-                    ['Scheduled Date', detailItem.labTestDate || detailItem.recommendationDate || '—'],
+                    ['Scheduled Date', formatLabDate(getScheduledDate(detailItem))],
+                    ...(detailItem.acceptedAt ? [['Accepted Date', formatLabDate(detailItem.acceptedAt)]] : []),
+                    ...(detailItem.rejectedAt ? [['Rejected Date', formatLabDate(detailItem.rejectedAt)]] : []),
+                    ...(detailItem.completedAt ? [['Completed Date', formatLabDate(detailItem.completedAt)]] : []),
                     ['Consultation Notes', detailItem.consultationNote || 'None provided'],
                     ['Prescriptions', detailItem.prescriptionMedicines || 'None prescribed'],
                   ].map(([label, val]) => (
@@ -242,7 +341,13 @@ export default function TestRequests() {
               <div className="tr-modal-footer">
                 <button className="tr-btn tr-btn--detail" onClick={() => setDetailItem(null)}>Close</button>
                 {detailItem.status === 'pending' && (
-                  <button className="tr-btn tr-btn--accept" onClick={() => handleAccept(detailItem.id)}>Accept Test</button>
+                  <button
+                    className="tr-btn tr-btn--accept"
+                    disabled={actionLoadingId === detailItem.id}
+                    onClick={() => handleAccept(detailItem.id)}
+                  >
+                    {actionLoadingId === detailItem.id ? 'Processing…' : 'Accept Test'}
+                  </button>
                 )}
                 {(detailItem.status === 'in_progress' || detailItem.status === 'accepted' || detailItem.status === 'draft_report') && (
                   <button
@@ -253,6 +358,18 @@ export default function TestRequests() {
                     }}
                   >
                     Report in Lab Reports →
+                  </button>
+                )}
+                {detailItem.status === 'completed' && (
+                  <button
+                    className="tr-btn tr-btn--accept"
+                    onClick={() => {
+                      const targetRequest = detailItem;
+                      setDetailItem(null);
+                      dispatch(fetchTestRequestReport(targetRequest));
+                    }}
+                  >
+                    View Submitted Report →
                   </button>
                 )}
               </div>
@@ -283,14 +400,29 @@ export default function TestRequests() {
               </div>
 
               <div className="tr-modal-footer">
-                <button className="tr-btn tr-btn--detail" onClick={() => setRejectItem(null)}>Cancel</button>
-                <button className="tr-btn tr-btn--reject" style={{ background: '#dc2626', color: '#fff' }} onClick={handleReject}>
-                  Confirm Rejection
+                <button className="tr-btn tr-btn--detail" disabled={actionLoadingId === rejectItem.id} onClick={() => setRejectItem(null)}>Cancel</button>
+                <button
+                  className="tr-btn tr-btn--reject"
+                  style={{ background: '#dc2626', color: '#fff' }}
+                  disabled={actionLoadingId === rejectItem.id}
+                  onClick={handleReject}
+                >
+                  {actionLoadingId === rejectItem.id ? 'Rejecting…' : 'Confirm Rejection'}
                 </button>
               </div>
             </div>
           </div>
         )}
+
+        {/* ── Shared Submitted Lab Report Modal ─────────────────────────────── */}
+        <LabReportDetailModal
+          isOpen={Boolean(selectedReportRequest)}
+          report={selectedReport}
+          request={selectedReportRequest}
+          loading={reportLoading}
+          error={reportError}
+          onClose={() => dispatch(clearSelectedTestRequestReport())}
+        />
 
       </div>
   );
