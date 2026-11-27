@@ -1,131 +1,53 @@
 ﻿/**
  * PatientDashboard.jsx — Patient Main Dashboard Page
  * ====================================================================
- * Location: src/pages/patient/PatientDashboard.jsx
+ * Location: src/pages/Patient/PatientDashboard.jsx
  *
- * Direct backend integration:
+ * Powered by Redux Toolkit (`patientDashboardSlice` + `authSlice`).
  *  - Upcoming Appointments fetched from /appointments/user/:userId
  *  - Lab Orders fetched directly from backend (/lab-requests/patient)
  *  - Side-by-side DataTables without ID columns or search/filter bars
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchPatientDashboard,
+  clearPatientDashboardError,
+  selectPatientDashboardAppointments,
+  selectPatientDashboardLabOrders,
+  selectPatientDashboardStatus,
+  selectPatientDashboardError,
+} from '../../store/slices/patient/patientDashboardSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import QuickActions from '../../components/dashboard/QuickActions';
 import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
-import { API_BASE_URL } from '../../api/apiClient';
-
-// Backend API Base URL from environment or local port 3000
 
 export default function PatientDashboard() {
-  const user = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ── STATE: Dynamic backend data ───────────────────────────────────
-  const [appointments, setAppointments] = useState([]);
-  const [labOrders, setLabOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
+  const user = useSelector(selectCurrentUser);
+  const userId = user?.id;
+  const appointments = useSelector(selectPatientDashboardAppointments);
+  const labOrders = useSelector(selectPatientDashboardLabOrders);
+  const status = useSelector(selectPatientDashboardStatus);
+  const fetchError = useSelector(selectPatientDashboardError);
+
+  const isLoading = Boolean(userId) && status === 'loading';
 
   // ── DATA FETCHING: Load upcoming appointments & lab orders ────────
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchPatientDashboardData() {
-      if (!user?.id) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setFetchError(null);
-
-      const userId = user.id;
-      const headers = {
-        'role': 'patient',
-        'x-user-id': userId,
-      };
-
-      try {
-        // 1. Fetch upcoming appointments directly
-        const aptRes = await fetch(
-          `${API_BASE_URL}/appointments/user/${encodeURIComponent(userId)}?status=upcoming`,
-          { headers }
-        );
-        let aptList = aptRes.ok ? await aptRes.json() : [];
-
-        // Fallback: check general user appointment list if upcoming filter is empty
-        if (!aptList.length) {
-          const allAptRes = await fetch(
-            `${API_BASE_URL}/appointments/user/${encodeURIComponent(userId)}`,
-            { headers }
-          );
-          if (allAptRes.ok) {
-            const allApt = await allAptRes.json();
-            aptList = allApt.filter((item) => item.status !== 'cancelled');
-          }
-        }
-
-        // 2. Fetch lab orders directly
-        const labRes = await fetch(
-          `${API_BASE_URL}/lab-requests/patient`,
-          { headers }
-        );
-        let labList = labRes.ok ? await labRes.json() : [];
-
-        // Fallback: check lab test history if lab requests is empty
-        if (!labList.length) {
-          const histRes = await fetch(
-            `${API_BASE_URL}/labtests/history/${encodeURIComponent(userId)}`,
-            { headers }
-          );
-          if (histRes.ok) {
-            labList = await histRes.json();
-          }
-        }
-
-        if (!isMounted) return;
-
-        // ── MAP APPOINTMENTS DIRECTLY (NO ID COLUMN) ────────────────
-        const formattedAppointments = (aptList || []).map((apt) => ({
-          doctor: apt.doctor?.name || apt.doctorName || 'Consulting Doctor',
-          department: apt.doctor?.department || apt.doctor?.specialization || 'OPD',
-          dateTime: `${apt.date || 'Scheduled'}${apt.slot ? ` • ${apt.slot}` : ''}`,
-          status: apt.status || 'Upcoming',
-        }));
-
-        // ── MAP LAB ORDERS DIRECTLY (NO ID COLUMN) ──────────────────
-        const formattedLabOrders = (labList || []).map((lab) => ({
-          testName: lab.testName || lab.labTest?.name || 'Diagnostic Test',
-          doctor: lab.doctorName || 'Pathology Department',
-          date: lab.requestDate || lab.date || (lab.createdAt ? lab.createdAt.split('T')[0] : 'Recent'),
-          status: lab.status || 'Pending',
-        }));
-
-        setAppointments(formattedAppointments);
-        setLabOrders(formattedLabOrders);
-
-      } catch {
-        if (isMounted) {
-          setFetchError('Unable to connect to the backend server.');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+    if (userId) {
+      dispatch(fetchPatientDashboard(userId));
     }
-
-    fetchPatientDashboardData();
-
     return () => {
-      isMounted = false;
+      dispatch(clearPatientDashboardError());
     };
-  }, [user?.id]);
+  }, [dispatch, userId]);
 
   // ── TABLE COLUMNS: Upcoming Appointments (NO ID COLUMN) ───────────
   const appointmentColumns = [
@@ -137,17 +59,21 @@ export default function PatientDashboard() {
       header: 'Status',
       render: (val) => {
         const isCompleted = String(val).toLowerCase() === 'completed';
-        const isUpcoming = String(val).toLowerCase() === 'upcoming' || String(val).toLowerCase() === 'scheduled';
+        const isUpcoming =
+          String(val).toLowerCase() === 'upcoming' ||
+          String(val).toLowerCase() === 'scheduled';
         return (
-          <span style={{
-            background: isCompleted ? '#dcfce7' : isUpcoming ? '#eff6ff' : '#f1f5f9',
-            color: isCompleted ? '#16a34a' : isUpcoming ? '#0284c7' : '#475569',
-            padding: '4px 10px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 700,
-            textTransform: 'capitalize',
-          }}>
+          <span
+            style={{
+              background: isCompleted ? '#dcfce7' : isUpcoming ? '#eff6ff' : '#f1f5f9',
+              color: isCompleted ? '#16a34a' : isUpcoming ? '#0284c7' : '#475569',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textTransform: 'capitalize',
+            }}
+          >
             {val}
           </span>
         );
@@ -165,18 +91,24 @@ export default function PatientDashboard() {
       header: 'Status',
       render: (val) => {
         const normalized = String(val).toLowerCase();
-        const isReady = normalized === 'submitted' || normalized === 'completed' || normalized === 'report ready';
-        const isInProgress = normalized === 'in_progress' || normalized === 'in analysis';
+        const isReady =
+          normalized === 'submitted' ||
+          normalized === 'completed' ||
+          normalized === 'report ready';
+        const isInProgress =
+          normalized === 'in_progress' || normalized === 'in analysis';
         return (
-          <span style={{
-            background: isReady ? '#dcfce7' : isInProgress ? '#e0f2fe' : '#fef3c7',
-            color: isReady ? '#16a34a' : isInProgress ? '#0284c7' : '#d97706',
-            padding: '4px 10px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: 700,
-            textTransform: 'capitalize',
-          }}>
+          <span
+            style={{
+              background: isReady ? '#dcfce7' : isInProgress ? '#e0f2fe' : '#fef3c7',
+              color: isReady ? '#16a34a' : isInProgress ? '#0284c7' : '#d97706',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textTransform: 'capitalize',
+            }}
+          >
             {val.replace('_', ' ')}
           </span>
         );
@@ -213,72 +145,76 @@ export default function PatientDashboard() {
   ];
 
   return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* ── 1. WELCOME HERO BANNER ────────────────────────────────── */}
+      <WelcomeCard
+        eyebrow="MEDBITS PATIENT PORTAL"
+        title={`Welcome back, ${user?.firstName || user?.name || 'Patient'}!`}
+        subtitle="Manage your upcoming doctor visits, lab diagnostic orders, and medical records."
+      />
 
-        {/* ── 1. WELCOME HERO BANNER ────────────────────────────────── */}
-        <WelcomeCard
-          eyebrow="MEDBITS PATIENT PORTAL"
-          title={`Welcome back, ${user?.firstName || user?.name || 'Patient'}!`}
-          subtitle="Manage your upcoming doctor visits, lab diagnostic orders, and medical records."
-        />
-
-        {/* Optional Error notification if backend fetch fails */}
-        {fetchError && (
-          <div style={{
+      {/* Optional Error notification if backend fetch fails */}
+      {fetchError && (
+        <div
+          style={{
             background: '#fef2f2',
             border: '1px solid #fecaca',
             color: '#dc2626',
             padding: '12px 16px',
             borderRadius: '10px',
             fontSize: '13.5px',
-          }}>
-            ⚠️ {fetchError}
-          </div>
-        )}
+          }}
+        >
+          ⚠️ {fetchError}
+        </div>
+      )}
 
-        {/* ── 2. SHORTCUT QUICK ACTIONS ─────────────────────────────── */}
-        <QuickActions
-          title="Patient Quick Actions"
-          actions={patientActions}
-          variant="grid"
-        />
+      {/* ── 2. SHORTCUT QUICK ACTIONS ─────────────────────────────── */}
+      <QuickActions
+        title="Patient Quick Actions"
+        actions={patientActions}
+        variant="grid"
+      />
 
-        {/* ── 3. SIDE-BY-SIDE DATA TABLES: APPOINTMENTS & LAB ORDERS ── */}
-        <div style={{
+      {/* ── 3. SIDE-BY-SIDE DATA TABLES: APPOINTMENTS & LAB ORDERS ── */}
+      <div
+        style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))',
           gap: '24px',
           alignItems: 'start',
-        }}>
+        }}
+      >
+        {/* TABLE 1: UPCOMING APPOINTMENTS (No filter, No ID column) */}
+        <ContentCard
+          title="Upcoming Appointments"
+          subtitle="Scheduled consultations with doctors"
+        >
+          <DataTable
+            columns={appointmentColumns}
+            data={appointments}
+            searchable={false}
+            emptyMessage={
+              isLoading ? 'Loading appointments...' : 'No upcoming appointments found.'
+            }
+          />
+        </ContentCard>
 
-          {/* TABLE 1: UPCOMING APPOINTMENTS (No filter, No ID column) */}
-          <ContentCard
-            title="Upcoming Appointments"
-            subtitle="Scheduled consultations with doctors"
-          >
-            <DataTable
-              columns={appointmentColumns}
-              data={appointments}
-              searchable={false}
-              emptyMessage={isLoading ? "Loading appointments..." : "No upcoming appointments found."}
-            />
-          </ContentCard>
-
-          {/* TABLE 2: LAB ORDERS (No filter, No ID column) */}
-          <ContentCard
-            title="Lab Orders & Diagnostics"
-            subtitle="Diagnostic test requests and lab reports"
-          >
-            <DataTable
-              columns={labOrderColumns}
-              data={labOrders}
-              searchable={false}
-              emptyMessage={isLoading ? "Loading lab orders..." : "No lab orders found."}
-            />
-          </ContentCard>
-
-        </div>
-
+        {/* TABLE 2: LAB ORDERS (No filter, No ID column) */}
+        <ContentCard
+          title="Lab Orders & Diagnostics"
+          subtitle="Diagnostic test requests and lab reports"
+        >
+          <DataTable
+            columns={labOrderColumns}
+            data={labOrders}
+            searchable={false}
+            emptyMessage={
+              isLoading ? 'Loading lab orders...' : 'No lab orders found.'
+            }
+          />
+        </ContentCard>
       </div>
+    </div>
   );
 }

@@ -1,5 +1,31 @@
 [
   {
+    "id": "APT1795770264984",
+    "userId": "PAT001",
+    "doctorId": "DOC001",
+    "branchId": "00000000-0000-4000-8000-000000000001",
+    "branch": {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "hospitalName": "Apollo Main Branch",
+      "branchName": "Main Branch",
+      "address": "Legacy data migration branch",
+      "city": "Hyderabad",
+      "state": "Telangana",
+      "pincode": "500001",
+      "phone": "+919000000000",
+      "email": "main.branch@apollo.local",
+      "status": "active",
+      "createdAt": "2026-07-31T06:30:09.000Z",
+      "updatedAt": "2026-08-29T10:59:57.000Z"
+    },
+    "date": "2026-11-27",
+    "slot": "11:30",
+    "status": "upcoming",
+    "bookedBy": "patient",
+    "bookedByRole": "patient",
+    "source": "patient"
+  },
+  {
     "id": "APT1795581697094",
     "userId": "PAT001",
     "doctorId": "DOC001",
