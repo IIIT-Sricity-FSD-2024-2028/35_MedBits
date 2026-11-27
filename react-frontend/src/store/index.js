@@ -11,6 +11,7 @@ import patientAppointmentsReducer from './slices/patient/patientAppointmentsSlic
 import patientFeedbackReducer from './slices/patient/patientFeedbackSlice';
 import patientLabTestsReducer from './slices/patient/patientLabTestsSlice';
 import patientDashboardReducer from './slices/patient/patientDashboardSlice';
+import patientMedicalRecordsReducer from './slices/patient/patientMedicalRecordsSlice';
 import doctorProfileReducer from './slices/doctor/doctorProfileSlice';
 import doctorDashboardReducer from './slices/doctor/doctorDashboardSlice';
 import doctorEarningsReducer from './slices/doctor/doctorEarningsSlice';
@@ -38,6 +39,7 @@ export const store = configureStore({
     patientFeedback: patientFeedbackReducer,
     patientLabTests: patientLabTestsReducer,
     patientDashboard: patientDashboardReducer,
+    patientMedicalRecords: patientMedicalRecordsReducer,
     doctorProfile: doctorProfileReducer,
     doctorDashboard: doctorDashboardReducer,
     doctorEarnings: doctorEarningsReducer,

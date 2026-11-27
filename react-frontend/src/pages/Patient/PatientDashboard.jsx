@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PatientDashboard.jsx — Patient Main Dashboard Page
  * ====================================================================
  * Location: src/pages/Patient/PatientDashboard.jsx
