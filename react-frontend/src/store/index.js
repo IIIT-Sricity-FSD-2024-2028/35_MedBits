@@ -36,6 +36,9 @@ import branchFrontDeskReducer from './slices/branchAdmin/branchFrontDeskSlice';
 import branchLabTechniciansReducer from './slices/branchAdmin/branchLabTechniciansSlice';
 import testRequestsReducer from './slices/labTech/testRequestsSlice';
 import labReportsReducer from './slices/labTech/labReportsSlice';
+import labTechProfileReducer from './slices/labTech/labTechProfileSlice';
+import labTechLeaveRequestReducer from './slices/labTech/labTechLeaveRequestSlice';
+import labTechDashboardReducer from './slices/labTech/labTechDashboardSlice';
 
 export const store = configureStore({
   reducer: {
@@ -70,6 +73,9 @@ export const store = configureStore({
     branchLabTechnicians: branchLabTechniciansReducer,
     labTechTestRequests: testRequestsReducer,
     labTechReports: labReportsReducer,
+    labTechProfile: labTechProfileReducer,
+    labTechLeaveRequest: labTechLeaveRequestReducer,
+    labTechDashboard: labTechDashboardReducer,
   },
 });
 

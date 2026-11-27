@@ -1,4 +1,4 @@
-﻿/**
+/**
  * LabTechProfile.jsx — Lab Technician Profile & Operational Assignment
  * ==============================================================================
  * Utilizes the shared <UserProfile> component configured for the Lab Technician role.
@@ -9,29 +9,26 @@
  * ==============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchLabTechBranch,
+  selectLabTechBranchName,
+} from '../../store/slices/labTech/labTechProfileSlice';
 import UserProfile from '../../components/profile/UserProfile';
-import { API_BASE_URL } from '../../api/apiClient';
-
 
 export default function LabTechProfile() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
-  const [branchName, setBranchName] = useState('');
+  const branchName = useSelector(selectLabTechBranchName);
 
   // Fetch branch details to display friendly branch name alongside branchId
   useEffect(() => {
     const branchId = user?.branchId || '00000000-0000-4000-8000-000000000001';
     if (!branchId) return;
-
-    fetch(`${API_BASE_URL}/hospital-branches/${encodeURIComponent(branchId)}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setBranchName(data.name || data.branchName || data.hospitalName || '');
-      })
-      .catch(() => {});
-  }, [user?.branchId]);
+    dispatch(fetchLabTechBranch(branchId));
+  }, [dispatch, user?.branchId]);
 
   const labTechFields = [
     { name: 'name', label: 'Full Name', readOnlyAlways: true },

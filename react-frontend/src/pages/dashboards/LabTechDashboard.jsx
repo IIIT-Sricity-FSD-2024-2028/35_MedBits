@@ -1,14 +1,20 @@
-﻿/**
+/**
  * LabTechDashboard.jsx — Laboratory Technician Dashboard Page
  * ====================================================================
  * Utilizes the core reusable UI components: AppShell, WelcomeCard,
  * StatCard, QuickActions, ContentCard, and DataTable.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  fetchLabTechDashboard,
+  selectLabTechDashboardRecentRequests,
+  selectLabTechDashboardStats,
+  selectLabTechDashboardStatus,
+} from '../../store/slices/labTech/labTechDashboardSlice';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -16,17 +22,17 @@ import ContentCard from '../../components/dashboard/ContentCard';
 import DataTable from '../../components/dashboard/DataTable';
 
 export default function LabTechDashboard() {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
   const navigate = useNavigate();
 
-  // Mock test requests data
-  const testRequests = [
-    { id: 'LAB-881', patient: 'Ria Sharma', test: 'Complete Blood Count (CBC)', doctor: 'Dr. S Madhuri', priority: 'Routine', status: 'Completed' },
-    { id: 'LAB-882', patient: 'Arun Menon', test: 'Lipid Profile & Serum Glucose', doctor: 'Dr. Ramesh Iyer', priority: 'STAT (Urgent)', status: 'In Analysis' },
-    { id: 'LAB-883', patient: 'Farah Ali', test: 'Thyroid Stimulating Hormone (TSH)', doctor: 'Dr. S Madhuri', priority: 'Routine', status: 'Sample Received' },
-    { id: 'LAB-884', patient: 'Dev Patel', test: 'HbA1c Glycated Hemoglobin', doctor: 'Dr. Ashwini Ray', priority: 'Routine', status: 'Pending Collection' },
-    { id: 'LAB-885', patient: 'Kiran Bedi', test: 'Liver Function Test (LFT)', doctor: 'Dr. Sarah Johnson', priority: 'STAT (Urgent)', status: 'In Analysis' },
-  ];
+  const testRequests = useSelector(selectLabTechDashboardRecentRequests);
+  const stats = useSelector(selectLabTechDashboardStats);
+  const status = useSelector(selectLabTechDashboardStatus);
+
+  useEffect(() => {
+    dispatch(fetchLabTechDashboard());
+  }, [dispatch, user?.userId, user?.id]);
 
   const testColumns = [
     { key: 'id', header: 'Request ID' },
@@ -107,9 +113,9 @@ export default function LabTechDashboard() {
           title={`Welcome back, ${user?.name || 'Suresh Kumar'}!`}
           subtitle="Track incoming diagnostic orders, review specimen batches, and publish verified digital reports."
           stats={[
-            { label: 'Pending Tests', value: '5' },
-            { label: 'Reports Today', value: '18' },
-            { label: 'Samples Collected', value: '23' },
+            { label: 'Pending Tests', value: String(stats.pendingTests) },
+            { label: 'Reports Today', value: String(stats.completedReports) },
+            { label: 'Samples Collected', value: String(stats.samplesCollected) },
           ]}
         />
 
@@ -117,30 +123,30 @@ export default function LabTechDashboard() {
         <StatGrid>
           <StatCard
             label="Pending Test Requests"
-            value="5"
+            value={String(stats.pendingTests)}
             delta="Awaiting specimen analysis"
             deltaType="warning"
             icon="🔬"
           />
           <StatCard
             label="Completed Lab Reports"
-            value="18"
-            delta="Uploaded and verified today"
+            value={String(stats.completedReports)}
+            delta="Uploaded and verified reports"
             deltaType="positive"
             icon="📊"
           />
           <StatCard
             label="Samples Collected"
-            value="23"
+            value={String(stats.samplesCollected)}
             delta="Processed in diagnostic lab"
             deltaType="info"
             icon="🧪"
           />
           <StatCard
             label="Critical Alerts"
-            value="0"
-            delta="All diagnostic indicators normal"
-            deltaType="positive"
+            value={String(stats.criticalAlerts)}
+            delta={stats.criticalAlerts > 0 ? "Urgent/STAT orders active" : "All diagnostic indicators normal"}
+            deltaType={stats.criticalAlerts > 0 ? "warning" : "positive"}
             icon="🛡️"
           />
         </StatGrid>
