@@ -26,7 +26,6 @@ import {
   closeFrontDeskView,
   openFrontDeskDelete,
   closeFrontDeskDelete,
-  setFrontDeskAlert,
   clearFrontDeskAlert,
   selectFrontDeskStaff,
   selectFrontDeskStatus,
@@ -271,15 +270,6 @@ export default function ManageFrontDesk() {
           onClose={() => dispatch(closeFrontDeskForm())}
           initialData={editingStaff}
           branchId={user?.branchId}
-          onSuccess={(saved) => {
-            dispatch(
-              setFrontDeskAlert({
-                type: 'success',
-                message: `${saved?.name || editingStaff?.name || 'Front desk staff'} saved successfully!`,
-              })
-            );
-            dispatch(fetchFrontDeskStaff());
-          }}
         />
 
         {/* ── 5. VIEW DETAILS MODAL ────────────────────────────────────────── */}

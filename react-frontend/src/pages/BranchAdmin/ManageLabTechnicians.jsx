@@ -26,7 +26,6 @@ import {
   closeLabTechView,
   openLabTechDelete,
   closeLabTechDelete,
-  setLabTechAlert,
   clearLabTechAlert,
   selectLabTechnicians,
   selectLabTechniciansStatus,
@@ -261,15 +260,6 @@ export default function ManageLabTechnicians() {
           onClose={() => dispatch(closeLabTechForm())}
           initialData={editingTech}
           branchId={user?.branchId}
-          onSuccess={(saved) => {
-            dispatch(
-              setLabTechAlert({
-                type: 'success',
-                message: `${saved?.name || editingTech?.name || 'Lab technician'} saved successfully!`,
-              })
-            );
-            dispatch(fetchLabTechnicians());
-          }}
         />
 
         {/* ── 5. VIEW DETAILS MODAL ────────────────────────────────────────── */}

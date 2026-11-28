@@ -5,36 +5,45 @@
  * pathology lab technicians.
  */
 
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  saveLabTechnician,
+  updateLabTechFormField,
+  setLabTechFormErrors,
+  selectLabTechFormData,
+  selectLabTechFormErrors,
+  selectIsSavingLabTech,
+  selectLabTechSaveError,
+} from '../../store/slices/branchAdmin/branchLabTechniciansSlice';
 import Modal from '../common/Modal';
-import { API_BASE_URL, isValidEmail, getAuthHeaders } from './staffHelpers';
+import { isValidEmail } from './staffHelpers';
 import './StaffFormModal.css';
 
-function LabTechDialog({ isOpen, onClose, initialData = null, branchId: propBranchId, onSuccess, onSubmit }) {
+export default function LabTechFormModal({
+  isOpen,
+  onClose,
+  initialData = null,
+  branchId: propBranchId,
+  onSuccess,
+  onSubmit,
+}) {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
+  const formData = useSelector(selectLabTechFormData);
+  const errors = useSelector(selectLabTechFormErrors);
+  const isSubmitting = useSelector(selectIsSavingLabTech);
+  const submitError = useSelector(selectLabTechSaveError);
+
+  if (!isOpen) return null;
+
   const isEdit = Boolean(initialData);
   const effectiveBranchId = propBranchId || user?.branchId || initialData?.branchId || '';
 
-  const [formData, setFormData] = useState(() => ({
-    name: initialData?.name || '',
-    email: initialData?.email || '',
-    password: '',
-    phone: initialData?.phone || '',
-    gender: initialData?.gender || '',
-    branchId: effectiveBranchId,
-  }));
-
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
-    if (submitError) setSubmitError(null);
+    dispatch(updateLabTechFormField({ name, value }));
   };
 
   const validate = () => {
@@ -52,16 +61,13 @@ function LabTechDialog({ isOpen, onClose, initialData = null, branchId: propBran
       errs.phone = '10 digits required';
     }
 
-    setErrors(errs);
+    dispatch(setLabTechFormErrors(errs));
     return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
 
     try {
       if (onSubmit) {
@@ -70,42 +76,13 @@ function LabTechDialog({ isOpen, onClose, initialData = null, branchId: propBran
         return;
       }
 
-      const techId = initialData?.id || initialData?.userId;
-      const endpoint = isEdit
-        ? `${API_BASE_URL}/lab-technicians/${encodeURIComponent(techId)}`
-        : `${API_BASE_URL}/lab-technicians`;
-
-      const payload = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        ...(effectiveBranchId ? { branchId: effectiveBranchId } : {}),
-        phone: formData.phone?.trim() || '',
-        gender: formData.gender || '',
-      };
-      if (!isEdit) {
-        payload.password = formData.password;
-      } else if (formData.password?.trim()) {
-        payload.password = formData.password;
-      }
-
-      const res = await fetch(endpoint, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: getAuthHeaders(user),
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(errJson?.message || `Failed to save lab technician (HTTP ${res.status})`);
-      }
-
-      const saved = await res.json().catch(() => ({}));
+      const saved = await dispatch(
+        saveLabTechnician({ formData, initialData, branchId: effectiveBranchId })
+      ).unwrap();
       onSuccess?.(saved);
       onClose();
-    } catch (err) {
-      setSubmitError(err.message || 'Operation failed');
-    } finally {
-      setIsSubmitting(false);
+    } catch {
+      // Rejection message is surfaced through Redux `saveError`.
     }
   };
 
@@ -233,11 +210,4 @@ function LabTechDialog({ isOpen, onClose, initialData = null, branchId: propBran
       </form>
     </Modal>
   );
-}
-
-export default function LabTechFormModal(props) {
-  if (!props.isOpen) return null;
-  const techId = props.initialData?.id || props.initialData?.userId;
-  const key = props.initialData ? `edit-${techId || 'current'}` : 'create-new';
-  return <LabTechDialog key={key} {...props} />;
 }

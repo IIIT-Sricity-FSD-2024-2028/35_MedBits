@@ -3,107 +3,61 @@
  * ================================================================
  * Location: src/components/appointments/BookingModal.jsx
  *
- * WHAT THIS COMPONENT DOES:
- *  Pops up when a patient clicks "Book" for a doctor.
- *  Displays:
- *   1. Doctor profile details (name, specialization, branch, consultation fee)
- *   2. Date picker to choose preferred appointment date
- *   3. Interactive grid of available time slots fetched dynamically from backend
- *   4. Selected slot feedback and Confirm Booking action
+ * Presentational modal controlled via Redux state in PatientAppointments.
  *
  * PROPS:
  *  @param {boolean} isOpen         — Whether modal is visible
  *  @param {object} doctor          — Selected doctor object { id, name, specialization, ... }
- *  @param {string} initialDate     — Pre-selected appointment date (YYYY-MM-DD)
- *  @param {Array} slots            — Optional pre-loaded slots array
+ *  @param {string} initialDate     — Appointment date (YYYY-MM-DD)
+ *  @param {Array} slots            — Available slots array loaded via Redux
+ *  @param {string} selectedSlot    — Controlled selected slot value
+ *  @param {boolean} isLoadingSlots — Loading state for slot lookup
+ *  @param {string} slotError       — Error message if slot lookup fails
  *  @param {boolean} isBooking      — Loading state during booking submission
+ *  @param {function} onDateChange  — Date change handler (date) => void
+ *  @param {function} onSlotSelect  — Slot click handler (slot) => void
  *  @param {function} onClose       — Modal dismiss handler
  *  @param {function} onConfirm     — Booking confirm handler ({ doctor, date, slot }) => void
- *  @param {string} apiBaseUrl      — Backend API base URL
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Modal from '../common/Modal';
 import './BookingModal.css';
-import { API_BASE_URL } from '../../api/apiClient';
-
 
 function getTodayIso() {
-  return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate()
+  ).padStart(2, '0')}`;
 }
 
 export default function BookingModal({
   isOpen,
   doctor,
   initialDate,
-  slots,
+  slots = [],
+  selectedSlot: controlledSlot = '',
+  isLoadingSlots = false,
+  slotError = null,
   isBooking = false,
+  onDateChange,
+  onSlotSelect,
   onClose,
   onConfirm,
-  apiBaseUrl = API_BASE_URL,
 }) {
-  const [selectedDate, setSelectedDate] = useState(initialDate || getTodayIso());
-  const [selectedSlot, setSelectedSlot] = useState('');
-  const [fetchedSlots, setFetchedSlots] = useState([]);
-  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
-  const [slotError, setSlotError] = useState(null);
-
-  // Reset selected slot when doctor changes
-  useEffect(() => {
-    setSelectedSlot('');
-    setSlotError(null);
-  }, [doctor?.id]);
-
-  // Fetch available doctor slots for selected date (only if not passed via slots prop)
-  useEffect(() => {
-    if (!isOpen || !doctor?.id || !selectedDate || slots) return;
-
-    let isMounted = true;
-    async function loadDoctorSlots() {
-      setIsLoadingSlots(true);
-      setSlotError(null);
-
-      try {
-        const response = await fetch(
-          `${apiBaseUrl}/doctors/${encodeURIComponent(doctor.id)}/slots?date=${encodeURIComponent(selectedDate)}`,
-          {
-            headers: {
-              role: 'patient',
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Unable to load available slots for this date.');
-        }
-
-        const data = await response.json();
-        if (isMounted) {
-          setFetchedSlots(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('Error fetching doctor slots:', err);
-          setSlotError(err.message || 'Failed to retrieve available slots.');
-          setFetchedSlots([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingSlots(false);
-        }
-      }
-    }
-
-    loadDoctorSlots();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isOpen, doctor?.id, selectedDate, slots, apiBaseUrl]);
-
   if (!isOpen || !doctor) return null;
 
-  const availableSlots = slots || fetchedSlots;
+  const selectedDate = initialDate || getTodayIso();
+  const selectedSlot = controlledSlot || '';
+  const availableSlots = Array.isArray(slots) ? slots : [];
+
+  const handleDateChange = (nextDate) => {
+    onDateChange?.(nextDate);
+  };
+
+  const handleSlotClick = (slot) => {
+    onSlotSelect?.(slot);
+  };
 
   const doctorName = doctor.name || 'Assigned Physician';
   const doctorSpec = doctor.specialization || doctor.department || 'Consultant Specialist';
@@ -215,10 +169,7 @@ export default function BookingModal({
             className="booking-date-input"
             min={getTodayIso()}
             value={selectedDate}
-            onChange={(e) => {
-              setSelectedDate(e.target.value);
-              setSelectedSlot('');
-            }}
+            onChange={(e) => handleDateChange(e.target.value)}
           />
         </div>
 
@@ -250,7 +201,7 @@ export default function BookingModal({
                     key={slot}
                     type="button"
                     className={`booking-slot-btn ${isSelected ? 'selected' : ''}`}
-                    onClick={() => setSelectedSlot(slot)}
+                    onClick={() => handleSlotClick(slot)}
                     aria-pressed={isSelected}
                   >
                     {slot}

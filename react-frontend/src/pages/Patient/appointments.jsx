@@ -14,6 +14,7 @@ import {
   fetchBranches,
   fetchDoctors,
   fetchUserAppointments,
+  fetchDoctorAvailableSlots,
   bookPatientAppointment,
   cancelPatientAppointment,
   setSelectedBranch,
@@ -23,6 +24,8 @@ import {
   resetFilters,
   openBookingModal,
   closeBookingModal,
+  setBookingDate,
+  setBookingSlot,
   clearAppointmentStatus,
   selectAppointmentBranches,
   selectAppointmentDoctors,
@@ -32,8 +35,13 @@ import {
   selectSelectedDate,
   selectDoctorNameFilter,
   selectDoctorsStatus,
+  selectDoctorAvailableSlots,
+  selectDoctorSlotsStatus,
+  selectDoctorSlotsError,
   selectIsSubmittingAppointment,
   selectBookingDoctor,
+  selectBookingDate,
+  selectBookingSlot,
   selectAppointmentStatusMessage,
 } from '../../store/slices/patient/patientAppointmentsSlice';
 import AppointmentFilters from '../../components/appointments/AppointmentFilters';
@@ -67,8 +75,13 @@ export default function PatientAppointments() {
   const selectedDate = useSelector(selectSelectedDate);
   const doctorName = useSelector(selectDoctorNameFilter);
   const doctorsStatus = useSelector(selectDoctorsStatus);
+  const availableSlots = useSelector(selectDoctorAvailableSlots);
+  const slotsStatus = useSelector(selectDoctorSlotsStatus);
+  const slotsError = useSelector(selectDoctorSlotsError);
   const isSubmitting = useSelector(selectIsSubmittingAppointment);
   const bookingDoctor = useSelector(selectBookingDoctor);
+  const bookingDate = useSelector(selectBookingDate);
+  const bookingSlot = useSelector(selectBookingSlot);
   const statusMessage = useSelector(selectAppointmentStatusMessage);
 
   const isLoading = doctorsStatus === 'loading';
@@ -93,6 +106,14 @@ export default function PatientAppointments() {
       dispatch(fetchUserAppointments(userId));
     }
   }, [dispatch, userId]);
+
+  // Fetch available doctor slots via Redux whenever modal opens or booking date changes
+  useEffect(() => {
+    const doctorId = bookingDoctor?.id || bookingDoctor?.userId;
+    if (doctorId && bookingDate) {
+      dispatch(fetchDoctorAvailableSlots({ doctorId, date: bookingDate }));
+    }
+  }, [dispatch, bookingDoctor, bookingDate]);
 
   // Derived filtered doctors
   const filteredDoctors = doctors.filter((doc) => {
@@ -274,10 +295,17 @@ export default function PatientAppointments() {
 
       {/* 5. Reusable Booking Modal */}
       <BookingModal
+        key={bookingDoctor?.id || bookingDoctor?.userId || 'closed'}
         isOpen={Boolean(bookingDoctor)}
         doctor={bookingDoctor}
-        initialDate={selectedDate}
+        initialDate={bookingDate}
+        slots={availableSlots}
+        selectedSlot={bookingSlot}
+        isLoadingSlots={slotsStatus === 'loading'}
+        slotError={slotsError}
         isBooking={isSubmitting}
+        onDateChange={(date) => dispatch(setBookingDate(date))}
+        onSlotSelect={(slot) => dispatch(setBookingSlot(slot))}
         onClose={() => dispatch(closeBookingModal())}
         onConfirm={handleConfirmBooking}
       />

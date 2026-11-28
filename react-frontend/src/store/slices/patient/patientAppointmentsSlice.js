@@ -26,6 +26,19 @@ function formatDateLabel(dateStr) {
   }
 }
 
+function getTodayLocalIso() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate()
+  ).padStart(2, '0')}`;
+}
+
+function extractPatientErrorDetail(err, fallback) {
+  const raw = err?.message || '';
+  const detail = raw.includes(': ') ? raw.split(': ').slice(1).join(': ') : raw;
+  return detail || fallback;
+}
+
 const initialState = {
   selectedBranch: '',
   selectedSpeciality: '',
@@ -34,11 +47,17 @@ const initialState = {
   branches: [],
   doctors: [],
   userAppointments: [],
+  availableSlots: [],
   branchesStatus: 'idle',
   doctorsStatus: 'idle',
   appointmentsStatus: 'idle',
+  slotsStatus: 'idle',
+  slotsError: null,
+  slotsRequestId: null,
   isSubmitting: false,
   bookingDoctor: null,
+  bookingDate: '',
+  bookingSlot: '',
   statusMessage: null,
 };
 
@@ -97,6 +116,28 @@ export const fetchUserAppointments = createAsyncThunk(
   }
 );
 
+export const fetchDoctorAvailableSlots = createAsyncThunk(
+  'patientAppointments/fetchDoctorAvailableSlots',
+  async ({ doctorId, date }, { getState, rejectWithValue }) => {
+    if (!doctorId || !date) {
+      return [];
+    }
+
+    const user = getState().auth.user;
+    try {
+      const data = await apiFetch(
+        `/doctors/${encodeURIComponent(doctorId)}/slots?date=${encodeURIComponent(date)}`,
+        { user: { ...user, role: user?.role || 'patient' } }
+      );
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      return rejectWithValue(
+        extractPatientErrorDetail(err, 'Unable to load available slots for this date.')
+      );
+    }
+  }
+);
+
 export const bookPatientAppointment = createAsyncThunk(
   'patientAppointments/bookAppointment',
   async ({ doctor, date, slot }, { getState, dispatch, rejectWithValue }) => {
@@ -129,9 +170,7 @@ export const bookPatientAppointment = createAsyncThunk(
         message: `Appointment booked with ${doctor.name} on ${formatDateLabel(date)} at ${slot}!`,
       };
     } catch (err) {
-      const raw = err?.message || '';
-      const detail = raw.includes(': ') ? raw.split(': ').slice(1).join(': ') : raw;
-      return rejectWithValue(detail || 'Unable to book appointment.');
+      return rejectWithValue(extractPatientErrorDetail(err, 'Unable to book appointment.'));
     }
   }
 );
@@ -185,9 +224,29 @@ const patientAppointmentsSlice = createSlice({
     },
     openBookingModal(state, action) {
       state.bookingDoctor = action.payload;
+      state.bookingDate = state.selectedDate || getTodayLocalIso();
+      state.bookingSlot = '';
+      state.availableSlots = [];
+      state.slotsStatus = 'idle';
+      state.slotsError = null;
+      state.slotsRequestId = null;
     },
     closeBookingModal(state) {
       state.bookingDoctor = null;
+      state.bookingDate = '';
+      state.bookingSlot = '';
+      state.availableSlots = [];
+      state.slotsStatus = 'idle';
+      state.slotsError = null;
+      state.slotsRequestId = null;
+    },
+    setBookingDate(state, action) {
+      state.bookingDate = action.payload;
+      state.bookingSlot = '';
+      state.slotsError = null;
+    },
+    setBookingSlot(state, action) {
+      state.bookingSlot = action.payload;
     },
     clearAppointmentStatus(state) {
       state.statusMessage = null;
@@ -225,6 +284,24 @@ const patientAppointmentsSlice = createSlice({
       .addCase(fetchUserAppointments.rejected, (state) => {
         state.appointmentsStatus = 'failed';
       })
+      .addCase(fetchDoctorAvailableSlots.pending, (state, action) => {
+        state.slotsStatus = 'loading';
+        state.slotsRequestId = action.meta.requestId;
+        state.slotsError = null;
+        state.availableSlots = [];
+      })
+      .addCase(fetchDoctorAvailableSlots.fulfilled, (state, action) => {
+        if (state.slotsRequestId !== action.meta.requestId) return;
+        state.slotsStatus = 'succeeded';
+        state.availableSlots = action.payload;
+        state.slotsError = null;
+      })
+      .addCase(fetchDoctorAvailableSlots.rejected, (state, action) => {
+        if (state.slotsRequestId !== action.meta.requestId) return;
+        state.slotsStatus = 'failed';
+        state.availableSlots = [];
+        state.slotsError = action.payload || 'Unable to load available slots for this date.';
+      })
       .addCase(bookPatientAppointment.pending, (state) => {
         state.isSubmitting = true;
         state.statusMessage = null;
@@ -232,6 +309,12 @@ const patientAppointmentsSlice = createSlice({
       .addCase(bookPatientAppointment.fulfilled, (state, action) => {
         state.isSubmitting = false;
         state.bookingDoctor = null;
+        state.bookingDate = '';
+        state.bookingSlot = '';
+        state.availableSlots = [];
+        state.slotsStatus = 'idle';
+        state.slotsError = null;
+        state.slotsRequestId = null;
         state.statusMessage = {
           type: 'success',
           text: action.payload.message,
@@ -268,6 +351,8 @@ export const {
   resetFilters,
   openBookingModal,
   closeBookingModal,
+  setBookingDate,
+  setBookingSlot,
   clearAppointmentStatus,
 } = patientAppointmentsSlice.actions;
 
@@ -279,8 +364,13 @@ export const selectSelectedSpeciality = (state) => state.patientAppointments.sel
 export const selectSelectedDate = (state) => state.patientAppointments.selectedDate;
 export const selectDoctorNameFilter = (state) => state.patientAppointments.doctorName;
 export const selectDoctorsStatus = (state) => state.patientAppointments.doctorsStatus;
+export const selectDoctorAvailableSlots = (state) => state.patientAppointments.availableSlots;
+export const selectDoctorSlotsStatus = (state) => state.patientAppointments.slotsStatus;
+export const selectDoctorSlotsError = (state) => state.patientAppointments.slotsError;
 export const selectIsSubmittingAppointment = (state) => state.patientAppointments.isSubmitting;
 export const selectBookingDoctor = (state) => state.patientAppointments.bookingDoctor;
+export const selectBookingDate = (state) => state.patientAppointments.bookingDate;
+export const selectBookingSlot = (state) => state.patientAppointments.bookingSlot;
 export const selectAppointmentStatusMessage = (state) => state.patientAppointments.statusMessage;
 
 export default patientAppointmentsSlice.reducer;

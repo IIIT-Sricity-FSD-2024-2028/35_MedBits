@@ -5,78 +5,64 @@
  * manage consultation fee / cut, and schedule available OPD time slots.
  */
 
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  saveBranchDoctor,
+  updateDoctorFormField,
+  setDoctorFormErrors,
+  setDoctorCustomSlot,
+  addDoctorSlot,
+  removeDoctorSlot,
+  addDoctorStandardSchedule,
+  selectDoctorFormData,
+  selectDoctorFormErrors,
+  selectDoctorCustomSlot,
+  selectIsSavingDoctor,
+  selectDoctorSaveError,
+} from '../../store/slices/branchAdmin/branchDoctorsSlice';
+import { DOCTOR_TIME_PRESETS } from '../../store/slices/branchAdmin/branchStaffHelpers';
 import Modal from '../common/Modal';
-import { API_BASE_URL, formatTime12, isValidEmail, getAuthHeaders } from './staffHelpers';
+import { isValidEmail } from './staffHelpers';
 import './StaffFormModal.css';
 
-const TIME_PRESETS = [
-  '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-  '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
-];
-
-function DoctorDialog({ isOpen, onClose, initialData = null, branchId: propBranchId, onSuccess, onSubmit }) {
+export default function DoctorFormModal({
+  isOpen,
+  onClose,
+  initialData = null,
+  branchId: propBranchId,
+  onSuccess,
+  onSubmit,
+}) {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
+  const formData = useSelector(selectDoctorFormData);
+  const errors = useSelector(selectDoctorFormErrors);
+  const customSlot = useSelector(selectDoctorCustomSlot);
+  const isSubmitting = useSelector(selectIsSavingDoctor);
+  const submitError = useSelector(selectDoctorSaveError);
+
+  if (!isOpen) return null;
+
   const isEdit = Boolean(initialData);
   const effectiveBranchId = propBranchId || user?.branchId || initialData?.branchId || '';
 
-  const [formData, setFormData] = useState(() => ({
-    name: initialData?.name || '',
-    email: initialData?.email || '',
-    password: '',
-    specialization: initialData?.specialization || '',
-    department: initialData?.department || '',
-    qualification: initialData?.qualification || '',
-    experience: initialData?.experience ?? '',
-    consultationFee: initialData?.consultationFee ?? '',
-    percentageCut: initialData?.percentageCut ?? '',
-    age: initialData?.age ?? '',
-    gender: initialData?.gender || '',
-    phone: initialData?.phone || '',
-    licenseNo: initialData?.licenseNo || '',
-    bio: initialData?.bio || '',
-    slots: Array.isArray(initialData?.slots) ? [...initialData.slots] : [],
-    branchId: effectiveBranchId,
-  }));
-
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [customSlot, setCustomSlot] = useState('');
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
-    if (submitError) setSubmitError(null);
+    dispatch(updateDoctorFormField({ name, value }));
   };
 
   const handleAddSlot = (slotVal) => {
-    const slot = (slotVal || formatTime12(customSlot)).trim();
-    if (!slot) return;
-    setFormData((prev) => {
-      const current = prev.slots || [];
-      if (current.includes(slot)) return prev;
-      return { ...prev, slots: [...current, slot] };
-    });
-    setCustomSlot('');
+    dispatch(addDoctorSlot(slotVal));
   };
 
   const handleRemoveSlot = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      slots: (prev.slots || []).filter((_, i) => i !== index),
-    }));
+    dispatch(removeDoctorSlot(index));
   };
 
   const handleAddStandardSchedule = () => {
-    setFormData((prev) => {
-      const current = new Set(prev.slots || []);
-      TIME_PRESETS.forEach((slot) => current.add(slot));
-      return { ...prev, slots: Array.from(current) };
-    });
+    dispatch(addDoctorStandardSchedule());
   };
 
   const validate = () => {
@@ -105,16 +91,13 @@ function DoctorDialog({ isOpen, onClose, initialData = null, branchId: propBranc
       if (cut < 0 || cut > 100) errs.percentageCut = 'Must be between 0% and 100%';
     }
 
-    setErrors(errs);
+    dispatch(setDoctorFormErrors(errs));
     return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
 
     try {
       if (onSubmit) {
@@ -123,49 +106,13 @@ function DoctorDialog({ isOpen, onClose, initialData = null, branchId: propBranc
         return;
       }
 
-      const docId = initialData?.userId || initialData?.id;
-      const endpoint = isEdit
-        ? `${API_BASE_URL}/doctors/${encodeURIComponent(docId)}`
-        : `${API_BASE_URL}/doctors`;
-
-      const payload = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        specialization: formData.specialization.trim(),
-        branchId: effectiveBranchId,
-        slots: formData.slots || [],
-        ...(formData.department ? { department: formData.department.trim() } : {}),
-        ...(formData.qualification ? { qualification: formData.qualification.trim() } : {}),
-        ...(formData.gender ? { gender: formData.gender } : {}),
-        ...(formData.phone ? { phone: formData.phone.trim() } : {}),
-        ...(formData.licenseNo ? { licenseNo: formData.licenseNo.trim() } : {}),
-        ...(formData.bio ? { bio: formData.bio.trim() } : {}),
-      };
-
-      if (formData.experience !== '') payload.experience = Number(formData.experience);
-      if (formData.age !== '') payload.age = Number(formData.age);
-      if (formData.consultationFee !== '') payload.consultationFee = Number(formData.consultationFee);
-      if (formData.percentageCut !== '') payload.percentageCut = Number(formData.percentageCut);
-      if (!isEdit) payload.password = formData.password;
-
-      const res = await fetch(endpoint, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: getAuthHeaders(user),
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(errJson?.message || `Failed to save doctor (HTTP ${res.status})`);
-      }
-
-      const saved = await res.json().catch(() => ({}));
+      const saved = await dispatch(
+        saveBranchDoctor({ formData, initialData, branchId: effectiveBranchId })
+      ).unwrap();
       onSuccess?.(saved);
       onClose();
-    } catch (err) {
-      setSubmitError(err.message || 'Operation failed');
-    } finally {
-      setIsSubmitting(false);
+    } catch {
+      // Rejection message is surfaced through Redux `saveError`.
     }
   };
 
@@ -413,7 +360,7 @@ function DoctorDialog({ isOpen, onClose, initialData = null, branchId: propBranc
                   type="time"
                   className="staff-input"
                   value={customSlot}
-                  onChange={(e) => setCustomSlot(e.target.value)}
+                  onChange={(e) => dispatch(setDoctorCustomSlot(e.target.value))}
                 />
                 <button type="button" className="staff-tag-add-btn" onClick={() => handleAddSlot()}>
                   ＋ Add Slot
@@ -421,7 +368,7 @@ function DoctorDialog({ isOpen, onClose, initialData = null, branchId: propBranc
               </div>
               <div className="staff-presets-group">
                 <span className="staff-presets-label">Quick:</span>
-                {TIME_PRESETS.map((p) => {
+                {DOCTOR_TIME_PRESETS.map((p) => {
                   const added = (formData.slots || []).includes(p);
                   return (
                     <button key={p} type="button" className="staff-preset-pill" disabled={added} onClick={() => handleAddSlot(p)}>
@@ -444,10 +391,4 @@ function DoctorDialog({ isOpen, onClose, initialData = null, branchId: propBranc
       </form>
     </Modal>
   );
-}
-
-export default function DoctorFormModal(props) {
-  if (!props.isOpen) return null;
-  const key = props.initialData?.userId || props.initialData?.id || (props.isOpen ? 'open' : 'closed');
-  return <DoctorDialog key={key} {...props} />;
 }
