@@ -27,7 +27,6 @@ import {
   closeDoctorView,
   openDoctorDelete,
   closeDoctorDelete,
-  setDoctorAlert,
   clearDoctorAlert,
   selectBranchDoctors,
   selectBranchDoctorsStatus,
@@ -303,15 +302,6 @@ export default function ManageDoctors() {
           isOpen={formModal.isOpen}
           onClose={() => dispatch(closeDoctorForm())}
           initialData={editingDoctor}
-          onSuccess={(savedDoc) => {
-            dispatch(
-              setDoctorAlert({
-                type: 'success',
-                message: `${savedDoc?.name || editingDoctor?.name || 'Doctor'} saved successfully!`,
-              })
-            );
-            dispatch(fetchBranchDoctors());
-          }}
         />
 
         {/* ── 6. VIEW DOCTOR DETAILS MODAL ─────────────────────────────────── */}

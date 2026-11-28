@@ -13,6 +13,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiFetch } from '../../../api/apiClient';
 import { logout } from '../authSlice';
+import { formatTime12 } from '../../../pages/BranchAdmin/utils/staffHelpers';
+import {
+  DOCTOR_TIME_PRESETS,
+  buildDoctorFormData,
+  applyStaffFormFieldUpdate,
+  getBranchAdminRequestUser,
+  extractBranchErrorDetail,
+  saveBranchStaffMember,
+} from './branchStaffHelpers';
 
 const initialState = {
   doctors: [],
@@ -24,6 +33,11 @@ const initialState = {
     isOpen: false,
     doctor: null, // null = create mode, object = edit mode
   },
+  formData: buildDoctorFormData(null),
+  formErrors: {},
+  customSlot: '',
+  isSaving: false,
+  saveError: null,
   viewDoctor: null,
   doctorAppointments: [],
   appointmentsStatus: 'idle',
@@ -32,23 +46,12 @@ const initialState = {
   isDeleting: false,
 };
 
-const getRequestUser = (getState) => {
-  const user = getState().auth.user;
-  return { ...user, role: user?.role || 'branch_admin' };
-};
-
-const extractErrorDetail = (err, fallback) => {
-  const raw = err?.message || '';
-  const detail = raw.includes(': ') ? raw.split(': ').slice(1).join(': ') : raw;
-  return detail || fallback;
-};
-
 const getDoctorId = (doc) => doc?.userId || doc?.id;
 
 export const fetchBranchDoctors = createAsyncThunk(
   'branchDoctors/fetchBranchDoctors',
   async (_, { getState, rejectWithValue }) => {
-    const user = getRequestUser(getState);
+    const user = getBranchAdminRequestUser(getState);
     const branchParam = user?.branchId ? `?branchId=${encodeURIComponent(user.branchId)}` : '';
 
     try {
@@ -63,7 +66,7 @@ export const fetchBranchDoctors = createAsyncThunk(
 export const fetchDoctorAppointments = createAsyncThunk(
   'branchDoctors/fetchDoctorAppointments',
   async (doctor, { getState, rejectWithValue }) => {
-    const user = getRequestUser(getState);
+    const user = getBranchAdminRequestUser(getState);
 
     try {
       const data = await apiFetch(
@@ -77,10 +80,56 @@ export const fetchDoctorAppointments = createAsyncThunk(
   }
 );
 
+export const saveBranchDoctor = createAsyncThunk(
+  'branchDoctors/saveBranchDoctor',
+  async ({ formData: argFormData, initialData: argInitialData, branchId } = {}, { getState, dispatch, rejectWithValue }) => {
+    const state = getState();
+    const user = getBranchAdminRequestUser(getState);
+    const initialData = argInitialData !== undefined ? argInitialData : state.branchDoctors.formModal.doctor;
+    const formData = argFormData || state.branchDoctors.formData;
+    const docId = getDoctorId(initialData);
+    const isEdit = Boolean(docId);
+    const effectiveBranchId = branchId || formData.branchId || user?.branchId || initialData?.branchId || '';
+
+    const payload = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      specialization: formData.specialization.trim(),
+      branchId: effectiveBranchId,
+      slots: formData.slots || [],
+      ...(formData.department ? { department: formData.department.trim() } : {}),
+      ...(formData.qualification ? { qualification: formData.qualification.trim() } : {}),
+      ...(formData.gender ? { gender: formData.gender } : {}),
+      ...(formData.phone ? { phone: formData.phone.trim() } : {}),
+      ...(formData.licenseNo ? { licenseNo: formData.licenseNo.trim() } : {}),
+      ...(formData.bio ? { bio: formData.bio.trim() } : {}),
+    };
+
+    if (formData.experience !== '') payload.experience = Number(formData.experience);
+    if (formData.age !== '') payload.age = Number(formData.age);
+    if (formData.consultationFee !== '') payload.consultationFee = Number(formData.consultationFee);
+    if (formData.percentageCut !== '') payload.percentageCut = Number(formData.percentageCut);
+    if (!isEdit) payload.password = formData.password;
+
+    try {
+      return await saveBranchStaffMember({
+        basePath: '/doctors',
+        id: docId,
+        payload,
+        user,
+        dispatch,
+        refreshThunk: fetchBranchDoctors,
+      });
+    } catch (err) {
+      return rejectWithValue(extractBranchErrorDetail(err, 'Failed to save doctor.'));
+    }
+  }
+);
+
 export const deleteBranchDoctor = createAsyncThunk(
   'branchDoctors/deleteBranchDoctor',
   async (doctor, { getState, dispatch, rejectWithValue }) => {
-    const user = getRequestUser(getState);
+    const user = getBranchAdminRequestUser(getState);
 
     try {
       await apiFetch(`/doctors/${encodeURIComponent(getDoctorId(doctor))}`, {
@@ -90,7 +139,7 @@ export const deleteBranchDoctor = createAsyncThunk(
       await dispatch(fetchBranchDoctors());
       return doctor;
     } catch (err) {
-      return rejectWithValue(extractErrorDetail(err, 'Failed to delete doctor.'));
+      return rejectWithValue(extractBranchErrorDetail(err, 'Failed to delete doctor.'));
     }
   }
 );
@@ -106,11 +155,51 @@ const branchDoctorsSlice = createSlice({
       state.selectedDept = action.payload;
     },
     openDoctorForm(state, action) {
-      state.formModal = { isOpen: true, doctor: action.payload || null };
+      const doctor = action.payload || null;
+      state.formModal = { isOpen: true, doctor };
+      state.formData = buildDoctorFormData(doctor);
+      state.formErrors = {};
+      state.customSlot = '';
       state.viewDoctor = null;
+      state.saveError = null;
     },
     closeDoctorForm(state) {
       state.formModal = { isOpen: false, doctor: null };
+      state.formData = buildDoctorFormData(null);
+      state.formErrors = {};
+      state.customSlot = '';
+      state.saveError = null;
+    },
+    updateDoctorFormField(state, action) {
+      applyStaffFormFieldUpdate(state, action.payload);
+    },
+    setDoctorFormErrors(state, action) {
+      state.formErrors = action.payload || {};
+    },
+    setDoctorCustomSlot(state, action) {
+      state.customSlot = action.payload;
+    },
+    addDoctorSlot(state, action) {
+      const raw = action.payload || formatTime12(state.customSlot);
+      const slot = String(raw || '').trim();
+      if (!slot) return;
+      const current = state.formData.slots || [];
+      if (!current.includes(slot)) {
+        state.formData.slots = [...current, slot];
+      }
+      state.customSlot = '';
+    },
+    removeDoctorSlot(state, action) {
+      const index = action.payload;
+      state.formData.slots = (state.formData.slots || []).filter((_, i) => i !== index);
+    },
+    addDoctorStandardSchedule(state) {
+      const current = new Set(state.formData.slots || []);
+      DOCTOR_TIME_PRESETS.forEach((slot) => current.add(slot));
+      state.formData.slots = Array.from(current);
+    },
+    clearDoctorSaveError(state) {
+      state.saveError = null;
     },
     openDoctorView(state, action) {
       state.viewDoctor = action.payload;
@@ -168,6 +257,27 @@ const branchDoctorsSlice = createSlice({
         state.appointmentsStatus = 'failed';
         state.doctorAppointments = [];
       })
+      .addCase(saveBranchDoctor.pending, (state) => {
+        state.isSaving = true;
+        state.saveError = null;
+      })
+      .addCase(saveBranchDoctor.fulfilled, (state, action) => {
+        const submittedName = action.meta.arg?.formData?.name || state.formData.name;
+        state.isSaving = false;
+        state.saveError = null;
+        state.formModal = { isOpen: false, doctor: null };
+        state.formData = buildDoctorFormData(null);
+        state.formErrors = {};
+        state.customSlot = '';
+        state.alert = {
+          type: 'success',
+          message: `${action.payload?.name || submittedName || 'Doctor'} saved successfully!`,
+        };
+      })
+      .addCase(saveBranchDoctor.rejected, (state, action) => {
+        state.isSaving = false;
+        state.saveError = action.payload || 'Operation failed';
+      })
       .addCase(deleteBranchDoctor.pending, (state) => {
         state.isDeleting = true;
       })
@@ -195,6 +305,13 @@ export const {
   setDoctorDeptFilter,
   openDoctorForm,
   closeDoctorForm,
+  updateDoctorFormField,
+  setDoctorFormErrors,
+  setDoctorCustomSlot,
+  addDoctorSlot,
+  removeDoctorSlot,
+  addDoctorStandardSchedule,
+  clearDoctorSaveError,
   openDoctorView,
   closeDoctorView,
   openDoctorDelete,
@@ -209,6 +326,11 @@ export const selectDoctorAlert = (state) => state.branchDoctors.alert;
 export const selectDoctorSearchQuery = (state) => state.branchDoctors.searchQuery;
 export const selectDoctorDeptFilter = (state) => state.branchDoctors.selectedDept;
 export const selectDoctorFormModal = (state) => state.branchDoctors.formModal;
+export const selectDoctorFormData = (state) => state.branchDoctors.formData;
+export const selectDoctorFormErrors = (state) => state.branchDoctors.formErrors;
+export const selectDoctorCustomSlot = (state) => state.branchDoctors.customSlot;
+export const selectIsSavingDoctor = (state) => state.branchDoctors.isSaving;
+export const selectDoctorSaveError = (state) => state.branchDoctors.saveError;
 export const selectViewDoctor = (state) => state.branchDoctors.viewDoctor;
 export const selectDoctorAppointments = (state) => state.branchDoctors.doctorAppointments;
 export const selectDoctorAppointmentsStatus = (state) => state.branchDoctors.appointmentsStatus;

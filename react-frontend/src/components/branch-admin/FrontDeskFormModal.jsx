@@ -5,68 +5,66 @@
  * assignments, shift schedules, and spoken languages.
  */
 
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
+import {
+  saveFrontDeskStaff,
+  updateFrontDeskFormField,
+  setFrontDeskFormErrors,
+  setFrontDeskCustomLang,
+  addFrontDeskLanguage,
+  removeFrontDeskLanguage,
+  selectFrontDeskFormData,
+  selectFrontDeskFormErrors,
+  selectFrontDeskCustomLang,
+  selectIsSavingFrontDesk,
+  selectFrontDeskSaveError,
+} from '../../store/slices/branchAdmin/branchFrontDeskSlice';
 import Modal from '../common/Modal';
-import { API_BASE_URL, parseTime24, formatTime12, isValidEmail, getAuthHeaders } from './staffHelpers';
+import { isValidEmail } from './staffHelpers';
 import './StaffFormModal.css';
 
 const LANG_PRESETS = ['English', 'Hindi', 'Telugu', 'Tamil', 'Kannada', 'Malayalam'];
 
-function FrontDeskDialog({ isOpen, onClose, initialData = null, branchId: propBranchId, onSuccess, onSubmit }) {
+export default function FrontDeskFormModal({
+  isOpen,
+  onClose,
+  initialData = null,
+  branchId: propBranchId,
+  onSuccess,
+  onSubmit,
+}) {
+  const dispatch = useDispatch();
   const user = useSelector(selectCurrentUser);
+  const formData = useSelector(selectFrontDeskFormData);
+  const errors = useSelector(selectFrontDeskFormErrors);
+  const customLang = useSelector(selectFrontDeskCustomLang);
+  const isSubmitting = useSelector(selectIsSavingFrontDesk);
+  const submitError = useSelector(selectFrontDeskSaveError);
+
+  if (!isOpen) return null;
+
   const isEdit = Boolean(initialData);
   const effectiveBranchId = propBranchId || user?.branchId || initialData?.branchId || '';
 
-  const [formData, setFormData] = useState(() => ({
-    name: initialData?.name || '',
-    email: initialData?.email || '',
-    password: '',
-    phone: initialData?.phone || '',
-    gender: initialData?.gender || '',
-    counter: initialData?.counter || '',
-    shiftStart: parseTime24(initialData?.shiftStart || ''),
-    shiftEnd: parseTime24(initialData?.shiftEnd || ''),
-    reportingManagerId: initialData?.reportingManagerId || '',
-    languages: Array.isArray(initialData?.languages) ? [...initialData.languages] : [],
-    branchId: effectiveBranchId,
-  }));
-
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [customLang, setCustomLang] = useState('');
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
-    if (submitError) setSubmitError(null);
+    dispatch(updateFrontDeskFormField({ name, value }));
   };
 
   const handleAddLanguage = (langVal) => {
-    const lang = (typeof langVal === 'string' ? langVal : customLang).trim();
-    if (!lang) return;
-    setFormData((prev) => {
-      const current = prev.languages || [];
-      if (current.some((l) => l.toLowerCase() === lang.toLowerCase())) return prev;
-      return { ...prev, languages: [...current, lang] };
-    });
-    setCustomLang('');
+    dispatch(addFrontDeskLanguage(langVal));
   };
 
   const handleRemoveLanguage = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      languages: (prev.languages || []).filter((_, i) => i !== index),
-    }));
+    dispatch(removeFrontDeskLanguage(index));
   };
 
   const handleLangKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
-      handleAddLanguage(customLang);
+      dispatch(addFrontDeskLanguage(customLang));
     }
   };
 
@@ -85,16 +83,13 @@ function FrontDeskDialog({ isOpen, onClose, initialData = null, branchId: propBr
       errs.phone = '10 digits required';
     }
 
-    setErrors(errs);
+    dispatch(setFrontDeskFormErrors(errs));
     return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
 
     try {
       if (onSubmit) {
@@ -103,43 +98,13 @@ function FrontDeskDialog({ isOpen, onClose, initialData = null, branchId: propBr
         return;
       }
 
-      const fdId = initialData?.userId || initialData?.id;
-      const endpoint = isEdit
-        ? `${API_BASE_URL}/frontdesk/${encodeURIComponent(fdId)}`
-        : `${API_BASE_URL}/frontdesk`;
-
-      const payload = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        branchId: effectiveBranchId,
-        ...(formData.phone ? { phone: formData.phone.trim() } : {}),
-        ...(formData.gender ? { gender: formData.gender } : {}),
-        ...(formData.counter ? { counter: formData.counter.trim() } : {}),
-        ...(formData.shiftStart ? { shiftStart: formatTime12(formData.shiftStart) } : {}),
-        ...(formData.shiftEnd ? { shiftEnd: formatTime12(formData.shiftEnd) } : {}),
-        ...(formData.reportingManagerId ? { reportingManagerId: formData.reportingManagerId.trim() } : {}),
-        languages: formData.languages || [],
-      };
-      if (!isEdit) payload.password = formData.password;
-
-      const res = await fetch(endpoint, {
-        method: isEdit ? 'PUT' : 'POST',
-        headers: getAuthHeaders(user),
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(errJson?.message || `Failed to save staff member (HTTP ${res.status})`);
-      }
-
-      const saved = await res.json().catch(() => ({}));
+      const saved = await dispatch(
+        saveFrontDeskStaff({ formData, initialData, branchId: effectiveBranchId })
+      ).unwrap();
       onSuccess?.(saved);
       onClose();
-    } catch (err) {
-      setSubmitError(err.message || 'Operation failed');
-    } finally {
-      setIsSubmitting(false);
+    } catch {
+      // Rejection message is surfaced through Redux `saveError`.
     }
   };
 
@@ -325,7 +290,7 @@ function FrontDeskDialog({ isOpen, onClose, initialData = null, branchId: propBr
                   className="staff-input"
                   placeholder="e.g. English, Hindi"
                   value={customLang}
-                  onChange={(e) => setCustomLang(e.target.value)}
+                  onChange={(e) => dispatch(setFrontDeskCustomLang(e.target.value))}
                   onKeyDown={handleLangKeyDown}
                 />
                 <button type="button" className="staff-tag-add-btn" onClick={() => handleAddLanguage(customLang)}>
@@ -349,10 +314,4 @@ function FrontDeskDialog({ isOpen, onClose, initialData = null, branchId: propBr
       </form>
     </Modal>
   );
-}
-
-export default function FrontDeskFormModal(props) {
-  if (!props.isOpen) return null;
-  const key = props.initialData?.userId || props.initialData?.id || (props.isOpen ? 'open' : 'closed');
-  return <FrontDeskDialog key={key} {...props} />;
 }
