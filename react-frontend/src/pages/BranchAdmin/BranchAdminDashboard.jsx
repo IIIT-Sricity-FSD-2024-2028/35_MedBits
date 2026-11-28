@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
 import {
+  clearBranchAdminDashboardError,
   fetchBranchAdminDashboard,
   selectBranchAdminInfo,
   selectBranchDoctors,
@@ -21,7 +22,9 @@ import {
   selectBranchLabTechs,
   selectBranchEarnings,
   selectBranchAdminDashboardStatus,
+  selectBranchAdminDashboardError,
 } from '../../store/slices/branchAdmin/branchAdminDashboardSlice';
+import AlertBanner from '../../components/dashboard/AlertBanner';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -39,11 +42,15 @@ export default function BranchAdminDashboard() {
   const labTechs = useSelector(selectBranchLabTechs);
   const earnings = useSelector(selectBranchEarnings);
   const status = useSelector(selectBranchAdminDashboardStatus);
+  const error = useSelector(selectBranchAdminDashboardError);
   const isLoading = status === 'idle' || status === 'loading';
 
   // Fetch all branch data dynamically via Redux thunk
   useEffect(() => {
     dispatch(fetchBranchAdminDashboard());
+    return () => {
+      dispatch(clearBranchAdminDashboardError());
+    };
   }, [dispatch, user?.id, user?.branchId]);
 
   // ── QUICK ACTIONS DEFINITION ──────────────────────────────────────────────
@@ -141,6 +148,18 @@ export default function BranchAdminDashboard() {
 
   return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {error && (
+          <AlertBanner
+            type="error"
+            title="Backend Connection Issue"
+            message={error}
+            onRetry={() => dispatch(fetchBranchAdminDashboard())}
+            isRetrying={isLoading}
+            retryLabel="Retry Connection"
+            onDismiss={() => dispatch(clearBranchAdminDashboardError())}
+          />
+        )}
 
         {/* ── 1. WELCOME BANNER ────────────────────────────────────────────── */}
         <WelcomeCard

@@ -10,11 +10,14 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
 import {
+  clearLabTechDashboardError,
   fetchLabTechDashboard,
+  selectLabTechDashboardError,
   selectLabTechDashboardRecentRequests,
   selectLabTechDashboardStats,
   selectLabTechDashboardStatus,
 } from '../../store/slices/labTech/labTechDashboardSlice';
+import AlertBanner from '../../components/dashboard/AlertBanner';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -29,9 +32,14 @@ export default function LabTechDashboard() {
   const testRequests = useSelector(selectLabTechDashboardRecentRequests);
   const stats = useSelector(selectLabTechDashboardStats);
   const status = useSelector(selectLabTechDashboardStatus);
+  const error = useSelector(selectLabTechDashboardError);
+  const isLoading = status === 'loading';
 
   useEffect(() => {
     dispatch(fetchLabTechDashboard());
+    return () => {
+      dispatch(clearLabTechDashboardError());
+    };
   }, [dispatch, user?.userId, user?.id]);
 
   const testColumns = [
@@ -106,6 +114,18 @@ export default function LabTechDashboard() {
 
   return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {error && (
+          <AlertBanner
+            type="error"
+            title="Backend Connection Issue"
+            message={error}
+            onRetry={() => dispatch(fetchLabTechDashboard())}
+            isRetrying={isLoading}
+            retryLabel="Retry Connection"
+            onDismiss={() => dispatch(clearLabTechDashboardError())}
+          />
+        )}
 
         {/* ── 1. WELCOME BANNER ────────────────────────────────────── */}
         <WelcomeCard

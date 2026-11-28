@@ -15,9 +15,12 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
 import {
+  clearDoctorDashboardError,
   fetchDoctorDashboard,
   selectDoctorDashboard,
+  selectDoctorDashboardError,
 } from '../../store/slices/doctor/doctorDashboardSlice';
+import AlertBanner from '../../components/dashboard/AlertBanner';
 import WelcomeCard from '../../components/dashboard/WelcomeCard';
 import StatCard, { StatGrid } from '../../components/dashboard/StatCard';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -45,6 +48,7 @@ export default function DoctorDashboard() {
     pendingLabCount,
     status,
   } = useSelector(selectDoctorDashboard);
+  const error = useSelector(selectDoctorDashboardError);
 
   const loading = status === 'loading' || status === 'idle';
   const userId = user?.id;
@@ -52,6 +56,9 @@ export default function DoctorDashboard() {
   // ── Fetch all dashboard data ──────────────────────────────────────────────
   useEffect(() => {
     dispatch(fetchDoctorDashboard());
+    return () => {
+      dispatch(clearDoctorDashboardError());
+    };
   }, [dispatch, userId]);
 
   // ── Derived stats ─────────────────────────────────────────────────────────
@@ -136,6 +143,18 @@ export default function DoctorDashboard() {
 
   return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {error && (
+          <AlertBanner
+            type="error"
+            title="Backend Connection Issue"
+            message={error}
+            onRetry={() => dispatch(fetchDoctorDashboard())}
+            isRetrying={loading}
+            retryLabel="Retry Connection"
+            onDismiss={() => dispatch(clearDoctorDashboardError())}
+          />
+        )}
 
         {/* ── 1. WELCOME BANNER ──────────────────────────────────────────────── */}
         <WelcomeCard

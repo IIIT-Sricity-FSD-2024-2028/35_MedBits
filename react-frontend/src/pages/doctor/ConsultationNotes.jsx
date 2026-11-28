@@ -25,10 +25,12 @@ import {
   backToList,
   openLabReport,
   closeLabReport,
+  clearConsultationAlert,
   resetConsultationView,
   selectConsultationNotes,
 } from '../../store/slices/doctor/consultationNotesSlice';
 
+import AlertBanner from '../../components/dashboard/AlertBanner';
 import ConsultationToolbar from './consultation/ConsultationToolbar';
 import UpcomingAppointmentsList from './consultation/UpcomingAppointmentsList';
 import ConsultationRecordsList from './consultation/ConsultationRecordsList';
@@ -50,10 +52,12 @@ export default function ConsultationNotes() {
     records,
     labReports,
     labCatalog,
+    status,
     saveStatus,
     alert: alertBanner,
   } = useSelector(selectConsultationNotes);
 
+  const isLoading = status === 'loading';
   const isSaving = saveStatus === 'loading';
   const userId = user?.id;
 
@@ -76,19 +80,17 @@ export default function ConsultationNotes() {
 
         {/* Status notification banner */}
         {alertBanner && (
-          <div
-            style={{
-              padding: '12px 18px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 500,
-              background: alertBanner.type === 'success' ? '#ecfdf5' : '#fef2f2',
-              color: alertBanner.type === 'success' ? '#065f46' : '#991b1b',
-              border: `1px solid ${alertBanner.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
-            }}
-          >
-            {alertBanner.type === 'success' ? '✓' : '⚠️'} {alertBanner.text}
-          </div>
+          <AlertBanner
+            type={alertBanner.type}
+            title={alertBanner.isLoadError ? 'Backend Connection Issue' : undefined}
+            message={alertBanner.text}
+            onRetry={
+              alertBanner.isLoadError ? () => dispatch(fetchConsultationData()) : undefined
+            }
+            isRetrying={isLoading}
+            retryLabel="Retry Connection"
+            onDismiss={() => dispatch(clearConsultationAlert())}
+          />
         )}
 
         {/* ── 1. LIST VIEW (Default OPD Dashboard) ────────────────────── */}

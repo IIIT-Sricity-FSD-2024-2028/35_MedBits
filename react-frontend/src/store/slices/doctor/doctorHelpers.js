@@ -40,6 +40,17 @@ export async function fetchListOrNull(path, user) {
   }
 }
 
+/** Extracts a clean user-facing error message from an apiFetch error. */
+export function extractDoctorError(err, fallback = 'Request failed') {
+  const raw = err?.message || '';
+  if (!raw) return fallback;
+  const colonIdx = raw.indexOf(': ');
+  if (colonIdx !== -1 && raw.startsWith('API Error ')) {
+    return raw.slice(colonIdx + 2) || raw;
+  }
+  return raw;
+}
+
 /** Normalises a patient record from any source to { id, userId, name, firstName, lastName }. */
 export function normalizePatient(p) {
   const id = p.userId || p.id || p.patientId || '';
