@@ -32,8 +32,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiFetch } from '../../../api/apiClient';
 import { logout } from '../authSlice';
-import { fetchListOrNull, getDoctorRequestUser, todayISO } from './doctorHelpers';
+import { extractDoctorError, getDoctorRequestUser, todayISO } from './doctorHelpers';
 
+const LOAD_ERROR = 'Failed to load consultation data. Please check backend connection.';
 const SAVE_ERROR = 'Failed to save note. Please check backend connection.';
 
 const initialState = {
@@ -53,23 +54,41 @@ const initialState = {
 
 export const fetchConsultationData = createAsyncThunk(
   'consultationNotes/fetchData',
-  async (_, { getState }) => {
+  async (_, { getState, rejectWithValue }) => {
     const user = getDoctorRequestUser(getState());
     const id = encodeURIComponent(user.id);
 
-    const [appointments, records, labCatalog, labReports] = await Promise.all([
-      fetchListOrNull(`/appointments/doctor/${id}`, user),
-      fetchListOrNull(`/medical-records/doctor/${id}`, user),
-      fetchListOrNull('/labtests', user),
-      fetchListOrNull('/lab-reports/doctor', user),
+    const results = await Promise.allSettled([
+      apiFetch(`/appointments/doctor/${id}`, { user }),
+      apiFetch(`/medical-records/doctor/${id}`, { user }),
+      apiFetch('/labtests', { user }),
+      apiFetch('/lab-reports/doctor', { user }),
     ]);
+
+    if (results.every((res) => res.status === 'rejected')) {
+      return rejectWithValue(extractDoctorError(results[0]?.reason, LOAD_ERROR));
+    }
+
+    const [apptsResult, recordsResult, catalogResult, reportsResult] = results;
 
     return {
       // Only appointments still waiting for a consultation belong in the queue.
-      appointments: (appointments ?? []).filter((a) => a.status === 'upcoming'),
-      records: records ? records.filter((r) => r.type === 'consultation' || !r.type) : null,
-      labCatalog,
-      labReports,
+      appointments:
+        apptsResult.status === 'fulfilled' && Array.isArray(apptsResult.value)
+          ? apptsResult.value.filter((a) => a.status === 'upcoming')
+          : null,
+      records:
+        recordsResult.status === 'fulfilled' && Array.isArray(recordsResult.value)
+          ? recordsResult.value.filter((r) => r.type === 'consultation' || !r.type)
+          : null,
+      labCatalog:
+        catalogResult.status === 'fulfilled' && Array.isArray(catalogResult.value)
+          ? catalogResult.value
+          : null,
+      labReports:
+        reportsResult.status === 'fulfilled' && Array.isArray(reportsResult.value)
+          ? reportsResult.value
+          : null,
     };
   }
 );
@@ -197,19 +216,29 @@ const consultationNotesSlice = createSlice({
     builder
       .addCase(fetchConsultationData.pending, (state) => {
         state.status = 'loading';
+        if (state.alert?.isLoadError) {
+          state.alert = null;
+        }
       })
       .addCase(fetchConsultationData.fulfilled, (state, action) => {
         const { appointments, records, labCatalog, labReports } = action.payload;
         state.status = 'succeeded';
-        state.appointments = appointments;
+        if (appointments !== null) state.appointments = appointments;
         // Keep the previous list if one of the optional endpoints failed.
-        if (records) state.records = records;
-        if (labCatalog) state.labCatalog = labCatalog;
-        if (labReports) state.labReports = labReports;
+        if (records !== null) state.records = records;
+        if (labCatalog !== null) state.labCatalog = labCatalog;
+        if (labReports !== null) state.labReports = labReports;
+        if (state.alert?.isLoadError) {
+          state.alert = null;
+        }
       })
-      .addCase(fetchConsultationData.rejected, (state) => {
+      .addCase(fetchConsultationData.rejected, (state, action) => {
         state.status = 'failed';
-        state.appointments = [];
+        state.alert = {
+          type: 'error',
+          text: action.payload || LOAD_ERROR,
+          isLoadError: true,
+        };
       })
       .addCase(saveConsultationNote.pending, (state) => {
         state.saveStatus = 'loading';

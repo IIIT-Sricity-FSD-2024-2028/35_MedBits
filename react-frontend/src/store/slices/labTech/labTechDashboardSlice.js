@@ -63,10 +63,21 @@ export const fetchLabTechDashboard = createAsyncThunk(
     const user = getLabTechRequestUser(getState());
 
     try {
-      const [reqsData, repsData] = await Promise.all([
-        apiFetch('/lab-requests', { user }).catch(() => []),
-        apiFetch('/lab-reports', { user }).catch(() => []),
+      const [reqsResult, repsResult] = await Promise.allSettled([
+        apiFetch('/lab-requests', { user }),
+        apiFetch('/lab-reports', { user }),
       ]);
+
+      if (reqsResult.status === 'rejected' && repsResult.status === 'rejected') {
+        throw (
+          reqsResult.reason ||
+          repsResult.reason ||
+          new Error('Failed to load laboratory dashboard data.')
+        );
+      }
+
+      const reqsData = reqsResult.status === 'fulfilled' ? reqsResult.value : [];
+      const repsData = repsResult.status === 'fulfilled' ? repsResult.value : [];
 
       const requests = Array.isArray(reqsData) ? reqsData : [];
       const reports = Array.isArray(repsData) ? repsData : [];

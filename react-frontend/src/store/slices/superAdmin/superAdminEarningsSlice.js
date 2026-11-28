@@ -166,10 +166,13 @@ const superAdminEarningsSlice = createSlice({
       .addCase(fetchSuperAdminBranchEarnings.rejected, (state) => {
         state.branchStatus = 'failed';
       })
-      .addCase(logout, () => ({
-        ...initialState,
-        selectedBranchId: '',
-      }));
+      .addCase(logout, () => {
+        saveSelectedBranchId('');
+        return {
+          ...initialState,
+          selectedBranchId: '',
+        };
+      });
   },
 });
 

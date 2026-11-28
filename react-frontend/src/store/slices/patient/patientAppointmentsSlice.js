@@ -363,6 +363,7 @@ export const selectSelectedBranch = (state) => state.patientAppointments.selecte
 export const selectSelectedSpeciality = (state) => state.patientAppointments.selectedSpeciality;
 export const selectSelectedDate = (state) => state.patientAppointments.selectedDate;
 export const selectDoctorNameFilter = (state) => state.patientAppointments.doctorName;
+export const selectBranchesStatus = (state) => state.patientAppointments.branchesStatus;
 export const selectDoctorsStatus = (state) => state.patientAppointments.doctorsStatus;
 export const selectDoctorAvailableSlots = (state) => state.patientAppointments.availableSlots;
 export const selectDoctorSlotsStatus = (state) => state.patientAppointments.slotsStatus;

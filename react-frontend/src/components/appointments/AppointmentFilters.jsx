@@ -18,9 +18,17 @@
  *  the unique clinical specializations available for that branch.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import './AppointmentFilters.css';
-import { API_BASE_URL } from '../../api/apiClient';
+import {
+  fetchBranches,
+  fetchDoctors,
+  selectAppointmentBranches,
+  selectAppointmentDoctors,
+  selectBranchesStatus,
+  selectDoctorsStatus,
+} from '../../store/slices/patient/patientAppointmentsSlice';
 
 
 function getTodayIso() {
@@ -44,92 +52,52 @@ export default function AppointmentFilters({
   title = 'Find a Doctor in 2 Easy Steps',
   subtitle = 'Select your branch, clinical specialty, and preferred appointment date',
 }) {
-  const [internalBranches, setInternalBranches] = useState([]);
-  const [isLoadingBranches, setIsLoadingBranches] = useState(!branches);
+  const dispatch = useDispatch();
+  const reduxBranches = useSelector(selectAppointmentBranches);
+  const reduxDoctors = useSelector(selectAppointmentDoctors);
+  const branchesStatus = useSelector(selectBranchesStatus);
+  const doctorsStatus = useSelector(selectDoctorsStatus);
 
-  // 1. Auto-fetch hospital branches from backend if not passed as prop
+  const isLoadingBranches = !branches && branchesStatus === 'loading';
+  const isLoadingSpecialities = !specialitiesProp && doctorsStatus === 'loading';
+
+  // 1. Auto-fetch hospital branches via Redux if not passed as prop
   useEffect(() => {
-    if (branches) return;
+    if (branches || branchesStatus !== 'idle') return;
+    dispatch(fetchBranches());
+  }, [branches, branchesStatus, dispatch]);
 
-    let isMounted = true;
-    async function fetchBranches() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/hospital-branches`, {
-          headers: { role: 'patient' },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (isMounted) {
-            setInternalBranches(Array.isArray(data) ? data : []);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load branches:', err);
-      } finally {
-        if (isMounted) {
-          setIsLoadingBranches(false);
-        }
-      }
-    }
+  const activeBranches = branches || reduxBranches || [];
 
-    fetchBranches();
-    return () => {
-      isMounted = false;
-    };
-  }, [branches]);
-
-  const activeBranches = branches || internalBranches;
-
-  // 2. Dynamically load specialties for the selected branch (NOT static)
-  const [dynamicSpecialities, setDynamicSpecialities] = useState([]);
-  const [isLoadingSpecialities, setIsLoadingSpecialities] = useState(!specialitiesProp);
-
+  // 2. Dynamically load specialties for the selected branch via Redux if not passed as prop
   useEffect(() => {
     if (specialitiesProp) return;
+    dispatch(fetchDoctors(selectedBranch));
+  }, [dispatch, selectedBranch, specialitiesProp]);
 
-    let isMounted = true;
-    async function loadSpecialitiesForBranch() {
-      setIsLoadingSpecialities(true);
-      try {
-        const url = selectedBranch
-          ? `${API_BASE_URL}/doctors?branchId=${encodeURIComponent(selectedBranch)}`
-          : `${API_BASE_URL}/doctors`;
+  const dynamicSpecialities = useMemo(() => {
+    if (specialitiesProp) return [];
+    return Array.isArray(reduxDoctors)
+      ? [...new Set(reduxDoctors.map((d) => d.specialization).filter(Boolean))].sort()
+      : [];
+  }, [reduxDoctors, specialitiesProp]);
 
-        const response = await fetch(url, {
-          headers: { role: 'patient' },
-        });
-
-        if (response.ok) {
-          const doctorsList = await response.json();
-          if (isMounted) {
-            const uniqueSpecialties = Array.isArray(doctorsList)
-              ? [...new Set(doctorsList.map((d) => d.specialization).filter(Boolean))].sort()
-              : [];
-
-            setDynamicSpecialities(uniqueSpecialties);
-
-            // If currently selected specialty does not exist in this branch, reset it
-            if (selectedSpeciality && !uniqueSpecialties.includes(selectedSpeciality)) {
-              if (onSpecialityChange) onSpecialityChange('');
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load branch specialties:', err);
-        if (isMounted) setDynamicSpecialities([]);
-      } finally {
-        if (isMounted) {
-          setIsLoadingSpecialities(false);
-        }
-      }
+  useEffect(() => {
+    if (
+      !specialitiesProp &&
+      doctorsStatus === 'succeeded' &&
+      selectedSpeciality &&
+      !dynamicSpecialities.includes(selectedSpeciality)
+    ) {
+      if (onSpecialityChange) onSpecialityChange('');
     }
-
-    loadSpecialitiesForBranch();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedBranch, specialitiesProp, selectedSpeciality, onSpecialityChange]);
+  }, [
+    specialitiesProp,
+    doctorsStatus,
+    selectedSpeciality,
+    dynamicSpecialities,
+    onSpecialityChange,
+  ]);
 
   const resolvedSpecialties = specialitiesProp || dynamicSpecialities;
 

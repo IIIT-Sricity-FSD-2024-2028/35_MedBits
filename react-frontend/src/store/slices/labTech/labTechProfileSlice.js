@@ -13,7 +13,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiFetch } from '../../../api/apiClient';
 import { logout } from '../authSlice';
-import { getLabTechRequestUser } from './labTechHelpers';
+import { extractErrorMessage, getLabTechRequestUser } from './labTechHelpers';
 
 const initialState = {
   branchName: '',
@@ -33,8 +33,10 @@ export const fetchLabTechBranch = createAsyncThunk(
         user,
       });
       return data?.name || data?.branchName || data?.hospitalName || '';
-    } catch {
-      return '';
+    } catch (err) {
+      return rejectWithValue(
+        extractErrorMessage(err, 'Failed to load branch information.')
+      );
     }
   }
 );
@@ -42,7 +44,11 @@ export const fetchLabTechBranch = createAsyncThunk(
 const labTechProfileSlice = createSlice({
   name: 'labTechProfile',
   initialState,
-  reducers: {},
+  reducers: {
+    clearLabTechProfileError(state) {
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchLabTechBranch.pending, (state) => {
@@ -61,6 +67,8 @@ const labTechProfileSlice = createSlice({
       .addCase(logout, () => initialState);
   },
 });
+
+export const { clearLabTechProfileError } = labTechProfileSlice.actions;
 
 export const selectLabTechBranchName = (state) => state.labTechProfile.branchName;
 export const selectLabTechProfileStatus = (state) => state.labTechProfile.status;
